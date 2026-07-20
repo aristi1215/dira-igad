@@ -285,12 +285,20 @@ CREATE OR REPLACE FUNCTION notify_dira_event() RETURNS trigger AS $$
 DECLARE
     payload json;
 BEGIN
-    payload := json_build_object('type', TG_ARGV[0], 'id', NEW.id::text, 'status', NEW.status);
-    PERFORM pg_notify('dira_events', payload::text);
-    -- Newly queued deliveries also wake the dispatch daemon (ADR 4).
-    IF TG_ARGV[0] = 'delivery' AND NEW.status = 'queued' THEN
-        PERFORM pg_notify('dira_dispatch', NEW.id::text);
+    -- Assessments have no status column; publish the situation + band instead.
+    IF TG_ARGV[0] = 'assessment' THEN
+        payload := json_build_object('type', 'assessment', 'id', NEW.id::text,
+            'situation_id', NEW.situation_id::text, 'band', NEW.operational_band,
+            'cycle', NEW.cycle::text);
+    ELSE
+        payload := json_build_object('type', TG_ARGV[0], 'id', NEW.id::text,
+            'status', NEW.status);
+        -- Newly queued deliveries also wake the dispatch daemon (ADR 4).
+        IF TG_ARGV[0] = 'delivery' AND NEW.status = 'queued' THEN
+            PERFORM pg_notify('dira_dispatch', NEW.id::text);
+        END IF;
     END IF;
+    PERFORM pg_notify('dira_events', payload::text);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

@@ -220,6 +220,42 @@ def write_acled(zones: list[dict], climate: list[dict]) -> None:
                         "available_at": avail.isoformat(),
                     }
                 )
+    # --- Demo escalation overlay ----------------------------------------------------------
+    # A clear, deterministic conflict escalation in Mandera Town (and, more mildly, its
+    # neighbours) across late 2025 into January 2026, so the demo cycles show a RED zone.
+    escalation = {
+        "z_ke_mandera_town": 1.0,
+        "z_ke_mandera_west": 0.5,
+        "z_ke_arabia": 0.4,
+        "z_so_bulohawo": 0.4,
+    }
+    esc_dekads = _dekads(date(2025, 10, 1), date(2026, 1, 11))
+    for zone_id, intensity in escalation.items():
+        for d in esc_dekads:
+            n = int(RNG.poisson(2.5 + 6.0 * intensity))
+            for _ in range(n):
+                eid += 1
+                ev_day = d + timedelta(days=int(RNG.integers(0, 9)))
+                # Publish within 2-4 days so the cluster is visible at the cycle cutoff.
+                avail = datetime(ev_day.year, ev_day.month, ev_day.day, 12, tzinfo=UTC) + timedelta(days=int(RNG.integers(2, 4)))
+                a1, a2 = RNG.choice(ACTORS, size=2, replace=False)
+                rows.append(
+                    {
+                        "event_id": f"SEED{eid:06d}",
+                        "event_date": ev_day.isoformat(),
+                        "zone_id": zone_id,
+                        "event_type": "Violence against civilians",
+                        "sub_event_type": "",
+                        "fatalities": int(RNG.integers(0, 4)),
+                        "actor1": str(a1),
+                        "actor2": str(a2),
+                        "notes": f"Reported incident involving {a1} and {a2}.",
+                        "lon": 41.85 + float(RNG.normal(0, 0.03)),
+                        "lat": 3.93 + float(RNG.normal(0, 0.03)),
+                        "available_at": avail.isoformat(),
+                    }
+                )
+
     # A couple of out-of-zone events (zone_id NULL) — retained but never enter zone features.
     for k in range(3):
         eid += 1

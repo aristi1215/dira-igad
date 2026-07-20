@@ -94,15 +94,20 @@ def stage_e2_tiles(conn: psycopg.Connection, cutoff: datetime, result: PipelineR
     result.stats["e2"] = {"tiles": written}
 
 
-def run_pipeline(cycle: date, conn: psycopg.Connection) -> PipelineResult:
+def run_pipeline(
+    cycle: date,
+    conn: psycopg.Connection,
+    *,
+    lm: Any | None = None,
+    risk_model: Any | None = None,
+) -> PipelineResult:
     cutoff = data_cutoff(cycle)
     result = PipelineResult(cycle=cycle, cutoff=cutoff)
     stage_e1_ingest(conn, cutoff, result)
     stage_e2_tiles(conn, cutoff, result)
-    # E3–E7 are added in M5.
-    from dira_worker import stages_late  # local import: added incrementally
+    from dira_worker import stages_late
 
-    stages_late.run_e3_to_e7(conn, cycle, cutoff, result)
+    stages_late.run_e3_to_e7(conn, cycle, cutoff, result, lm=lm, risk_model=risk_model)
     return result
 
 
@@ -116,7 +121,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[pipeline] {exc}", file=sys.stderr)
         return 2
 
-    conn = connect(autocommit=False)
+    # Autocommit so each `conn.transaction()` block (E1, E5 registration, per-zone E7) is a
+    # real, independent commit. Reads happen outside transactions; network calls (E1/E3)
+    # happen before any transaction opens (invariant 5).
+    conn = connect(autocommit=True)
     try:
         ensure_schema(conn)
         result = run_pipeline(cycle, conn)

@@ -16,7 +16,15 @@ from dira_data.repositories import geo
 from dira_features import FeatureBuilder, enumerate_dekads
 
 
-def build_feature_builder(conn: psycopg.Connection) -> tuple[FeatureBuilder, list[str]]:
+def build_feature_builder(
+    conn: psycopg.Connection, up_to: date | None = None
+) -> tuple[FeatureBuilder, list[str]]:
+    """Build the shared FeatureBuilder from the DB.
+
+    The dekad calendar must be a CONTINUOUS index covering the cycle (``up_to``) even though
+    the current dekad's climate is not yet published — otherwise the cycle would have no
+    position and every lag would be NULL.
+    """
     climate = climate_repo.read_all(conn)
     events = events_repo.read_all(conn)
     adjacency = geo.adjacency_pairs(conn)
@@ -26,7 +34,9 @@ def build_feature_builder(conn: psycopg.Connection) -> tuple[FeatureBuilder, lis
         first, last = dekads_present[0], dekads_present[-1]
         if isinstance(first, str):
             first, last = date.fromisoformat(first), date.fromisoformat(last)
+        if up_to and up_to > last:
+            last = up_to
         dekads = enumerate_dekads(first, last)
     else:
-        dekads = []
+        dekads = enumerate_dekads(up_to, up_to) if up_to else []
     return FeatureBuilder(climate, events, adjacency, dekads), zids

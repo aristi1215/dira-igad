@@ -78,8 +78,10 @@ def _truncate(conn: psycopg.Connection) -> None:
 
 @pytest.fixture
 def db(db_url: str, _ensure_schema: None) -> Iterator[psycopg.Connection]:
-    """A clean, migrated DB connection (dict rows). Data is truncated before and after."""
-    conn = psycopg.connect(db_url, row_factory=dict_row)
+    """A clean, migrated DB connection (dict rows), autocommit so `conn.transaction()` blocks
+    commit independently — mirroring the real pipeline/dispatch connection model. Data is
+    truncated before and after each test for isolation."""
+    conn = psycopg.connect(db_url, row_factory=dict_row, autocommit=True)
     _truncate(conn)
     try:
         yield conn
