@@ -15,6 +15,7 @@ dev = [
   "httpx>=0.28",
   "alembic>=1.18.5",
   "import-linter>=2.13",
+  "pytest-cov>=7.1.0",
 ]
 
 [tool.uv.workspace]
@@ -56,4 +57,11 @@ markers = [
 [tool.mypy]
 python_version = "3.11"
 strict = true
-packages = ["dira_core"]
+packages = ["dira_core", "dira_features"]
+
+[tool.coverage.report]
+exclude_also = [
+  "^\\s*\\.\\.\\.\\s*$",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]

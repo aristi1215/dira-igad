@@ -54,9 +54,13 @@ def db_url() -> str:
     return _database_url()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def _ensure_schema(db_url: str) -> None:
-    """Apply the authoritative DDL once per session if the schema is absent."""
+    """Apply the authoritative DDL once per session if the schema is absent.
+
+    NOT autouse: pure-domain tests must run with no DB and no ``.env``. Only fixtures that
+    actually need a database depend on this.
+    """
     try:
         conn = psycopg.connect(db_url, autocommit=True, row_factory=dict_row)
     except psycopg.OperationalError as exc:  # pragma: no cover - environment guard
@@ -73,7 +77,7 @@ def _truncate(conn: psycopg.Connection) -> None:
 
 
 @pytest.fixture
-def db(db_url: str) -> Iterator[psycopg.Connection]:
+def db(db_url: str, _ensure_schema: None) -> Iterator[psycopg.Connection]:
     """A clean, migrated DB connection (dict rows). Data is truncated before and after."""
     conn = psycopg.connect(db_url, row_factory=dict_row)
     _truncate(conn)
