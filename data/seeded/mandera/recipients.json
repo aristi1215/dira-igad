@@ -1,0 +1,26 @@
+[
+  {
+    "zone_id": "z_ke_mandera_town",
+    "name": "Community Elder A",
+    "phone": "+254700000001",
+    "language": "sw"
+  },
+  {
+    "zone_id": "z_ke_mandera_town",
+    "name": "Chief B",
+    "phone": "+254700000002",
+    "language": "sw"
+  },
+  {
+    "zone_id": "z_ke_mandera_west",
+    "name": "Health Volunteer C",
+    "phone": "+254700000003",
+    "language": "sw"
+  },
+  {
+    "zone_id": "z_so_bulohawo",
+    "name": "Cross-border Liaison D",
+    "phone": "+252600000004",
+    "language": "so"
+  }
+]

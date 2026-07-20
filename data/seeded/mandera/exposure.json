@@ -1,0 +1,56 @@
+[
+  {
+    "zone_id": "z_ke_mandera_south",
+    "population": 20000,
+    "households": 4000,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_ke_arabia",
+    "population": 28123,
+    "households": 5624,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_so_bulohawo_s",
+    "population": 36246,
+    "households": 7249,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_ke_mandera_west",
+    "population": 44369,
+    "households": 8873,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_ke_mandera_town",
+    "population": 52492,
+    "households": 10498,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_so_bulohawo",
+    "population": 60615,
+    "households": 12123,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_et_suftu",
+    "population": 68738,
+    "households": 13747,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_et_dolo_ado",
+    "population": 21861,
+    "households": 4372,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  },
+  {
+    "zone_id": "z_so_dolow",
+    "population": 29984,
+    "households": 5996,
+    "source": "WorldPop2020+OSM (seeded fixture)"
+  }
+]

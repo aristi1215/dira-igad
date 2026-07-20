@@ -1,0 +1,342 @@
+{
+  "type": "FeatureCollection",
+  "cluster": {
+    "id": "mandera",
+    "name": "Mandera tri-border (KE/ET/SO)"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_ke_mandera_south",
+        "name": "Mandera South",
+        "country": "KE"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.4,
+                3.6
+              ],
+              [
+                41.65,
+                3.6
+              ],
+              [
+                41.65,
+                3.85
+              ],
+              [
+                41.4,
+                3.85
+              ],
+              [
+                41.4,
+                3.6
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_ke_arabia",
+        "name": "Arabia",
+        "country": "KE"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.65,
+                3.6
+              ],
+              [
+                41.9,
+                3.6
+              ],
+              [
+                41.9,
+                3.85
+              ],
+              [
+                41.65,
+                3.85
+              ],
+              [
+                41.65,
+                3.6
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_so_bulohawo_s",
+        "name": "Bulo Hawo South",
+        "country": "SO"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.9,
+                3.6
+              ],
+              [
+                42.15,
+                3.6
+              ],
+              [
+                42.15,
+                3.85
+              ],
+              [
+                41.9,
+                3.85
+              ],
+              [
+                41.9,
+                3.6
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_ke_mandera_west",
+        "name": "Mandera West",
+        "country": "KE"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.4,
+                3.85
+              ],
+              [
+                41.65,
+                3.85
+              ],
+              [
+                41.65,
+                4.1
+              ],
+              [
+                41.4,
+                4.1
+              ],
+              [
+                41.4,
+                3.85
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_ke_mandera_town",
+        "name": "Mandera Town",
+        "country": "KE"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.65,
+                3.85
+              ],
+              [
+                41.9,
+                3.85
+              ],
+              [
+                41.9,
+                4.1
+              ],
+              [
+                41.65,
+                4.1
+              ],
+              [
+                41.65,
+                3.85
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_so_bulohawo",
+        "name": "Bulo Hawo",
+        "country": "SO"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.9,
+                3.85
+              ],
+              [
+                42.15,
+                3.85
+              ],
+              [
+                42.15,
+                4.1
+              ],
+              [
+                41.9,
+                4.1
+              ],
+              [
+                41.9,
+                3.85
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_et_suftu",
+        "name": "Suftu",
+        "country": "ET"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.4,
+                4.1
+              ],
+              [
+                41.65,
+                4.1
+              ],
+              [
+                41.65,
+                4.35
+              ],
+              [
+                41.4,
+                4.35
+              ],
+              [
+                41.4,
+                4.1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_et_dolo_ado",
+        "name": "Dolo Ado",
+        "country": "ET"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.65,
+                4.1
+              ],
+              [
+                41.9,
+                4.1
+              ],
+              [
+                41.9,
+                4.35
+              ],
+              [
+                41.65,
+                4.35
+              ],
+              [
+                41.65,
+                4.1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "z_so_dolow",
+        "name": "Dolow",
+        "country": "SO"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.9,
+                4.1
+              ],
+              [
+                42.15,
+                4.1
+              ],
+              [
+                42.15,
+                4.35
+              ],
+              [
+                41.9,
+                4.35
+              ],
+              [
+                41.9,
+                4.1
+              ]
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
