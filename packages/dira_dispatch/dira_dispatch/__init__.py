@@ -1,9 +1,14 @@
-"""Dispatch adapters: Africa's Talking, retries, webhooks, TTS.
-
-VoiceChannel live: AfricasTalkingAdapter | seeded: MockDispatcher.
-SpeechSynthesizer: TTS provider | PrerecordedAudioAdapter fallback.
-"""
+"""Dispatch adapters: Africa's Talking, mock voice, and prerecorded TTS."""
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from dira_dispatch.at_adapter import AfricasTalkingAdapter
+from dira_dispatch.mock import MockCall, MockDispatcher
+from dira_dispatch.tts import PrerecordedAudioAdapter
+
+__all__ = [
+    "AfricasTalkingAdapter",
+    "MockCall",
+    "MockDispatcher",
+    "PrerecordedAudioAdapter",
+]

@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     zombie_timeout_minutes: int = 10
     dispatch_poll_seconds: int = 30
     max_dispatch_attempts: int = 5
+    resolve_after_cycles_below_threshold: int = 3
+    public_base_url: str = "http://localhost:8000"
+    mock_ack_delay_seconds: float = 2.0
+    anthropic_api_key: str | None = None
+    at_username: str | None = None
+    at_api_key: str | None = None
 
 
 @lru_cache

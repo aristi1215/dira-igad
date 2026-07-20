@@ -1,0 +1,38 @@
+{
+  "mandera_ke_north": {
+    "population": 62000,
+    "pastoralist_share": 0.74,
+    "water_points": 18,
+    "markets": 4
+  },
+  "mandera_ke_south": {
+    "population": 79000,
+    "pastoralist_share": 0.61,
+    "water_points": 24,
+    "markets": 6
+  },
+  "mandera_et_west": {
+    "population": 48000,
+    "pastoralist_share": 0.82,
+    "water_points": 13,
+    "markets": 3
+  },
+  "mandera_et_east": {
+    "population": 41000,
+    "pastoralist_share": 0.86,
+    "water_points": 11,
+    "markets": 2
+  },
+  "mandera_so_north": {
+    "population": 52000,
+    "pastoralist_share": 0.79,
+    "water_points": 15,
+    "markets": 3
+  },
+  "mandera_so_south": {
+    "population": 57000,
+    "pastoralist_share": 0.68,
+    "water_points": 17,
+    "markets": 4
+  }
+}

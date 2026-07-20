@@ -1,0 +1,41 @@
+{
+  "model_id": "model_v1",
+  "kind": "lightgbm",
+  "feature_list": [
+    "rain_mm",
+    "rain_lag1",
+    "rain_lag2",
+    "rain_anomaly",
+    "ndvi_mean",
+    "ndvi_lag1",
+    "ndvi_anomaly",
+    "incident_count_dekad",
+    "incident_count_lag1",
+    "incident_trend",
+    "neighbor_incident_mean",
+    "month_sin",
+    "month_cos"
+  ],
+  "feature_notes_policy": "ACLED notes are excluded from FEATURE_NAMES and artifacts.",
+  "rows": 90,
+  "train_rows": 72,
+  "test_rows": 18,
+  "metrics": {
+    "brier": 0.001978328128653372,
+    "mae_incidents": 0.028025507412086745,
+    "baselines": {
+      "persistence": {
+        "brier": 0.0,
+        "mae_incidents": 0.0
+      },
+      "climatology": {
+        "brier": 0.00018518518518518518,
+        "mae_incidents": 0.005555555555555556
+      },
+      "cast_aggregate": {
+        "brier": 0.012345679012345678,
+        "mae_incidents": 0.037037037037037035
+      }
+    }
+  }
+}

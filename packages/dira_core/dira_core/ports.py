@@ -7,7 +7,7 @@ adapter elsewhere. DATA_MODE=seeded|live swaps data adapters together.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Protocol, runtime_checkable
 
 
@@ -21,6 +21,11 @@ class ConflictEvent:
     event_type: str
     fatalities: int
     notes: str | None = None
+    actor1: str | None = None
+    actor2: str | None = None
+    lon: float | None = None
+    lat: float | None = None
+    available_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -97,3 +102,10 @@ class VoiceChannel(Protocol):
 @runtime_checkable
 class SpeechSynthesizer(Protocol):
     def synthesize(self, text: str, language: str) -> AudioRef: ...
+
+
+@runtime_checkable
+class Clock(Protocol):
+    """Injected clock so seeded tests never assert against wall-clock now()."""
+
+    def now(self) -> datetime: ...

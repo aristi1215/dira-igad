@@ -38,3 +38,15 @@ Thumbs.db
 
 # Docker
 infra/**/*.log
+
+# Local env / tiles / generated
+.env
+artifacts/tiles/
+*.pyc
+__pycache__/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+apps/web/dist/
