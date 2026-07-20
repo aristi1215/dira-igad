@@ -265,6 +265,13 @@ SELECT
     a.explanation,
     es.population       AS exposed_population,
     es.households       AS exposed_households,
+    -- Whether the community has been reached (any delivery acknowledged). The map paints an
+    -- acknowledged zone green regardless of risk band (the "turned green" demo moment).
+    EXISTS (
+        SELECT 1 FROM alerts al
+        JOIN deliveries d ON d.alert_id = al.id
+        WHERE al.situation_id = s.id AND d.ack_status <> 'none'
+    ) AS acknowledged,
     ST_AsGeoJSON(z.geom)::json AS geometry
 FROM situations s
 JOIN zones z ON z.id = s.zone_id

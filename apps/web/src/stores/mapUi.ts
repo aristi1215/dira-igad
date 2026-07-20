@@ -1,16 +1,26 @@
-/** Minimal UI store: active layers, selection, viewport. Server truth stays in Query. */
+/** Minimal UI store: active layers, selection, viewport. Server truth stays in Query.
+ * INVARIANT: this store holds NO server data — only client-side view state. */
 import { create } from 'zustand'
 
-type MapUiState = {
+interface Viewport {
+  center: [number, number]
+  zoom: number
+}
+
+interface MapUiState {
   activeLayers: string[]
-  selectedZoneId: string | null
+  selectedSituationId: string | null
+  viewport: Viewport
   setActiveLayers: (layers: string[]) => void
-  setSelectedZoneId: (id: string | null) => void
+  setSelectedSituationId: (id: string | null) => void
+  setViewport: (v: Viewport) => void
 }
 
 export const useMapUiStore = create<MapUiState>((set) => ({
-  activeLayers: ['rain', 'vegetation'],
-  selectedZoneId: null,
+  activeLayers: ['rain', 'ndvi'],
+  selectedSituationId: null,
+  viewport: { center: [41.9, 3.95], zoom: 7.4 },
   setActiveLayers: (activeLayers) => set({ activeLayers }),
-  setSelectedZoneId: (selectedZoneId) => set({ selectedZoneId }),
+  setSelectedSituationId: (selectedSituationId) => set({ selectedSituationId }),
+  setViewport: (viewport) => set({ viewport }),
 }))
