@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Amina Hassan",
+    "phone_e164": "+254700100001",
+    "zone_id": "mandera_ke_north",
+    "channel": "voice",
+    "language": "sw",
+    "active": true
+  },
+  {
+    "name": "Mohamed Ali",
+    "phone_e164": "+254700100002",
+    "zone_id": "mandera_ke_south",
+    "channel": "voice",
+    "language": "sw",
+    "active": true
+  },
+  {
+    "name": "Fatuma Noor",
+    "phone_e164": "+254700100003",
+    "zone_id": "mandera_ke_north",
+    "channel": "voice",
+    "language": "sw",
+    "active": true
+  },
+  {
+    "name": "Abdi Osman",
+    "phone_e164": "+254700100004",
+    "zone_id": "mandera_ke_south",
+    "channel": "voice",
+    "language": "sw",
+    "active": true
+  }
+]

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     africas_talking_username: str | None = None
     africas_talking_api_key: str | None = None
     public_base_url: str = "http://localhost:8000"
+    webhook_shared_secret: str | None = None
 
 
 @lru_cache

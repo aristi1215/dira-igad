@@ -1,14 +1,23 @@
 :root {
-  --dira-ink: #1a2421;
-  --dira-sand: #e8e2d6;
-  --dira-accent: #0d5c63;
-  font-family: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --dira-bg: #071b22;
+  --dira-panel: rgba(12, 34, 42, 0.82);
+  --dira-panel-strong: rgba(8, 27, 35, 0.94);
+  --dira-border: rgba(148, 197, 204, 0.2);
+  --dira-ink: #ecfeff;
+  --dira-muted: #a7c7cc;
+  --dira-accent: #22d3ee;
+  --dira-green: #22c55e;
+  --dira-grid: rgba(125, 211, 252, 0.08);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
   line-height: 1.5;
   color: var(--dira-ink);
   background:
-    radial-gradient(ellipse at 20% 0%, #c5d5ce 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 20%, #d4cbb8 0%, transparent 45%),
-    var(--dira-sand);
+    radial-gradient(circle at 12% 10%, rgba(34, 211, 238, 0.22), transparent 28rem),
+    radial-gradient(circle at 92% 8%, rgba(20, 184, 166, 0.2), transparent 30rem),
+    linear-gradient(var(--dira-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dira-grid) 1px, transparent 1px),
+    var(--dira-bg);
+  background-size: auto, auto, 42px 42px, 42px 42px, auto;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -21,6 +30,22 @@
 body {
   margin: 0;
   min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 #root {

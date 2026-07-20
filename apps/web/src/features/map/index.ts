@@ -1,2 +1,2 @@
-/** MapLibre canvas + declarative layers via useMapLayers. */
-export {}
+export { MapView } from './MapView'
+export { useMapLayers } from './useMapLayers'

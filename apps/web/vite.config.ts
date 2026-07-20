@@ -8,4 +8,13 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  server: {
+    proxy: {
+      '/map': 'http://localhost:8000',
+      '/situations': 'http://localhost:8000',
+      '/alerts': 'http://localhost:8000',
+      '/deliveries': 'http://localhost:8000',
+      '/events': 'http://localhost:8000',
+    },
+  },
 })
