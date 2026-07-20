@@ -1,6 +1,9 @@
 services:
   db:
-    image: postgis/postgis:16-3.4
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    image: dira-postgis-pgvector:16-3.4
     container_name: dira-db
     environment:
       POSTGRES_USER: dira

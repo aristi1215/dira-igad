@@ -16,6 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 rasters = [
   "rasterio>=1.4",
+  "rasterstats>=0.21.0",
 ]
 
 [build-system]

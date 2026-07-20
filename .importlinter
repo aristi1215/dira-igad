@@ -1,0 +1,61 @@
+[importlinter]
+include_external_packages = True
+root_packages =
+    dira_core
+    dira_features
+    dira_data
+    dira_ml
+    dira_llm
+    dira_dispatch
+    dira_api
+    dira_worker
+
+[importlinter:contract:layers]
+name = Apps depend on packages, never the reverse; core is the innermost layer
+type = layers
+layers =
+    dira_api | dira_worker
+    dira_data | dira_ml | dira_llm | dira_dispatch
+    dira_features
+    dira_core
+
+[importlinter:contract:core-is-pure]
+name = dira_core imports no project package and no I/O library
+type = forbidden
+source_modules =
+    dira_core
+forbidden_modules =
+    dira_features
+    dira_data
+    dira_ml
+    dira_llm
+    dira_dispatch
+    dira_api
+    dira_worker
+    pandas
+    numpy
+    psycopg
+    sqlalchemy
+    httpx
+    anthropic
+    fastapi
+    rasterio
+
+[importlinter:contract:features-are-thin]
+name = dira_features imports only dira_core plus pandas/numpy
+type = forbidden
+source_modules =
+    dira_features
+forbidden_modules =
+    dira_data
+    dira_ml
+    dira_llm
+    dira_dispatch
+    dira_api
+    dira_worker
+    psycopg
+    sqlalchemy
+    httpx
+    anthropic
+    fastapi
+    rasterio
