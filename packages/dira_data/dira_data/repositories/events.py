@@ -34,6 +34,13 @@ def upsert_events(conn: psycopg.Connection, rows: list[dict[str, Any]]) -> None:
         cur.executemany(_UPSERT, norm)
 
 
+def read_all(conn: psycopg.Connection) -> list[dict[str, Any]]:
+    """All events (zone_id, event_date, fatalities, available_at) — never notes/actors."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT zone_id, event_date, fatalities, available_at FROM acled_events")
+        return [dict(r) for r in cur.fetchall()]
+
+
 def assign_event_zones(conn: psycopg.Connection) -> None:
     """Spatially assign zone_id to events that lack one (live rows arrive without it).
 

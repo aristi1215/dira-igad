@@ -1,9 +1,22 @@
-"""Shared feature engineering for training and inference.
-
-Must be identical in both paths. Bitemporal cut: only values with
-available_at <= cycle date. ACLED notes never enter as features (label leak).
-"""
+"""Shared feature engineering (train ≡ serve). Imports only dira_core + pandas/numpy."""
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from dira_features.builder import FEATURE_NAMES, FeatureBuilder
+from dira_features.dekads import (
+    dekad_end,
+    dekad_of_year_index,
+    enumerate_dekads,
+    next_dekad,
+    seasonality,
+)
+
+__all__ = [
+    "FEATURE_NAMES",
+    "FeatureBuilder",
+    "dekad_end",
+    "dekad_of_year_index",
+    "enumerate_dekads",
+    "next_dekad",
+    "seasonality",
+]

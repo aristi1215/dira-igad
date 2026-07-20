@@ -1,0 +1,78 @@
+{
+  "kind": "lightgbm",
+  "created_at": "2026-07-20T05:21:49.859408+00:00",
+  "feature_list": [
+    "rain_anom_lag1",
+    "rain_anom_lag2",
+    "rain_anom_lag3",
+    "rain_anom_mean3",
+    "rain_anom_mean6",
+    "ndvi_lag1",
+    "ndvi_lag2",
+    "ndvi_lag3",
+    "ndvi_anom_lag1",
+    "ndvi_anom_mean3",
+    "incidents_lag1",
+    "incidents_sum3",
+    "incidents_sum6",
+    "fatalities_sum3",
+    "incident_trend3",
+    "neigh_incidents_sum3",
+    "neigh_rain_anom_mean3",
+    "season_sin",
+    "season_cos"
+  ],
+  "n_train": 3150,
+  "n_valid": 675,
+  "n_test": 684,
+  "train_end": {
+    "min": "2012-03-01",
+    "max": "2021-11-11"
+  },
+  "test_range": {
+    "min": "2023-12-21",
+    "max": "2026-01-21"
+  },
+  "metrics": {
+    "auc": 0.5769388076136542,
+    "brier": 0.20022880857552822,
+    "incidents_mae": 0.4859272021923136,
+    "baselines": {
+      "persistence_mae": 0.41228070175438597,
+      "climatology_mae": 0.48097200070884283,
+      "cast_aggregate_mae": 0.5021969957573673
+    },
+    "shap_importance": {
+      "rain_anom_lag1": 0.0,
+      "rain_anom_lag2": 0.2549245583067206,
+      "rain_anom_lag3": 0.16491347431981745,
+      "rain_anom_mean3": 0.0,
+      "rain_anom_mean6": 0.0,
+      "ndvi_lag1": 0.0,
+      "ndvi_lag2": 0.18683142906228778,
+      "ndvi_lag3": 0.15916208908679388,
+      "ndvi_anom_lag1": 0.0,
+      "ndvi_anom_mean3": 0.0,
+      "incidents_lag1": 0.010474970207232094,
+      "incidents_sum3": 0.03358502807405853,
+      "incidents_sum6": 0.04891076129508176,
+      "fatalities_sum3": 0.05325546548936992,
+      "incident_trend3": 0.03443276071548215,
+      "neigh_incidents_sum3": 0.0914559818846594,
+      "neigh_rain_anom_mean3": 0.0,
+      "season_sin": 0.23741206310823815,
+      "season_cos": 0.08505663252368696
+    }
+  },
+  "params": {
+    "n_estimators": 200,
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_child_samples": 20,
+    "random_state": 42,
+    "deterministic": true,
+    "force_row_wise": true,
+    "verbosity": -1
+  },
+  "notes": "SHAP via LightGBM native pred_contrib; isotonic calibration on validation."
+}

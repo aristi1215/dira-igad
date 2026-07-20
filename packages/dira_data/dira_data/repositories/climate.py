@@ -43,3 +43,13 @@ def upsert_climate(conn: psycopg.Connection, rows: list[dict[str, Any]]) -> None
         return
     with conn.cursor() as cur:
         cur.executemany(_UPSERT, rows)
+
+
+def read_all(conn: psycopg.Connection) -> list[dict[str, Any]]:
+    """All climate rows (with available_at). The FeatureBuilder applies the bitemporal cut."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT zone_id, dekad_start, rain_mm, rain_anomaly, rain_available_at, "
+            "ndvi, ndvi_anomaly, ndvi_available_at FROM zone_climate_dekadal"
+        )
+        return [dict(r) for r in cur.fetchall()]

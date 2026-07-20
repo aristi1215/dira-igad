@@ -109,6 +109,18 @@ def load_zone_features(conn: psycopg.Connection) -> list[dict[str, Any]]:
         ]
 
 
+def zone_ids(conn: psycopg.Connection) -> list[str]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM zones ORDER BY id")
+        return [r["id"] for r in cur.fetchall()]
+
+
+def adjacency_pairs(conn: psycopg.Connection) -> list[tuple[str, str]]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT zone_id, neighbor_id FROM zone_adjacency ORDER BY zone_id, neighbor_id")
+        return [(r["zone_id"], r["neighbor_id"]) for r in cur.fetchall()]
+
+
 def cluster_bounds(conn: psycopg.Connection) -> tuple[float, float, float, float]:
     with conn.cursor() as cur:
         cur.execute(

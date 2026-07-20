@@ -1,9 +1,7 @@
-"""ML training, evaluation, SHAP → artifacts.
-
-Adapters: LightGBMAdapter (live) | TransparentIndexAdapter (fallback).
-Baselines: naive persistence, ACLED CAST (aggregated grain), climatology.
-"""
+"""Model training, baselines, SHAP, transparent index, and inference adapters."""
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from dira_ml.transparent_index import TransparentIndexAdapter
+
+__all__ = ["TransparentIndexAdapter"]
