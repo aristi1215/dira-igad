@@ -50,6 +50,8 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 # One-off deterministic fixture generator: dense literal data rows.
 "scripts/gen_fixtures.py" = ["E501"]
+# FastAPI's Depends()-in-defaults is the idiomatic pattern.
+"apps/api/dira_api/main.py" = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["packages", "apps", "tests"]
