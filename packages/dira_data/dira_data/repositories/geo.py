@@ -95,6 +95,30 @@ def upsert_exposure(conn: psycopg.Connection, rows: list[dict[str, Any]]) -> Non
     conn.commit()
 
 
+def load_zone_features(conn: psycopg.Connection) -> list[dict[str, Any]]:
+    """Zones as GeoJSON-like features (for zonal stats / tile rendering)."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, name, country, ST_AsGeoJSON(geom) AS g FROM zones ORDER BY id")
+        return [
+            {
+                "type": "Feature",
+                "properties": {"id": r["id"], "name": r["name"], "country": r["country"]},
+                "geometry": json.loads(r["g"]),
+            }
+            for r in cur.fetchall()
+        ]
+
+
+def cluster_bounds(conn: psycopg.Connection) -> tuple[float, float, float, float]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT ST_XMin(e) x0, ST_YMin(e) y0, ST_XMax(e) x1, ST_YMax(e) y1 "
+            "FROM (SELECT ST_Extent(geom) e FROM zones) s"
+        )
+        r = cur.fetchone()
+    return (r["x0"], r["y0"], r["x1"], r["y1"])
+
+
 def upsert_recipients(conn: psycopg.Connection, rows: list[dict[str, Any]]) -> None:
     """Idempotent by (zone_id, phone). E.164 is enforced by the DB CHECK on insert."""
     with conn.cursor() as cur:

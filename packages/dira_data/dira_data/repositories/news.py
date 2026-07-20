@@ -11,7 +11,7 @@ from typing import Any
 
 import psycopg
 
-_NS = uuid.UUID("0d1ra000-0000-5000-8000-000000000001")
+_NS = uuid.UUID("0d17a000-0000-5000-8000-000000000001")
 
 
 def doc_uuid(natural_id: str) -> uuid.UUID:

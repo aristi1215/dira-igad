@@ -32,3 +32,21 @@ def upsert_events(conn: psycopg.Connection, rows: list[dict[str, Any]]) -> None:
         norm.append(r)
     with conn.cursor() as cur:
         cur.executemany(_UPSERT, norm)
+
+
+def assign_event_zones(conn: psycopg.Connection) -> None:
+    """Spatially assign zone_id to events that lack one (live rows arrive without it).
+
+    Events outside every zone keep zone_id NULL — retained, never entering zone features.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE acled_events e
+            SET zone_id = z.id
+            FROM zones z
+            WHERE e.zone_id IS NULL
+              AND e.geom IS NOT NULL
+              AND ST_Contains(z.geom, e.geom)
+            """
+        )
