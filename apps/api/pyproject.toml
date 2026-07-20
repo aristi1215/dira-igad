@@ -1,0 +1,27 @@
+[project]
+name = "dira-api"
+version = "0.1.0"
+description = "FastAPI application: routes, webhooks, SSE."
+requires-python = ">=3.11"
+dependencies = [
+  "dira-core",
+  "dira-data",
+  "dira-llm",
+  "dira-dispatch",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "sse-starlette>=2.1",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "psycopg[binary,pool]>=3.2",
+]
+
+[project.scripts]
+dira-api = "dira_api.main:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dira_api"]

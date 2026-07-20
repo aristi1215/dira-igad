@@ -1,0 +1,32 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem clamp(1.25rem, 4vw, 3rem);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  letter-spacing: -0.02em;
+  color: var(--dira-accent);
+}
+
+.app-header p {
+  margin: 0.35rem 0 0;
+  max-width: 28rem;
+  opacity: 0.8;
+}
+
+.app-main {
+  flex: 1;
+  display: grid;
+  place-items: start;
+  padding-top: 3rem;
+}
+
+.scaffold-note {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 1.05rem;
+}

@@ -1,0 +1,40 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+uv.lock
+
+# Env / secrets
+.env
+.env.local
+*.pem
+
+# Node
+apps/web/node_modules/
+apps/web/dist/
+apps/web/.vite/
+
+# Data / heavy artifacts (keep cards; ignore large binaries if needed)
+data/seeded/**/*.tif
+data/seeded/**/*.nc
+*.lgb
+!artifacts/.gitkeep
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Docker
+infra/**/*.log
