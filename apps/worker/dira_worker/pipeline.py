@@ -35,7 +35,7 @@ from dira_data.db import (
 )
 from dira_data.tiles import render_placeholder_tile
 from dira_features import build_feature_row
-from dira_llm import CannedResponseAdapter, extract_signals
+from dira_llm import CannedResponseAdapter, extract_signals, get_language_model
 from dira_ml import LightGBMAdapter, TransparentIndexAdapter
 
 from dira_worker.settings import Settings, get_settings
@@ -206,6 +206,8 @@ def stage_e3(
 
     corroboration: dict[str, float] = {zid: 0.0 for zid in zone_ids}
     with conn.cursor() as cur:
+        # Idempotent rerun: this cycle's signals are fully re-derived each run.
+        cur.execute("DELETE FROM news_signals WHERE cycle = %s", (cycle,))
         for sig in signals:
             doc_id = sig.get("document_id")
             zid = sig.get("zone_id")
@@ -434,7 +436,16 @@ def run_pipeline(
 ) -> int:
     """Run E1–E7. Exit 0 on success or degradable failure; raise/return 1 on hard failure."""
     settings = settings or get_settings()
-    llm = llm or CannedResponseAdapter()
+    if llm is None:
+        # Seeded mode stays deterministic; live mode uses OpenAI/Anthropic when keyed.
+        llm = (
+            get_language_model(
+                openai_api_key=settings.openai_api_key,
+                anthropic_api_key=settings.anthropic_api_key,
+            )
+            if settings.data_mode == "live"
+            else CannedResponseAdapter()
+        )
 
     with connect(settings.database_url) as conn:
         stage_e1_e2(conn, cycle, settings)

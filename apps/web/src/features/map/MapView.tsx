@@ -10,6 +10,7 @@ import type {
 import { useMapLayers } from './useMapLayers'
 
 const MANDERA_CENTER: [number, number] = [41.8, 3.9]
+const IGAD_CENTER: [number, number] = [38.5, 6.2]
 
 type MapViewProps = {
   situations: SituationFeatureCollection | undefined
@@ -120,7 +121,7 @@ export function MapView({
       <div className="map-toolbar">
         <div>
           <p className="eyebrow">Amani live map</p>
-          <h2>Horn regional view</h2>
+          <h2>IGAD regional view</h2>
         </div>
         <div className="map-actions">
           <button
@@ -128,13 +129,26 @@ export function MapView({
             type="button"
             onClick={() => {
               map?.flyTo({
-                center: MANDERA_CENTER,
-                zoom: 8,
+                center: IGAD_CENTER,
+                zoom: 4.4,
                 duration: 1_200,
               })
             }}
           >
-            Zoom to Mandera
+            IGAD region
+          </button>
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={() => {
+              map?.flyTo({
+                center: MANDERA_CENTER,
+                zoom: 7.4,
+                duration: 1_200,
+              })
+            }}
+          >
+            Mandera cluster
           </button>
           <button
             className="button button-secondary"

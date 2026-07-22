@@ -22,7 +22,10 @@ class SeededAcledAdapter:
 
     def events(self, zone_ids: list[str], since: date) -> list[ConflictEvent]:
         wanted = set(zone_ids)
-        rows = _read_json(_fixture_path(self.seed_dir, "mandera/acled/events.json", "events.json"))
+        rows = _read_json_multi(
+            self.seed_dir,
+            ("mandera/acled/events.json", "igad/acled/events.json", "events.json"),
+        )
         out: list[ConflictEvent] = []
         for row in rows:
             event_date = _parse_date(row["event_date"])
@@ -58,8 +61,9 @@ class SeededRasterAdapter:
         self.seed_dir = Path(seed_dir)
 
     def fetch_dekadal(self, zone_ids: list[str], dekad_start: date) -> dict[str, dict[str, Any]]:
-        rows = _read_json(
-            _fixture_path(self.seed_dir, "mandera/climate/climate.json", "climate.json")
+        rows = _read_json_multi(
+            self.seed_dir,
+            ("mandera/climate/climate.json", "igad/climate/climate.json", "climate.json"),
         )
         wanted = set(zone_ids)
         out: dict[str, dict[str, Any]] = {}
@@ -82,21 +86,90 @@ class SeededRasterAdapter:
 
 
 class AcledApiAdapter:
-    """Live ACLED adapter placeholder.
+    """Live ACLED adapter using the OAuth password grant + /api/acled/read.
 
-    The live API contract and key names are not fixed in the scaffold yet, so
-    fail clearly instead of silently mixing seeded and live data.
+    Zone attribution happens downstream (PostGIS point-in-polygon at ingest),
+    so events are returned with zone_id=None and lon/lat set.
     """
 
-    def __init__(self, api_key: str | None = None) -> None:
-        self.api_key = api_key or os.environ.get("ACLED_API_KEY")
-        if not self.api_key:
-            raise RuntimeError("DATA_MODE=live requires ACLED_API_KEY for AcledApiAdapter.")
+    TOKEN_URL = "https://acleddata.com/oauth/token"
+    READ_URL = "https://acleddata.com/api/acled/read"
+    COUNTRIES = (
+        "Kenya|Ethiopia|Somalia|South Sudan|Sudan|Uganda|Djibouti|Eritrea"
+    )
+    PAGE_SIZE = 5000
+
+    def __init__(self, email: str | None = None, password: str | None = None) -> None:
+        self.email = email or os.environ.get("ACLED_EMAIL")
+        self.password = password or os.environ.get("ACLED_PASSWORD")
+        if not self.email or not self.password:
+            raise RuntimeError(
+                "DATA_MODE=live requires ACLED_EMAIL and ACLED_PASSWORD for AcledApiAdapter."
+            )
+        self._token: str | None = None
+
+    def _access_token(self) -> str:
+        if self._token:
+            return self._token
+        import httpx
+
+        response = httpx.post(
+            self.TOKEN_URL,
+            data={
+                "username": self.email,
+                "password": self.password,
+                "grant_type": "password",
+                "client_id": "acled",
+                "scope": "authenticated",
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+        self._token = str(response.json()["access_token"])
+        return self._token
 
     def events(self, zone_ids: list[str], since: date) -> list[ConflictEvent]:
-        raise RuntimeError(
-            "Live ACLED fetching is not implemented in this scaffold; use DATA_MODE=seeded."
-        )
+        import httpx
+
+        headers = {"Authorization": f"Bearer {self._access_token()}"}
+        out: list[ConflictEvent] = []
+        page = 1
+        while True:
+            response = httpx.get(
+                self.READ_URL,
+                params={
+                    "country": self.COUNTRIES,
+                    "event_date": since.isoformat(),
+                    "event_date_where": ">=",
+                    "limit": self.PAGE_SIZE,
+                    "page": page,
+                },
+                headers=headers,
+                timeout=120,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            rows = payload.get("data", [])
+            for row in rows:
+                out.append(
+                    ConflictEvent(
+                        event_id=str(row["event_id_cnty"]),
+                        event_date=_parse_date(row["event_date"]),
+                        zone_id=None,
+                        event_type=str(row.get("event_type", "unknown")),
+                        fatalities=int(row.get("fatalities") or 0),
+                        notes=row.get("notes"),
+                        actor1=row.get("actor1"),
+                        actor2=row.get("actor2"),
+                        lon=_optional_float(row.get("longitude")),
+                        lat=_optional_float(row.get("latitude")),
+                        available_at=None,
+                    )
+                )
+            if len(rows) < self.PAGE_SIZE:
+                break
+            page += 1
+        return out
 
 
 class ChirpsS3Adapter:
@@ -137,6 +210,20 @@ def _fixture_path(seed_dir: Path, nested: str, flat: str) -> Path:
     if nested_path.exists():
         return nested_path
     return seed_dir / flat
+
+
+def _read_json_multi(seed_dir: Path, candidates: tuple[str, ...]) -> list[Any]:
+    """Concatenate every fixture list that exists among the candidate paths."""
+    rows: list[Any] = []
+    found = False
+    for rel in candidates:
+        path = seed_dir / rel
+        if path.exists():
+            rows.extend(_read_json(path))
+            found = True
+    if not found:
+        raise FileNotFoundError(f"No seeded fixture found among {candidates} in {seed_dir}")
+    return rows
 
 
 def _read_json(path: Path) -> Any:

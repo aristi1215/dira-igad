@@ -10,7 +10,8 @@ from uuid import UUID
 
 from dira_core.alerts import derive_idempotency_key
 from dira_data.db import connect
-from dira_llm import ALERT_DRAFT_SYSTEM, CannedResponseAdapter
+from dira_data.economy import get_economy_source
+from dira_llm import ALERT_DRAFT_SYSTEM, CannedResponseAdapter, get_language_model
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -48,8 +49,21 @@ class RetryBody(BaseModel):
     pass
 
 
+class AdvisorBody(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+    situation_id: UUID | None = None
+
+
 def _settings() -> Settings:
     return get_settings()
+
+
+def _language_model() -> Any:
+    settings = _settings()
+    return get_language_model(
+        openai_api_key=settings.openai_api_key,
+        anthropic_api_key=settings.anthropic_api_key,
+    )
 
 
 def _verify_webhook_secret(
@@ -135,7 +149,6 @@ def situation_detail(situation_id: UUID) -> dict[str, Any]:
 
 @app.post("/situations/{situation_id}/alert")
 def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, Any]:
-    llm = CannedResponseAdapter()
     with connect(_settings().database_url) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT id, zone_id FROM situations WHERE id = %s", (situation_id,))
@@ -150,10 +163,18 @@ def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, An
                 (situation_id,),
             )
             latest = cur.fetchone()
-        draft = llm.complete_json(
-            f"Draft alert for zone {sit['zone_id']} band={latest and latest['operational_band']}",
-            system=ALERT_DRAFT_SYSTEM,
+        prompt = (
+            f"Draft alert for zone {sit['zone_id']} "
+            f"band={latest and latest['operational_band']}. "
+            f"Model explanation: {latest and latest['explanation']}. "
+            f'Return JSON {{"language": "{body.language}", "body_text": "..."}} '
+            f"with body_text in language code '{body.language}', under 320 characters."
         )
+        try:
+            draft = _language_model().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
+        except Exception:
+            logger.exception("LLM draft failed; using canned fallback")
+            draft = CannedResponseAdapter().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
         text = str(draft.get("body_text") or draft.get("text") or "Tahadhari ya hali.")
         with conn.transaction():
             with conn.cursor() as cur:
@@ -251,6 +272,105 @@ def approve_alert(
             raise HTTPException(500, str(exc)) from exc
 
     return {"id": str(alert_id), "status": "approved", "approved_by": signer}
+
+
+@app.get("/alerts")
+def list_alerts(status: str | None = Query(default=None)) -> list[dict[str, Any]]:
+    with connect(_settings().database_url) as conn:
+        with conn.cursor() as cur:
+            query = """
+                SELECT a.id, a.situation_id, a.status, a.language, a.body_text,
+                       a.created_by, a.approved_by, a.approved_at, a.created_at,
+                       s.zone_id, z.name AS zone_name
+                FROM alerts a
+                JOIN situations s ON s.id = a.situation_id
+                JOIN zones z ON z.id = s.zone_id
+            """
+            if status:
+                cur.execute(query + " WHERE a.status = %s ORDER BY a.created_at DESC", (status,))
+            else:
+                cur.execute(query + " ORDER BY a.created_at DESC LIMIT 200")
+            return [_jsonable(dict(r)) for r in cur.fetchall()]
+
+
+@app.get("/zones/{zone_id}/signals")
+def zone_signals(zone_id: str) -> list[dict[str, Any]]:
+    """Unconfirmed-first news signals with their source documents for a zone."""
+    with connect(_settings().database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT DISTINCT ON (ns.document_id)
+                       ns.id, ns.zone_id, ns.signal_type, ns.confidence, ns.status,
+                       ns.excerpt, ns.cycle, nd.title, nd.source, nd.published_at
+                FROM news_signals ns
+                LEFT JOIN news_documents nd ON nd.id = ns.document_id
+                WHERE ns.zone_id = %s
+                ORDER BY ns.document_id, ns.cycle DESC, ns.confidence DESC
+                LIMIT 20
+                """,
+                (zone_id,),
+            )
+            return [_jsonable(dict(r)) for r in cur.fetchall()]
+
+
+@app.get("/economy")
+def economy() -> dict[str, Any]:
+    """IGAD country economy indicators (seeded snapshot or live World Bank)."""
+    return get_economy_source(_settings().data_mode).indicators()
+
+
+ADVISOR_SYSTEM = (
+    "You are the Dira situation-room advisor for a governmental early-warning team "
+    "in the IGAD region. Answer using only the structured context provided. Give "
+    "practical, do-no-harm preparedness guidance. Never name actors, ethnicities, "
+    "clans, or communities. Keep answers under 180 words."
+)
+
+
+@app.post("/advisor")
+def advisor(body: AdvisorBody) -> dict[str, Any]:
+    context: dict[str, Any] = {}
+    with connect(_settings().database_url) as conn:
+        with conn.cursor() as cur:
+            if body.situation_id:
+                cur.execute(
+                    """
+                    SELECT zone_id, zone_name, operational_band, model_risk, corroboration,
+                           explanation, combination_rule, exposure_snapshot
+                    FROM v_map_situations WHERE situation_id = %s
+                    """,
+                    (body.situation_id,),
+                )
+                row = cur.fetchone()
+                if row:
+                    context = _jsonable(dict(row))
+            else:
+                cur.execute(
+                    """
+                    SELECT zone_id, zone_name, operational_band, model_risk
+                    FROM v_map_situations
+                    ORDER BY model_risk DESC LIMIT 8
+                    """
+                )
+                context = {"top_zones": [_jsonable(dict(r)) for r in cur.fetchall()]}
+    prompt = f"Context: {context}\n\nQuestion: {body.question}"
+    llm = _language_model()
+    answer: str | None = None
+    if not isinstance(llm, CannedResponseAdapter):
+        try:
+            answer = llm.complete(prompt, system=ADVISOR_SYSTEM)
+        except Exception:
+            logger.exception("Advisor LLM failed; deterministic fallback")
+    if not answer:
+        band = context.get("operational_band", "elevated")
+        answer = (
+            f"Advisor offline fallback: current operational band is {band}. "
+            "Recommended: verify water-point functionality, brief peace committees, "
+            "pre-position mediation teams along grazing corridors, and confirm alert "
+            "recipients are reachable. Re-ask when the language model is available."
+        )
+    return {"answer": answer, "context": context}
 
 
 @app.get("/deliveries")

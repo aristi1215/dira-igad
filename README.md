@@ -11,7 +11,7 @@ Dira turns ICPAC-class environmental forecasts into actionable last-mile voice a
 | **Tabiri** | Impact cards: who/what is at risk in critical zones |
 | **Onya** | Last-mile dispatch: Swahili voice calls with keypad ack |
 
-**Protagonist cluster:** Mandera (Kenya–Ethiopia–Somalia tri-border).
+**Protagonist cluster:** Mandera (Kenya–Ethiopia–Somalia tri-border), inside a **full IGAD regional view** — 9 clusters / 22 zones across Kenya, Ethiopia, Somalia, South Sudan, Sudan, Uganda, and Djibouti (D-011). A per-country **economy panel** (World Bank WDI-derived, D-012) rounds out the situation room.
 
 Authoritative reconstructed spec: [`DIRA-SPEC.md`](DIRA-SPEC.md). Honest deviations: [`DEVIATIONS.md`](DEVIATIONS.md).
 
@@ -93,12 +93,15 @@ npm --prefix apps/web run dev -- --host 0.0.0.0
 
 ### Demo script
 
-1. Map shows Mandera zones (high / very_high bands).
-2. Select a red zone → Tabiri card (frozen exposure + explanation + SHAP).
+1. Map shows all 22 IGAD zones (watch → very_high bands); left rail ranks zones by pressure with the country economy panel below.
+2. Select a red zone (map or watchlist) → Tabiri card (risk index, model vs corroboration, trigger indicator, exposure, SHAP drivers) plus that zone's unconfirmed news signals.
 3. Prepare alert → pending approval in advisor panel.
 4. Approve as `demo-advisor` → deliveries queued.
 5. Dispatch worker / MockDispatcher “calls” → simulated ack.
 6. SSE patches Query cache → zone trends green.
+7. Optional: ask the situation advisor (OpenAI in live mode, deterministic canned fallback in seeded mode) about the selected situation.
+
+LLM: set `OPENAI_API_KEY` for live alert drafting/advisor (D-010); Anthropic is a fallback and seeded mode needs no key.
 
 `make demo` twice is idempotent (same final storefront state for the three cycles).
 

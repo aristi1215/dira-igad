@@ -1,0 +1,60 @@
+[
+  {
+    "id": "seed-news-2026-02-18-101",
+    "title": "Water rationing extended along the Shabelle river corridor",
+    "body": "Community elders in the Lower Shabelle corridor report boreholes running dry three weeks earlier than usual. Livestock keepers are moving herds toward riverine farmland, and water committees have introduced rationing schedules at the remaining wells.",
+    "source": "Radio Shabelle (seeded corpus)",
+    "published_at": "2026-02-18T06:00:00Z",
+    "available_at": "2026-02-18T09:00:00Z",
+    "related_zone_ids": [
+      "shabelle_corridor",
+      "shabelle_coast"
+    ]
+  },
+  {
+    "id": "seed-news-2026-02-24-102",
+    "title": "Pasture disputes reported near Jubaland coastal grazing routes",
+    "body": "Herders arriving from drought-hit inland rangelands are congregating along coastal pasture in Jubaland. Local peace committees convened after disputes over grazing sequencing and access to two functioning water points.",
+    "source": "Goobjoog News (seeded corpus)",
+    "published_at": "2026-02-24T06:00:00Z",
+    "available_at": "2026-02-24T09:00:00Z",
+    "related_zone_ids": [
+      "jubaland_coast"
+    ]
+  },
+  {
+    "id": "seed-news-2026-03-02-103",
+    "title": "Gambella lowlands see new arrivals as river levels fall",
+    "body": "Seasonal migration into the Gambella lowlands started early this year. District officials report pressure on riverbank farmland and request support for water trucking to reduce competition at shallow wells.",
+    "source": "Gambella Regional Radio (seeded corpus)",
+    "published_at": "2026-03-02T06:00:00Z",
+    "available_at": "2026-03-02T09:00:00Z",
+    "related_zone_ids": [
+      "gambella_lowlands"
+    ]
+  },
+  {
+    "id": "seed-news-2026-03-05-104",
+    "title": "Cattle movement through Abyei belt ahead of dry-season peak",
+    "body": "Monitors describe larger-than-usual cattle movements crossing the Abyei transitional belt. Joint community meetings agreed on corridor timings, though water access at two points remains contested.",
+    "source": "Radio Tamazuj (seeded corpus)",
+    "published_at": "2026-03-05T06:00:00Z",
+    "available_at": "2026-03-05T09:00:00Z",
+    "related_zone_ids": [
+      "abyei_belt",
+      "abyei_north"
+    ]
+  },
+  {
+    "id": "seed-news-2026-03-08-105",
+    "title": "Marsabit frontier wells under strain as dry spell continues",
+    "body": "Vegetation conditions along the Marsabit-Moyale frontier continue to decline. County officers note rising congestion at boreholes and have asked peace committees to pre-position mediation teams along the border grazing routes.",
+    "source": "Kenya News Agency (seeded corpus)",
+    "published_at": "2026-03-08T06:00:00Z",
+    "available_at": "2026-03-08T09:00:00Z",
+    "related_zone_ids": [
+      "marsabit_frontier",
+      "moyale_border"
+    ]
+  }
+]

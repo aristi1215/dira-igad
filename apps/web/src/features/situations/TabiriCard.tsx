@@ -7,6 +7,8 @@ type TabiriCardProps = {
   feature: SituationFeature | null
 }
 
+const OPEN_BANDS = new Set(['high', 'very_high'])
+
 export function TabiriCard({ feature }: TabiriCardProps) {
   const [showWhy, setShowWhy] = useState(false)
   const queryClient = useQueryClient()
@@ -30,7 +32,7 @@ export function TabiriCard({ feature }: TabiriCardProps) {
 
     return Object.entries(feature.properties.shap)
       .sort(([, left], [, right]) => Math.abs(right) - Math.abs(left))
-      .slice(0, 6)
+      .slice(0, 5)
   }, [feature])
 
   if (!feature) {
@@ -39,14 +41,18 @@ export function TabiriCard({ feature }: TabiriCardProps) {
         <p className="eyebrow">Tabiri impact card</p>
         <h2>Select a zone</h2>
         <p className="muted">
-          Choose an operational zone on the map to inspect exposure, model
-          explanation, and advisor actions.
+          Choose an operational zone on the map or from the watchlist to inspect
+          risk, exposure, drivers, and advisor actions.
         </p>
       </section>
     )
   }
 
   const { properties } = feature
+  const modelRisk = properties.model_risk ?? 0
+  const corroboration = properties.corroboration ?? 0
+  const riskIndex = Math.round(modelRisk * 100)
+  const triggerEligible = OPEN_BANDS.has(properties.operational_band ?? '')
 
   return (
     <section className="tabiri-card panel-fade" aria-live="polite">
@@ -54,10 +60,28 @@ export function TabiriCard({ feature }: TabiriCardProps) {
         <div>
           <p className="eyebrow">Tabiri impact card</p>
           <h2>{properties.zone_name}</h2>
+          <small className="muted">
+            {properties.country_iso2} · cycle {properties.cycle ?? 'n/a'}
+          </small>
         </div>
-        <span className={`band-pill band-${properties.operational_band ?? 'none'}`}>
-          {formatBand(properties.operational_band)}
-        </span>
+        <div className="risk-badge">
+          <strong>{riskIndex}</strong>
+          <span className={`band-pill band-${properties.operational_band ?? 'none'}`}>
+            {formatBand(properties.operational_band)}
+          </span>
+        </div>
+      </div>
+
+      <div className="score-bars">
+        <ScoreBar label="Model risk (climate + history)" value={modelRisk} />
+        <ScoreBar label="News corroboration" value={corroboration} />
+      </div>
+
+      <div className={triggerEligible ? 'trigger-row armed' : 'trigger-row'}>
+        <span className="trigger-dot" />
+        {triggerEligible
+          ? 'Trigger active — band ≥ high, alert drafting enabled'
+          : 'Below trigger — monitoring only'}
       </div>
 
       <dl className="metric-grid">
@@ -68,12 +92,45 @@ export function TabiriCard({ feature }: TabiriCardProps) {
         />
         <Metric label="Water points" value={formatNumber(properties.exposure_snapshot.water_points)} />
         <Metric label="Markets" value={formatNumber(properties.exposure_snapshot.markets)} />
+        <Metric
+          label="Conflict probability"
+          value={formatPercent(properties.prob_conflict ?? undefined)}
+        />
+        <Metric
+          label="Expected incidents"
+          value={
+            properties.expected_incidents != null
+              ? properties.expected_incidents.toFixed(1)
+              : 'n/a'
+          }
+        />
       </dl>
 
       <div className="explanation-block">
-        <h3>Explanation</h3>
+        <h3>Why this assessment</h3>
         <p>{properties.explanation ?? 'No explanation is available yet.'}</p>
       </div>
+
+      {shapEntries.length > 0 ? (
+        <div className="drivers-block">
+          <h3>Risk drivers</h3>
+          <ul className="drivers-list">
+            {shapEntries.map(([name, value]) => (
+              <li key={name}>
+                <span>{labelize(name)}</span>
+                <span className="driver-bar">
+                  <span
+                    style={{
+                      width: `${Math.min(100, Math.abs(value) * 100 * 3)}%`,
+                    }}
+                  />
+                </span>
+                <strong>{value.toFixed(3)}</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="card-actions">
         <button
@@ -81,12 +138,12 @@ export function TabiriCard({ feature }: TabiriCardProps) {
           type="button"
           onClick={() => setShowWhy((current) => !current)}
         >
-          {showWhy ? 'Hide why' : 'See why'}
+          {showWhy ? 'Hide rule' : 'Combination rule'}
         </button>
         <button
           className="button button-primary"
           type="button"
-          disabled={prepareMutation.isPending}
+          disabled={prepareMutation.isPending || !triggerEligible}
           onClick={() => prepareMutation.mutate(properties.situation_id)}
         >
           {prepareMutation.isPending ? 'Preparing...' : 'Prepare alert'}
@@ -94,7 +151,7 @@ export function TabiriCard({ feature }: TabiriCardProps) {
       </div>
 
       {prepareMutation.isSuccess ? (
-        <p className="success-note">Alert drafted for advisor approval.</p>
+        <p className="success-note">Alert drafted — waiting for human approval.</p>
       ) : null}
       {prepareMutation.isError ? (
         <p className="error-note">{errorMessage(prepareMutation.error)}</p>
@@ -102,22 +159,27 @@ export function TabiriCard({ feature }: TabiriCardProps) {
 
       {showWhy ? (
         <div className="shap-panel">
-          <h3>SHAP breakdown</h3>
-          {shapEntries.length > 0 ? (
-            <ul>
-              {shapEntries.map(([name, value]) => (
-                <li key={name}>
-                  <span>{labelize(name)}</span>
-                  <strong>{value.toFixed(3)}</strong>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">No SHAP values were returned for this zone.</p>
-          )}
+          <h3>Score combination</h3>
+          <p className="rule-text">
+            {properties.combination_rule ?? 'No combination rule recorded.'}
+          </p>
         </div>
       ) : null}
     </section>
+  )
+}
+
+function ScoreBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="score-bar">
+      <div className="score-bar-head">
+        <span>{label}</span>
+        <strong>{Math.round(value * 100)}%</strong>
+      </div>
+      <div className="score-track">
+        <div className="score-fill" style={{ width: `${Math.round(value * 100)}%` }} />
+      </div>
+    </div>
   )
 }
 

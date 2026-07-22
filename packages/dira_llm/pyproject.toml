@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
   "dira-core",
   "anthropic>=0.40",
+  "openai>=1.50",
   "pydantic>=2.9",
   "httpx>=0.28",
 ]

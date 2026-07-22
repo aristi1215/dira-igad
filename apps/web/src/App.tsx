@@ -1,10 +1,12 @@
 import './App.css'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AdvisorPanel } from './features/advisor'
+import { AdvisorPanel, AskAdvisor } from './features/advisor'
 import { DispatchPanel } from './features/dispatch'
+import { EconomyPanel } from './features/economy'
 import { MapView } from './features/map'
-import { TabiriCard } from './features/situations'
+import { ZoneQueue } from './features/queue'
+import { SignalsList, TabiriCard } from './features/situations'
 import {
   apiUrl,
   fetchDeliveries,
@@ -20,6 +22,7 @@ function App() {
   const queryClient = useQueryClient()
   const [sseFailed, setSseFailed] = useState(false)
   const selectedSituationId = useMapUiStore((state) => state.selectedSituationId)
+  const selectedZoneId = useMapUiStore((state) => state.selectedZoneId)
   const fallbackInterval = sseFailed ? 3_000 : false
 
   const mapQuery = useQuery({
@@ -88,19 +91,33 @@ function App() {
     [mapQuery.data?.features, selectedSituationId],
   )
 
+  const latestCycle = useMemo(() => {
+    const cycles = (mapQuery.data?.features ?? [])
+      .map((f) => f.properties.cycle)
+      .filter((c): c is string => c != null)
+    return cycles.sort().at(-1) ?? null
+  }, [mapQuery.data?.features])
+
   return (
     <div className="app-shell">
       <header className="app-header panel-fade">
-        <div>
-          <p className="eyebrow">IGAD Husika Hackathon 2026</p>
-          <h1>Dira</h1>
-          <p>
-            Causal situation room for Mandera and the wider Horn of Africa.
-          </p>
+        <div className="header-brand">
+          <h1>DIRA</h1>
+          <div>
+            <p className="header-title">IGAD Conflict Early Warning &amp; Response</p>
+            <p className="header-sub">
+              Climate-driven conflict pressure · Horn of Africa situation room
+            </p>
+          </div>
         </div>
-        <div className="header-status">
-          <span className={sseFailed ? 'status-dot fallback' : 'status-dot'} />
-          {sseFailed ? 'Polling backup every 3s' : 'SSE live'}
+        <div className="header-meta">
+          {latestCycle ? (
+            <span className="cycle-chip">Cycle {latestCycle}</span>
+          ) : null}
+          <div className="header-status">
+            <span className={sseFailed ? 'status-dot fallback' : 'status-dot'} />
+            {sseFailed ? 'Polling backup every 3s' : 'SSE live'}
+          </div>
         </div>
       </header>
 
@@ -111,13 +128,22 @@ function App() {
       ) : null}
 
       <main className="situation-room">
+        <aside className="left-rail" aria-label="Watchlist and economy">
+          <ZoneQueue situations={mapQuery.data} isLoading={mapQuery.isLoading} />
+          <EconomyPanel
+            focusCountry={selectedFeature?.properties.country_iso2 ?? null}
+          />
+        </aside>
+
         <MapView
           situations={mapQuery.data}
           ackBySituation={ackQuery.data}
           isLoading={mapQuery.isLoading}
         />
+
         <aside className="right-rail" aria-label="Situation controls">
           <TabiriCard feature={selectedFeature} />
+          <SignalsList zoneId={selectedZoneId} />
           <AdvisorPanel
             alerts={alertsQuery.data}
             isLoading={alertsQuery.isLoading}
@@ -128,6 +154,7 @@ function App() {
             isLoading={deliveriesQuery.isLoading}
             error={deliveriesQuery.error}
           />
+          <AskAdvisor situationId={selectedSituationId} />
         </aside>
       </main>
     </div>

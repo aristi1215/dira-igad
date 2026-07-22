@@ -73,3 +73,39 @@ This file records honest deviations from the authoritative specification for hum
 **What we did:** `make demo` still trains LightGBM for the model card, then activates `transparent_v1` for inference so Mandera drought stress reliably opens high/very_high situations for the demo script.
 
 **Why:** A freshly trained LightGBM on the short seeded history scored bands too low to open situations, leaving `v_map_situations` empty and breaking the red→green demo.
+
+## D-010 — OpenAI replaces Anthropic as the primary LLM
+
+**Spec said:** Anthropic API for alert drafting and news-signal extraction.
+
+**What we did:** Added `dira_llm.openai_adapter.OpenAIAdapter` (default `gpt-4o-mini`) and a `get_language_model()` factory with selection order OpenAI → Anthropic → CannedResponseAdapter. Seeded mode always uses the canned adapter for determinism.
+
+**Why:** Explicit user request; the user supplied an OpenAI key instead of an Anthropic key.
+
+## D-011 — Full IGAD regional coverage with synthetic zones
+
+**Spec said:** Mandera protagonist cluster (deep view) as the primary scope.
+
+**What we did:** Kept the six real Mandera zones and added 8 regional clusters / 16 zones spanning Kenya, Ethiopia, Somalia, South Sudan, Sudan, Uganda, Djibouti (Karamoja, Turkana, Abyei, Blue Nile, Gambella, Jubaland, Shabelle, Afar) via a deterministic fixture generator (`scripts/generate_igad_fixtures.py`, fixed seed). Zone geometries are simplified synthetic polygons; climate/events/exposure series are synthetic but climatologically plausible.
+
+**Why:** Explicit user request for a full-IGAD governmental map. Synthetic fixtures keep the seeded demo deterministic and network-free; live mode can replace them with real boundaries and ACLED/CHIRPS data.
+
+## D-012 — Country economy module (not in spec)
+
+**What we did:** Added `/economy` API, `packages/dira_data/dira_data/economy.py`, and a frontend panel with per-country GDP, growth, inflation, population, food insecurity, and GDP-growth sparklines. Default is a curated seeded snapshot compiled from public World Bank WDI / IMF WEO series; `DATA_MODE=live` overlays live values from api.worldbank.org with graceful fallback to the snapshot.
+
+**Why:** Explicit user request, inspired by koala73/worldmonitor. The World Bank API returned 5xx errors during development, so the seeded snapshot guarantees the panel always renders.
+
+## D-013 — ACLED live adapter authenticated but read access denied
+
+**Spec said:** Live ACLED ingestion in live mode.
+
+**What we did:** Implemented the full OAuth password-grant + `/api/acled/read` adapter for all eight IGAD countries. With the supplied credentials, token acquisition succeeds but the read endpoint returns `{"message":"Access denied"}` (account-level API permission). Seeded events remain the default.
+
+**Why:** The adapter is ready; unlocking it only requires enabling API access on the ACLED account.
+
+## D-014 — Fixed broken import-linter configuration
+
+**What we did:** `[tool.importlinter]` had an invalid `root_package = []` that crashed `lint-imports`. Replaced with `root_packages` and a contract enforcing that `dira_core` imports no sibling package.
+
+**Why:** Makes the spec's dependency rule actually enforced rather than silently skipped.
