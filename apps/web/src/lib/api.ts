@@ -1,10 +1,13 @@
 import type {
+  AdvisorResponse,
   Alert,
   AlertDraftResponse,
   ApproveAlertResponse,
   Delivery,
+  EconomyResponse,
   RetryDeliveryResponse,
   SituationFeatureCollection,
+  ZoneSignal,
 } from './types'
 
 /** API base URL for the FastAPI backend. */
@@ -18,6 +21,8 @@ export const queryKeys = {
   pendingAlerts: ['alerts', 'pending_approval'] as const,
   deliveries: ['deliveries'] as const,
   ackBySituation: ['map', 'ackBySituation'] as const,
+  economy: ['economy'] as const,
+  zoneSignals: (zoneId: string) => ['zones', zoneId, 'signals'] as const,
 }
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
@@ -127,6 +132,24 @@ export function approveAlert(alertId: string): Promise<ApproveAlertResponse> {
     body: {
       approved_by: 'demo-advisor',
     },
+  })
+}
+
+export function fetchEconomy(): Promise<EconomyResponse> {
+  return requestJson<EconomyResponse>('/economy')
+}
+
+export function fetchZoneSignals(zoneId: string): Promise<ZoneSignal[]> {
+  return requestJson<ZoneSignal[]>(`/zones/${zoneId}/signals`)
+}
+
+export function askAdvisor(
+  question: string,
+  situationId: string | null,
+): Promise<AdvisorResponse> {
+  return requestJson<AdvisorResponse>('/advisor', {
+    method: 'POST',
+    body: { question, situation_id: situationId },
   })
 }
 

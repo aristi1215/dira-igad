@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     public_base_url: str = "http://localhost:8000"
     mock_ack_delay_seconds: float = 2.0
     anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
     at_username: str | None = None
     at_api_key: str | None = None
 

@@ -17,9 +17,9 @@ export const useMapUiStore = create<MapUiState>((set) => ({
   selectedZoneId: null,
   selectedSituationId: null,
   viewport: {
-    longitude: 41.8,
-    latitude: 3.9,
-    zoom: 5.4,
+    longitude: 38.5,
+    latitude: 6.2,
+    zoom: 4.4,
   },
   setActiveLayers: (activeLayers) => set({ activeLayers }),
   setSelectedZoneId: (selectedZoneId) => set({ selectedZoneId }),

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "lower_shabelle",
+    "name": "Lower Shabelle Corridor",
+    "description": "Riverine corridor southwest of Mogadishu; drought-displacement pressure over irrigated farmland."
+  },
+  {
+    "id": "jubaland",
+    "name": "Jubaland Coast",
+    "description": "Southern Somalia coastal and inland rangelands along the Juba river."
+  },
+  {
+    "id": "gambella",
+    "name": "Gambella Lowlands",
+    "description": "Western Ethiopia lowlands; seasonal flooding and cross-border movement from South Sudan."
+  },
+  {
+    "id": "abyei",
+    "name": "Abyei Transitional Belt",
+    "description": "Contested Sudan/South Sudan transitional area with seasonal cattle migration."
+  },
+  {
+    "id": "marsabit_moyale",
+    "name": "Marsabit–Moyale Frontier",
+    "description": "Northern Kenya / southern Ethiopia frontier rangelands."
+  },
+  {
+    "id": "karamoja",
+    "name": "Karamoja Cluster",
+    "description": "Uganda/Kenya border cluster with recurrent cattle-raiding cycles."
+  },
+  {
+    "id": "blue_nile",
+    "name": "Blue Nile Escarpment",
+    "description": "Sudan Blue Nile escarpment; conflict-displacement overlay on rainfed farming."
+  },
+  {
+    "id": "afar",
+    "name": "Afar Triangle",
+    "description": "Ethiopia/Djibouti Afar lowlands; extreme heat stress corridor."
+  }
+]

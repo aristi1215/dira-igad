@@ -129,6 +129,44 @@ export type DiraSseEvent = {
   alert_id?: string
 }
 
+export type ZoneSignal = {
+  id: string
+  zone_id: string
+  signal_type: string
+  confidence: number
+  status: string
+  excerpt: string | null
+  cycle: string
+  title: string | null
+  source: string | null
+  published_at: string | null
+}
+
+export type CountryEconomy = {
+  name: string
+  currency: string
+  gdp_usd_bn: (number | null)[]
+  gdp_growth_pct: (number | null)[]
+  inflation_pct: (number | null)[]
+  population_m: (number | null)[]
+  food_insecure_m?: number
+  agri_gdp_share_pct?: number
+  remittances_pct_gdp?: number
+  note?: string
+}
+
+export type EconomyResponse = {
+  source: string
+  as_of: string
+  years: number[]
+  countries: Record<string, CountryEconomy>
+}
+
+export type AdvisorResponse = {
+  answer: string
+  context: Record<string, JsonValue>
+}
+
 export type Viewport = {
   longitude: number
   latitude: number

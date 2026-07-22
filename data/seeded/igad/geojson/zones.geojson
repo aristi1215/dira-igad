@@ -1,0 +1,613 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "shabelle_corridor",
+        "name": "Lower Shabelle Corridor",
+        "country_iso2": "SO",
+        "cluster_id": "lower_shabelle"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                44.0,
+                1.6
+              ],
+              [
+                44.6,
+                1.6
+              ],
+              [
+                44.6,
+                2.1
+              ],
+              [
+                44.0,
+                2.1
+              ],
+              [
+                44.0,
+                1.6
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "shabelle_coast",
+        "name": "Shabelle Coast",
+        "country_iso2": "SO",
+        "cluster_id": "lower_shabelle"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                44.4,
+                1.1
+              ],
+              [
+                45.0,
+                1.1
+              ],
+              [
+                45.0,
+                1.6
+              ],
+              [
+                44.4,
+                1.6
+              ],
+              [
+                44.4,
+                1.1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "jubaland_coast",
+        "name": "Jubaland Coast",
+        "country_iso2": "SO",
+        "cluster_id": "jubaland"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                42.2,
+                -0.5
+              ],
+              [
+                42.9,
+                -0.5
+              ],
+              [
+                42.9,
+                0.2
+              ],
+              [
+                42.2,
+                0.2
+              ],
+              [
+                42.2,
+                -0.5
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "jubaland_inland",
+        "name": "Jubaland Inland",
+        "country_iso2": "SO",
+        "cluster_id": "jubaland"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.8,
+                0.2
+              ],
+              [
+                42.6,
+                0.2
+              ],
+              [
+                42.6,
+                0.9
+              ],
+              [
+                41.8,
+                0.9
+              ],
+              [
+                41.8,
+                0.2
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "gambella_lowlands",
+        "name": "Gambella Lowlands",
+        "country_iso2": "ET",
+        "cluster_id": "gambella"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                34.2,
+                7.9
+              ],
+              [
+                34.9,
+                7.9
+              ],
+              [
+                34.9,
+                8.6
+              ],
+              [
+                34.2,
+                8.6
+              ],
+              [
+                34.2,
+                7.9
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "gambella_east",
+        "name": "Gambella East",
+        "country_iso2": "ET",
+        "cluster_id": "gambella"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                34.9,
+                7.9
+              ],
+              [
+                35.5,
+                7.9
+              ],
+              [
+                35.5,
+                8.5
+              ],
+              [
+                34.9,
+                8.5
+              ],
+              [
+                34.9,
+                7.9
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "abyei_belt",
+        "name": "Abyei Transitional Belt",
+        "country_iso2": "SS",
+        "cluster_id": "abyei"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                28.0,
+                9.3
+              ],
+              [
+                28.8,
+                9.3
+              ],
+              [
+                28.8,
+                9.9
+              ],
+              [
+                28.0,
+                9.9
+              ],
+              [
+                28.0,
+                9.3
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "abyei_north",
+        "name": "Abyei North",
+        "country_iso2": "SD",
+        "cluster_id": "abyei"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                28.0,
+                9.9
+              ],
+              [
+                28.8,
+                9.9
+              ],
+              [
+                28.8,
+                10.5
+              ],
+              [
+                28.0,
+                10.5
+              ],
+              [
+                28.0,
+                9.9
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "marsabit_frontier",
+        "name": "Marsabit Frontier",
+        "country_iso2": "KE",
+        "cluster_id": "marsabit_moyale"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                37.6,
+                2.2
+              ],
+              [
+                38.4,
+                2.2
+              ],
+              [
+                38.4,
+                3.0
+              ],
+              [
+                37.6,
+                3.0
+              ],
+              [
+                37.6,
+                2.2
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "moyale_border",
+        "name": "Moyale Border",
+        "country_iso2": "ET",
+        "cluster_id": "marsabit_moyale"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                38.4,
+                3.0
+              ],
+              [
+                39.2,
+                3.0
+              ],
+              [
+                39.2,
+                3.7
+              ],
+              [
+                38.4,
+                3.7
+              ],
+              [
+                38.4,
+                3.0
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "karamoja_cluster",
+        "name": "Karamoja Cluster",
+        "country_iso2": "UG",
+        "cluster_id": "karamoja"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                34.0,
+                2.2
+              ],
+              [
+                34.8,
+                2.2
+              ],
+              [
+                34.8,
+                3.0
+              ],
+              [
+                34.0,
+                3.0
+              ],
+              [
+                34.0,
+                2.2
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "turkana_west",
+        "name": "Turkana West",
+        "country_iso2": "KE",
+        "cluster_id": "karamoja"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                34.8,
+                2.8
+              ],
+              [
+                35.6,
+                2.8
+              ],
+              [
+                35.6,
+                3.6
+              ],
+              [
+                34.8,
+                3.6
+              ],
+              [
+                34.8,
+                2.8
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "blue_nile_escarpment",
+        "name": "Blue Nile Escarpment",
+        "country_iso2": "SD",
+        "cluster_id": "blue_nile"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                33.9,
+                11.3
+              ],
+              [
+                34.7,
+                11.3
+              ],
+              [
+                34.7,
+                12.0
+              ],
+              [
+                33.9,
+                12.0
+              ],
+              [
+                33.9,
+                11.3
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "blue_nile_south",
+        "name": "Blue Nile South",
+        "country_iso2": "SD",
+        "cluster_id": "blue_nile"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                33.9,
+                10.6
+              ],
+              [
+                34.7,
+                10.6
+              ],
+              [
+                34.7,
+                11.3
+              ],
+              [
+                33.9,
+                11.3
+              ],
+              [
+                33.9,
+                10.6
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "afar_triangle",
+        "name": "Afar Triangle",
+        "country_iso2": "ET",
+        "cluster_id": "afar"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                40.9,
+                11.4
+              ],
+              [
+                41.7,
+                11.4
+              ],
+              [
+                41.7,
+                12.1
+              ],
+              [
+                40.9,
+                12.1
+              ],
+              [
+                40.9,
+                11.4
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "afar_coast",
+        "name": "Afar Coast",
+        "country_iso2": "DJ",
+        "cluster_id": "afar"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                41.7,
+                11.4
+              ],
+              [
+                42.5,
+                11.4
+              ],
+              [
+                42.5,
+                12.1
+              ],
+              [
+                41.7,
+                12.1
+              ],
+              [
+                41.7,
+                11.4
+              ]
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

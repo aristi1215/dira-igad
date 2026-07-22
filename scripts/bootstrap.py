@@ -18,6 +18,11 @@ def load_json(relative_path: str) -> Any:
     return json.loads((SEEDED / relative_path).read_text(encoding="utf-8"))
 
 
+def upsert_clusters(cur: psycopg.Cursor[Any], clusters: list[dict[str, Any]]) -> None:
+    for cluster in clusters:
+        upsert_cluster(cur, cluster)
+
+
 def upsert_cluster(cur: psycopg.Cursor[Any], cluster: dict[str, Any]) -> None:
     cur.execute(
         """
@@ -332,17 +337,24 @@ def main() -> int:
         print("[bootstrap] DATABASE_URL is required.")
         return 2
 
-    cluster = load_json("mandera/geojson/cluster.json")
+    clusters = [load_json("mandera/geojson/cluster.json")]
+    clusters.extend(load_json("igad/geojson/clusters.json"))
     zones_geojson = load_json("mandera/geojson/zones.geojson")
+    zones_geojson["features"].extend(load_json("igad/geojson/zones.geojson")["features"])
     exposure = load_json("mandera/exposure/exposure.json")
+    exposure.update(load_json("igad/exposure/exposure.json"))
     acled_events = load_json("mandera/acled/events.json")
+    acled_events.extend(load_json("igad/acled/events.json"))
     climate_rows = load_json("mandera/climate/climate.json")
+    climate_rows.extend(load_json("igad/climate/climate.json"))
     articles = load_json("news/corpus/articles.json")
+    articles.extend(load_json("igad/news_articles.json"))
     recipients = load_json("mandera/recipients.json")
+    recipients.extend(load_json("igad/recipients.json"))
 
     with psycopg.connect(database_url) as conn:
         with conn.cursor() as cur:
-            upsert_cluster(cur, cluster)
+            upsert_clusters(cur, clusters)
             zone_ids = upsert_zones(cur, zones_geojson)
             adjacency_count = recompute_adjacency(cur, zone_ids)
             upsert_exposure(cur, exposure)
@@ -351,8 +363,8 @@ def main() -> int:
             upsert_news_documents(cur, articles)
             upsert_recipients(cur, recipients)
 
-    print("[bootstrap] Seeded Mandera fixtures loaded.")
-    print(f"[bootstrap] clusters=1 zones={len(zones_geojson['features'])}")
+    print("[bootstrap] Seeded Mandera + IGAD fixtures loaded.")
+    print(f"[bootstrap] clusters={len(clusters)} zones={len(zones_geojson['features'])}")
     print(f"[bootstrap] adjacency_edges={adjacency_count} exposures={len(exposure)}")
     print(f"[bootstrap] acled_events={len(acled_events)} null_zone_events={null_event_count}")
     print(f"[bootstrap] climate_dekads={len(climate_rows)} news_documents={len(articles)}")

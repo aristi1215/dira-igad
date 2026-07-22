@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-4o-mini"
     acled_email: str | None = None
     acled_password: str | None = None
     africas_talking_username: str | None = None

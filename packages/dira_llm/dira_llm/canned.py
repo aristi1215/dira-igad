@@ -37,7 +37,7 @@ class CannedResponseAdapter:
         return {"signals": self._signals(prompt)}
 
     def _signals(self, prompt: str) -> list[dict[str, Any]]:
-        zone_ids = _extract_zone_ids(prompt)
+        zone_ids = _relevant_zone_ids(prompt)
         confidence = 0.35
         signal_type = "monitoring"
         prompt_lower = prompt.lower()
@@ -62,11 +62,34 @@ class CannedResponseAdapter:
         ]
 
 
+_GENERIC_TOKENS = frozenset(
+    {
+        "north", "south", "east", "west", "coast", "inland", "border", "belt",
+        "cluster", "corridor", "frontier", "triangle", "lowlands",
+    }
+)
+
+
 def _extract_zone_ids(prompt: str) -> list[str]:
     match = re.search(r"zone_ids\s*=\s*\[([^\]]*)\]", prompt)
     if not match:
         return []
     return re.findall(r"[a-z][a-z0-9_]*", match.group(1))
+
+
+def _relevant_zone_ids(prompt: str) -> list[str]:
+    """Keep only zones whose distinctive name tokens appear in the document text."""
+    document = prompt.split("Title:", 1)[-1].lower()
+    out: list[str] = []
+    for zone_id in _extract_zone_ids(prompt):
+        tokens = [
+            token
+            for token in zone_id.split("_")
+            if len(token) >= 4 and token not in _GENERIC_TOKENS
+        ]
+        if tokens and any(token in document for token in tokens):
+            out.append(zone_id)
+    return out
 
 
 def _safe_excerpt(prompt: str) -> str:

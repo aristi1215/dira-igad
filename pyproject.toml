@@ -69,4 +69,10 @@ fail_under = 95
 show_missing = true
 
 [tool.importlinter]
-root_package = []
+root_packages = ["dira_core", "dira_features", "dira_data", "dira_ml", "dira_llm", "dira_dispatch"]
+
+[[tool.importlinter.contracts]]
+name = "dira_core stays dependency-free"
+type = "forbidden"
+source_modules = ["dira_core"]
+forbidden_modules = ["dira_data", "dira_ml", "dira_llm", "dira_dispatch", "dira_features"]

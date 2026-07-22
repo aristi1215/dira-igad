@@ -1,9 +1,12 @@
 services:
   db:
-    # Prefer this image when Docker overlay builds work.
+    # PostGIS 16 + pgvector baked at build time (Dockerfile.db).
     # On constrained VMs, use local PostgreSQL 16 + postgis + pgvector instead
     # (see DEVIATIONS.md D-008). Schema is applied via Alembic, not init scripts.
-    image: postgis/postgis:16-3.4
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    image: dira-db:local
     container_name: dira-db
     environment:
       POSTGRES_USER: dira
@@ -13,7 +16,6 @@ services:
       - "5432:5432"
     volumes:
       - dira_pgdata:/var/lib/postgresql/data
-      - ./init-vector.sh:/docker-entrypoint-initdb.d/00-vector.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dira -d dira"]
       interval: 5s

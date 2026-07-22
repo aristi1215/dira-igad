@@ -1,0 +1,1922 @@
+[
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 32.2,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.393,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 28.7,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.375,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 27.4,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.347,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 25.3,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.32,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 22.7,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.309,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 19.1,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.274,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 17.0,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.262,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 14.8,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.236,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 15.5,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.222,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 13.0,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.221,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 11.5,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.184,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 6.3,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.168,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 6.4,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.149,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 2.6,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.134,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 0.7,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.12,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 38.2,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.4,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 32.6,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.403,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 33.0,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.388,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 32.0,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.371,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 30.4,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.351,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 29.2,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.328,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 24.5,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.325,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 22.5,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.307,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 23.8,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.311,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 20.3,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.273,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 19.0,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.262,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 17.4,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.257,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 15.6,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.262,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 16.1,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.222,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 14.5,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.219,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 31.3,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.38,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 29.1,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.361,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 30.1,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.364,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 26.8,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.35,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 22.9,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.309,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 22.3,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.309,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 22.3,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.274,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 18.9,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.258,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 18.8,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.257,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 14.2,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.219,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 12.5,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.22,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 8.6,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.208,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 9.0,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.171,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 4.9,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.162,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 5.8,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.143,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 36.0,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.408,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 36.2,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.404,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 32.5,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.375,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 33.4,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.383,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 27.9,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.353,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 26.7,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.352,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 26.8,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.339,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 24.3,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.317,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 25.0,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.301,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 20.3,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.292,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 22.7,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.275,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 16.7,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.261,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 18.2,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.253,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 16.8,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.243,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 14.1,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.238,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 32.0,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.392,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 31.9,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.388,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 28.0,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.376,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 27.2,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.351,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 24.9,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.339,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 24.3,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.317,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 22.6,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.28,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 20.2,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.291,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 20.0,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.27,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 16.6,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.237,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 14.0,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.236,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 11.4,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.208,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 8.6,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.189,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 7.4,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.178,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 7.1,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.171,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 34.9,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.42,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 33.1,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.397,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 31.8,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.407,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 34.9,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.396,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 30.9,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.363,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 30.5,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.369,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 30.2,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.353,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 26.8,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.34,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 24.1,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.329,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 24.9,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.328,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 24.9,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.287,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 21.0,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.28,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 20.3,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.282,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 18.9,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.281,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 19.2,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.247,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 34.2,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.403,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 30.6,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.372,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 29.9,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.379,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 29.8,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.348,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 28.4,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.352,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 24.5,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.316,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 24.1,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.318,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 20.4,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.29,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 17.8,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.273,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 16.2,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.262,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 17.4,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.245,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 12.8,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.243,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 13.4,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.206,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 8.7,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.186,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 8.8,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.187,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 36.7,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.429,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 35.2,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.402,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 35.2,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.405,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 30.5,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.377,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 32.6,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.354,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 30.1,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.343,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 26.7,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.349,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 24.8,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.333,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 25.8,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.305,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 25.3,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.31,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 21.7,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.305,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 19.8,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.267,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 19.2,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.264,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 16.1,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.257,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 15.3,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.234,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 37.2,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.396,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 32.3,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.392,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 32.0,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.375,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 27.8,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.353,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 27.2,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.35,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 24.7,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.329,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 26.9,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.327,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 23.1,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.318,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 19.7,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.285,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 20.0,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.264,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 17.7,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.259,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 13.6,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.258,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 15.5,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.236,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 11.8,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.231,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 8.4,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.193,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 38.6,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.42,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 33.6,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.414,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 31.2,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.394,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 33.1,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.372,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 30.9,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.368,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 30.4,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.336,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 25.1,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.325,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 27.3,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.338,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 21.5,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.313,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 23.9,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.291,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 21.8,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.279,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 18.4,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.278,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 15.5,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.245,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 17.4,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.24,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 15.6,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.241,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 37.8,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.423,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 35.5,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.402,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 32.2,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.396,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 31.1,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.359,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 27.4,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.36,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 28.5,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.332,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 27.5,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.339,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 22.6,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.305,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 23.9,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.292,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 20.4,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.288,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 20.6,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.27,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 18.1,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.27,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 17.2,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.259,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 17.2,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.247,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 15.1,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.229,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 38.4,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.428,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 36.0,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.404,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 32.3,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.391,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 33.3,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.384,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 31.6,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.389,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 29.9,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.362,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 28.5,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.353,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 26.2,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.352,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 24.7,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.325,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 26.7,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.329,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 25.8,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.3,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 21.3,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.296,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 22.8,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.297,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 18.3,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.288,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 17.3,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.28,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 39.7,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.411,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 35.7,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.404,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 35.6,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.412,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 36.0,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.383,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 30.0,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.394,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 29.5,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.36,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 29.3,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.351,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 29.5,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.355,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 28.0,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.335,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 23.8,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.337,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 25.0,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.308,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 23.8,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.323,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 20.9,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.311,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 21.3,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.278,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 19.8,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.276,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 37.7,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.437,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 39.0,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.417,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 35.7,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.4,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 36.9,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.389,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 31.7,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.401,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 30.8,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.371,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 30.7,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.363,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 29.4,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.356,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 30.7,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.347,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 30.8,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.355,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 27.8,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.357,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 28.7,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.33,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 24.9,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.321,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 26.2,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.32,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 25.4,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.307,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 35.5,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.43,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 36.3,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.415,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 36.3,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.407,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 35.8,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.406,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 32.6,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.385,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 32.4,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.386,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 31.2,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.358,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 30.9,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.354,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 28.3,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.361,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 27.5,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.351,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 27.5,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.339,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 26.6,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.316,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 22.1,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.31,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 24.9,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.306,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 22.9,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.311,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2025-11-01",
+    "rain_mm": 39.9,
+    "rain_available_at": "2025-11-06T09:00:00Z",
+    "ndvi_mean": 0.444,
+    "ndvi_available_at": "2025-11-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2025-11-11",
+    "rain_mm": 37.5,
+    "rain_available_at": "2025-11-16T09:00:00Z",
+    "ndvi_mean": 0.424,
+    "ndvi_available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2025-11-21",
+    "rain_mm": 36.6,
+    "rain_available_at": "2025-11-26T09:00:00Z",
+    "ndvi_mean": 0.432,
+    "ndvi_available_at": "2025-11-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2025-12-01",
+    "rain_mm": 34.8,
+    "rain_available_at": "2025-12-06T09:00:00Z",
+    "ndvi_mean": 0.425,
+    "ndvi_available_at": "2025-12-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2025-12-11",
+    "rain_mm": 34.0,
+    "rain_available_at": "2025-12-16T09:00:00Z",
+    "ndvi_mean": 0.415,
+    "ndvi_available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2025-12-21",
+    "rain_mm": 35.2,
+    "rain_available_at": "2025-12-26T09:00:00Z",
+    "ndvi_mean": 0.395,
+    "ndvi_available_at": "2025-12-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-01-01",
+    "rain_mm": 31.7,
+    "rain_available_at": "2026-01-06T09:00:00Z",
+    "ndvi_mean": 0.403,
+    "ndvi_available_at": "2026-01-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-01-11",
+    "rain_mm": 32.3,
+    "rain_available_at": "2026-01-16T09:00:00Z",
+    "ndvi_mean": 0.394,
+    "ndvi_available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-01-21",
+    "rain_mm": 32.2,
+    "rain_available_at": "2026-01-26T09:00:00Z",
+    "ndvi_mean": 0.37,
+    "ndvi_available_at": "2026-01-29T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-02-01",
+    "rain_mm": 28.8,
+    "rain_available_at": "2026-02-06T09:00:00Z",
+    "ndvi_mean": 0.363,
+    "ndvi_available_at": "2026-02-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-02-11",
+    "rain_mm": 31.1,
+    "rain_available_at": "2026-02-16T09:00:00Z",
+    "ndvi_mean": 0.36,
+    "ndvi_available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-02-21",
+    "rain_mm": 27.3,
+    "rain_available_at": "2026-02-26T09:00:00Z",
+    "ndvi_mean": 0.359,
+    "ndvi_available_at": "2026-03-01T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-03-01",
+    "rain_mm": 25.7,
+    "rain_available_at": "2026-03-06T09:00:00Z",
+    "ndvi_mean": 0.331,
+    "ndvi_available_at": "2026-03-09T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-03-11",
+    "rain_mm": 25.1,
+    "rain_available_at": "2026-03-16T09:00:00Z",
+    "ndvi_mean": 0.332,
+    "ndvi_available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "dekad_start": "2026-03-21",
+    "rain_mm": 22.9,
+    "rain_available_at": "2026-03-26T09:00:00Z",
+    "ndvi_mean": 0.323,
+    "ndvi_available_at": "2026-03-29T09:00:00Z"
+  }
+]

@@ -1,0 +1,98 @@
+{
+  "shabelle_corridor": {
+    "population": 483364,
+    "pastoralist_share": 0.78,
+    "water_points": 14,
+    "markets": 4
+  },
+  "shabelle_coast": {
+    "population": 326972,
+    "pastoralist_share": 0.63,
+    "water_points": 25,
+    "markets": 5
+  },
+  "jubaland_coast": {
+    "population": 441553,
+    "pastoralist_share": 0.73,
+    "water_points": 14,
+    "markets": 8
+  },
+  "jubaland_inland": {
+    "population": 309098,
+    "pastoralist_share": 0.61,
+    "water_points": 23,
+    "markets": 8
+  },
+  "gambella_lowlands": {
+    "population": 412340,
+    "pastoralist_share": 0.71,
+    "water_points": 20,
+    "markets": 4
+  },
+  "gambella_east": {
+    "population": 298636,
+    "pastoralist_share": 0.58,
+    "water_points": 23,
+    "markets": 2
+  },
+  "abyei_belt": {
+    "population": 389544,
+    "pastoralist_share": 0.67,
+    "water_points": 18,
+    "markets": 8
+  },
+  "abyei_north": {
+    "population": 307838,
+    "pastoralist_share": 0.6,
+    "water_points": 25,
+    "markets": 5
+  },
+  "marsabit_frontier": {
+    "population": 348342,
+    "pastoralist_share": 0.65,
+    "water_points": 19,
+    "markets": 6
+  },
+  "moyale_border": {
+    "population": 318180,
+    "pastoralist_share": 0.61,
+    "water_points": 25,
+    "markets": 8
+  },
+  "karamoja_cluster": {
+    "population": 334708,
+    "pastoralist_share": 0.62,
+    "water_points": 22,
+    "markets": 6
+  },
+  "turkana_west": {
+    "population": 270971,
+    "pastoralist_share": 0.57,
+    "water_points": 23,
+    "markets": 7
+  },
+  "blue_nile_escarpment": {
+    "population": 247761,
+    "pastoralist_share": 0.55,
+    "water_points": 24,
+    "markets": 6
+  },
+  "blue_nile_south": {
+    "population": 224755,
+    "pastoralist_share": 0.52,
+    "water_points": 28,
+    "markets": 2
+  },
+  "afar_triangle": {
+    "population": 235178,
+    "pastoralist_share": 0.53,
+    "water_points": 27,
+    "markets": 2
+  },
+  "afar_coast": {
+    "population": 207673,
+    "pastoralist_share": 0.5,
+    "water_points": 30,
+    "markets": 3
+  }
+}
