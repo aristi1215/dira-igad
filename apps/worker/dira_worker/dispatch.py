@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import select
 import threading
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -239,9 +238,10 @@ def run_loop(
                 time.sleep(max(0.5, float(settings.mock_ack_delay_seconds) + 0.5))
                 return
 
-            if select.select([conn], [], [], settings.dispatch_poll_seconds) == ([], [], []):
-                continue
-            conn.notifies.clear()
+            # Block until a NOTIFY arrives or the poll interval elapses,
+            # draining any queued notifications (psycopg3 generator API).
+            for _ in conn.notifies(timeout=settings.dispatch_poll_seconds, stop_after=1):
+                pass
 
 
 def main(argv: list[str] | None = None) -> int:
