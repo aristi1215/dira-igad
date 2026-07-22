@@ -10,9 +10,13 @@ license = { text = "MIT" }
 dev = [
   "pytest>=8.0",
   "pytest-asyncio>=0.24",
+  "pytest-cov>=5.0",
   "ruff>=0.8",
   "mypy>=1.13",
   "httpx>=0.28",
+  "alembic>=1.14",
+  "import-linter>=2.1",
+  "psycopg[binary,pool]>=3.2",
 ]
 
 [tool.uv.workspace]
@@ -45,10 +49,24 @@ target-version = "py311"
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
-testpaths = ["packages", "apps"]
+testpaths = ["packages", "apps", "tests"]
 asyncio_mode = "auto"
+markers = [
+  "integration: requires real Postgres",
+]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
-packages = ["dira_core"]
+packages = ["dira_core", "dira_features"]
+
+[tool.coverage.run]
+source = ["dira_core"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+
+[tool.importlinter]
+root_package = []

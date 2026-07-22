@@ -1,0 +1,83 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mandera_ke_north",
+        "name": "Mandera Kenya North",
+        "country_iso2": "KE",
+        "cluster_id": "mandera"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [[[[41.6, 3.8], [41.9, 3.8], [41.9, 4.0], [41.6, 4.0], [41.6, 3.8]]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mandera_ke_south",
+        "name": "Mandera Kenya South",
+        "country_iso2": "KE",
+        "cluster_id": "mandera"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [[[[41.6, 3.6], [41.9, 3.6], [41.9, 3.8], [41.6, 3.8], [41.6, 3.6]]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mandera_et_west",
+        "name": "Mandera Ethiopia West",
+        "country_iso2": "ET",
+        "cluster_id": "mandera"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [[[[41.6, 4.0], [41.9, 4.0], [41.9, 4.2], [41.6, 4.2], [41.6, 4.0]]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mandera_et_east",
+        "name": "Mandera Ethiopia East",
+        "country_iso2": "ET",
+        "cluster_id": "mandera"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [[[[41.9, 4.0], [42.2, 4.0], [42.2, 4.2], [41.9, 4.2], [41.9, 4.0]]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mandera_so_north",
+        "name": "Mandera Somalia North",
+        "country_iso2": "SO",
+        "cluster_id": "mandera"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [[[[41.9, 3.8], [42.2, 3.8], [42.2, 4.0], [41.9, 4.0], [41.9, 3.8]]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mandera_so_south",
+        "name": "Mandera Somalia South",
+        "country_iso2": "SO",
+        "cluster_id": "mandera"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [[[[41.9, 3.6], [42.2, 3.6], [42.2, 3.8], [41.9, 3.8], [41.9, 3.6]]]]
+      }
+    }
+  ]
+}

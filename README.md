@@ -13,7 +13,7 @@ Dira turns ICPAC-class environmental forecasts into actionable last-mile voice a
 
 **Protagonist cluster:** Mandera (Kenya–Ethiopia–Somalia tri-border).
 
-This repository is scaffolded for implementation. Business logic, pipeline stages, ML training, and live adapters are **not** implemented yet — see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
+Authoritative reconstructed spec: [`DIRA-SPEC.md`](DIRA-SPEC.md). Honest deviations: [`DEVIATIONS.md`](DEVIATIONS.md).
 
 ---
 
@@ -28,41 +28,31 @@ dira-igad/
 ├── packages/
 │   ├── dira_core/      Pure domain + ports (no I/O)
 │   ├── dira_features/  Shared features (train ≡ serve)
-│   ├── dira_data/      ACLED / CHIRPS / MODIS / PostGIS adapters
-│   ├── dira_ml/        LightGBM, baselines, SHAP artifacts
-│   ├── dira_llm/       LLM, RAG (pgvector), prompts
-│   └── dira_dispatch/  Africa's Talking, TTS, retries
-├── artifacts/          model_v1.lgb + model_card.json
+│   ├── dira_data/      ACLED / CHIRPS / PostGIS adapters
+│   ├── dira_ml/        LightGBM, baselines, SHAP/transparent index
+│   ├── dira_llm/       LLM, prompts, signal extraction
+│   └── dira_dispatch/  Africa's Talking, TTS, MockDispatcher
+├── artifacts/          model artifacts + PNG tiles
 ├── data/seeded/        Mandera fixtures — demo insurance
-├── infra/              docker-compose, Dockerfiles, migrations
-├── scripts/            bootstrap.py, train.py (manual)
+├── infra/              docker-compose, Dockerfiles, Alembic
+├── scripts/            bootstrap.py, train.py, demo.py
 └── docs/               ADRs + implementation brief
 ```
 
-**Dependency rule:** everything points inward; `dira_core` imports nothing external.
+**Dependency rule:** everything points inward; `dira_core` imports nothing from sibling packages (enforced by import-linter).
 
-**Resilience:** `DATA_MODE=seeded|live` swaps all data adapters at once. **The demo always runs seeded.** Live mode is shown separately.
-
-Ports (defined in `packages/dira_core/dira_core/ports.py`):
-
-| Port | Live adapter | Seeded / fallback |
-|------|--------------|-------------------|
-| ConflictDataSource | AcledApiAdapter | SeededAcledAdapter |
-| HazardDataSource | ChirpsS3 / GeeNdvi | SeededRasterAdapter |
-| RiskModel | LightGBMAdapter | TransparentIndexAdapter |
-| LanguageModel | AnthropicAdapter | CannedResponseAdapter |
-| EmbeddingModel | LocalBgeM3Adapter | PrecomputedEmbeddingsAdapter |
-| VoiceChannel | AfricasTalkingAdapter | MockDispatcher |
-| SpeechSynthesizer | TtsProviderAdapter | PrerecordedAudioAdapter |
+**Resilience:** `DATA_MODE=seeded|live` swaps all data adapters at once. **The demo always runs seeded.**
 
 ---
 
 ## Safety red lines (schema-enforced where noted)
 
-1. **Human gate** before any dispatch — DB `CHECK` on `alerts` (approved_by / approved_at required).
+1. **Human gate** before any dispatch — DB `CHECK` on `alerts` (`approved_by` / `approved_at` required).
 2. **News signals never fire alerts alone** — born `unconfirmed`.
 3. **Do-not-harm alert copy** — conditions and actions only; never name actors, ethnicities, clans, or communities.
 4. **Two separate scores** — pure `model_risk` (climate + history) vs news `corroboration`, combined by a **written visible rule**.
+5. **Bitemporal features** — only `available_at <= data_cutoff`; climate upserts are first-write-wins per column group.
+6. **No network calls inside open DB transactions.**
 
 ---
 
@@ -72,72 +62,45 @@ Ports (defined in `packages/dira_core/dira_core/ports.py`):
 - `provider_message_id UNIQUE` → deduplicates provider webhooks.
 - Physical double-call prevention depends on the provider; we mitigate with **two short transactions** (claim → HTTP outside Tx → result) and zombies (`sending` > 10 min) → **`needs_review`** (no auto-retry).
 
-Acks enter via the **API webhook**, not the dispatch worker.
+Acks enter via the **API webhook**, not the dispatch worker. In seeded mode, `MockDispatcher` simulates the call + delayed keypad ack so the map can turn green without telephony keys.
 
 ---
 
-## Quick start
+## Quick start (3 commands)
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12 + [uv](https://github.com/astral-sh/uv)
 - Node.js 20+
-- Docker (for Postgres + PostGIS)
-
-### 1. Environment
+- PostgreSQL 16 with PostGIS + pgvector (via Docker Compose **or** local apt packages — see D-008)
 
 ```bash
-cp .env.example .env
+cp .env.example .env          # keep DATA_MODE=seeded
+uv sync --all-packages
+make seed && make demo        # migrate + bootstrap + 3 pipeline cycles
 ```
 
-Keep `DATA_MODE=seeded` for local demo work.
-
-### 2. Database
+Then in three terminals:
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d db
+uv run uvicorn dira_api.main:app --host 0.0.0.0 --port 8000
+uv run python -m dira_worker.dispatch
+npm --prefix apps/web run dev -- --host 0.0.0.0
 ```
 
-Full schema is applied by the implementation agent from the consolidated spec (Part 5). The scaffold migration only creates extensions + a meta marker.
+- API docs: http://localhost:8000/docs  
+- Web: http://localhost:5173  
 
-### 3. Python workspace
+### Demo script
 
-```bash
-# Prefer uv (uses .venv automatically)
-uv sync
+1. Map shows Mandera zones (high / very_high bands).
+2. Select a red zone → Tabiri card (frozen exposure + explanation + SHAP).
+3. Prepare alert → pending approval in advisor panel.
+4. Approve as `demo-advisor` → deliveries queued.
+5. Dispatch worker / MockDispatcher “calls” → simulated ack.
+6. SSE patches Query cache → zone trends green.
 
-# Optional extras when implementing rasters / SHAP (may need compatible Python):
-# uv sync --extra rasters --package dira-data
-# uv sync --extra explain --package dira-ml
-
-# Or pip editable installs
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-pip install -e packages/dira_core -e packages/dira_features -e packages/dira_data -e packages/dira_ml -e packages/dira_llm -e packages/dira_dispatch -e apps/api -e apps/worker
-```
-
-### 4. API
-
-```bash
-uvicorn dira_api.main:app --reload --port 8000
-```
-
-Health: [http://localhost:8000/health](http://localhost:8000/health)
-
-### 5. Web
-
-```bash
-cd apps/web
-npm install
-npm run dev
-```
-
-### Workers (after implementation)
-
-```bash
-python -m dira_worker.pipeline --cycle 2026-03-11
-python -m dira_worker.dispatch
-```
+`make demo` twice is idempotent (same final storefront state for the three cycles).
 
 ---
 
@@ -145,29 +108,39 @@ python -m dira_worker.dispatch
 
 | Process | Trigger | Notes |
 |---------|---------|--------|
-| Bootstrap | Manual once | Zones, adjacency, exposure |
-| Training | Manual | Offline; writes artifact + `model_versions` |
-| Pipeline worker | Cron / dekadal | Seven stages E1–E7; exit code matters |
-| Dispatch worker | Daemon | LISTEN + 30s poll safety net |
-| API | Always | Request/response + webhooks + SSE |
-
-**Hard rule:** no external network calls inside an open DB transaction.
+| Bootstrap | `make seed` | Zones, adjacency, exposure, fixtures |
+| Training | `python -m scripts.train` / demo | Offline; writes artifact + `model_versions` |
+| Pipeline | `python -m dira_worker.pipeline --cycle YYYY-MM-DD` | E1–E7; day must be 1/11/21 |
+| Dispatch | `python -m dira_worker.dispatch` | LISTEN + 30s poll |
+| API | uvicorn | REST + webhooks + SSE |
 
 ---
 
-## Frontend state
+## Testing / lint
 
-- **TanStack Query** — situations, cards, deliveries (server is source of truth)
-- **Zustand (tiny)** — active layers, selection, viewport
-- **useState** — forms
-- **SSE** — only patches Query cache (`setQueryData`); polling every 3s if SSE drops
-- Timestamps stored in **UTC**; UI displays **EAT (UTC+3)**
+```bash
+make lint          # ruff + mypy (core/features) + import-linter
+make test          # pytest (unit + Postgres integration)
+npm --prefix apps/web run test
+npm --prefix apps/web run build
+```
+
+Integration tests require a real Postgres (`DATABASE_URL`). They never use SQLite.
+
+---
+
+## When we would change these decisions
+
+- Swap TransparentIndex for a freshly trained LightGBM when Mandera history is long enough for honest lift over the three baselines.
+- Replace MockDispatcher with Africa's Talking only after webhook signature verification is wired in live mode.
+- Add WhatsApp/SMS channels only after the voice Mandera loop is rock-solid (spec cut order).
+- Move embeddings from precomputed/hash to local BGE-M3 once GPU/CPU budget allows.
 
 ---
 
 ## Decision log
 
-See [docs/adr/README.md](docs/adr/README.md) for ADR index (hexagonal monorepo, Postgres as queue/bus, dekadal grain, BGE-M3 embeddings, pre-generated TTS, etc.).
+See [docs/adr/README.md](docs/adr/README.md) for ADR index (#1–21).
 
 ---
 

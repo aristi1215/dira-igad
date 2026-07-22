@@ -1,0 +1,5 @@
+{
+  "id": "mandera",
+  "name": "Mandera Tri-Border",
+  "description": "Synthetic seeded demo cluster around Mandera where Kenya, Ethiopia, and Somalia meet. Geometry is simplified for deterministic local PostGIS adjacency tests."
+}

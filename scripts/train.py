@@ -1,7 +1,8 @@
-# Offline training entrypoint (outside the live system).
-# Produces artifacts/model_v1.lgb + model_card.json and a model_versions row.
+"""Replace scaffold train stub with real training entrypoint."""
 
-print(
-    "[train] Scaffold only — temporal split, LightGBM + baselines + SHAP."
-)
-raise SystemExit(1)
+from __future__ import annotations
+
+from dira_ml.train import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())
