@@ -17,6 +17,7 @@ from dira_core.ports import VoiceChannel
 from dira_core.time import dispatch_backoff_delta
 from dira_data.db import connect
 from dira_dispatch import MockDispatcher, PrerecordedAudioAdapter
+from dira_dispatch.at_adapter import AfricasTalkingAdapter
 
 from dira_worker.settings import Settings, get_settings
 
@@ -215,12 +216,21 @@ def run_loop(
     settings = settings or get_settings()
     tts = PrerecordedAudioAdapter()
     audio = tts.synthesize("generic alert", "sw")
-    # Disable built-in call()-time ack; process_one schedules ack after Tx B.
-    voice = voice or MockDispatcher(
-        ack_delay_seconds=settings.mock_ack_delay_seconds,
-        database_url=settings.database_url,
-        ack_callback=None,
-    )
+    if voice is None:
+        if settings.dispatch_mode == "at" and settings.at_username and settings.at_api_key:
+            voice = AfricasTalkingAdapter(
+                settings.at_username,
+                settings.at_api_key,
+                base_url=settings.at_voice_base_url,
+            )
+            logger.info("Using Africa's Talking dispatcher base_url=%s", voice.base_url)
+        else:
+            # Disable built-in call()-time ack; process_one schedules ack after Tx B.
+            voice = MockDispatcher(
+                ack_delay_seconds=settings.mock_ack_delay_seconds,
+                database_url=settings.database_url,
+                ack_callback=None,
+            )
 
     with connect(settings.database_url) as conn:
         conn.autocommit = True

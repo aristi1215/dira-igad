@@ -13,7 +13,7 @@ type MapUiState = {
 }
 
 export const useMapUiStore = create<MapUiState>((set) => ({
-  activeLayers: ['situations'],
+  activeLayers: [],
   selectedZoneId: null,
   selectedSituationId: null,
   viewport: {

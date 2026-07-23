@@ -109,3 +109,15 @@ This file records honest deviations from the authoritative specification for hum
 **What we did:** `[tool.importlinter]` had an invalid `root_package = []` that crashed `lint-imports`. Replaced with `root_packages` and a contract enforcing that `dira_core` imports no sibling package.
 
 **Why:** Makes the spec's dependency rule actually enforced rather than silently skipped.
+
+## D-015 — Map-first frontend rework (aesthetics over density)
+
+**What we did:** Rebuilt the situation room as a full-viewport dark map (CARTO dark basemap) with floating, collapsible panels: a tabbed left dock (Watchlist / Economy) and an accordion right dock (Situation, Field signals, Approval gate, Deliveries, Ask Dira). Zones are now displayed as graduated glowing circle markers sized by model risk and colored by operational band; the old square polygon fills remain available behind a "Zone outlines" toggle. The top title bar was removed in favor of small floating chips (brand, cycle, live status).
+
+**Why:** Explicit user request — prioritize a professional, presentation-ready look (hackathon value proposition) over information density.
+
+## D-016 — Africa's Talking dispatcher wired but sandbox key rejected
+
+**What we did:** Added `DISPATCH_MODE=at` to switch the dispatch daemon from MockDispatcher to the Africa's Talking voice API (`AT_USERNAME`/`AT_API_KEY`/`AT_VOICE_BASE_URL`). The supplied sandbox API key returned HTTP 401 "The supplied authentication is invalid" on both the voice and sandbox messaging endpoints, so the default remains `DISPATCH_MODE=mock`.
+
+**Why:** Keeps the golden path demonstrable while making live dispatch a one-line env change once a valid key exists.
