@@ -18,17 +18,26 @@ class AfricasTalkingAdapter:
         username: str | None = None,
         api_key: str | None = None,
         *,
-        base_url: str = "https://voice.africastalking.com",
+        base_url: str | None = None,
     ) -> None:
         self.username = username or os.environ.get("AT_USERNAME")
         self.api_key = api_key or os.environ.get("AT_API_KEY")
-        self.base_url = base_url.rstrip("/")
+        resolved = (
+            base_url
+            or os.environ.get("AT_VOICE_BASE_URL")
+            or "https://voice.africastalking.com"
+        )
+        self.base_url = resolved.rstrip("/")
         if not self.username or not self.api_key:
             raise RuntimeError("AT_USERNAME and AT_API_KEY are required for AfricasTalkingAdapter.")
 
     def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef:
         payload = {"username": self.username, "to": phone, "url": audio_url}
-        headers = {"apiKey": self.api_key, "Idempotency-Key": idem_key}
+        headers = {
+            "apiKey": self.api_key,
+            "Accept": "application/json",
+            "Idempotency-Key": idem_key,
+        }
         with httpx.Client(timeout=20.0) as client:
             response = client.post(f"{self.base_url}/call", data=payload, headers=headers)
             response.raise_for_status()

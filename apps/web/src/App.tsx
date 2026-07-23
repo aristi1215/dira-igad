@@ -1,5 +1,5 @@
 import './App.css'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AdvisorPanel, AskAdvisor } from './features/advisor'
 import { DispatchPanel } from './features/dispatch'
@@ -98,28 +98,17 @@ function App() {
     return cycles.sort().at(-1) ?? null
   }, [mapQuery.data?.features])
 
+  const pendingCount = alertsQuery.data?.length ?? 0
+
   return (
     <div className="app-shell">
-      <header className="app-header panel-fade">
-        <div className="header-brand">
-          <h1>DIRA</h1>
-          <div>
-            <p className="header-title">IGAD Conflict Early Warning &amp; Response</p>
-            <p className="header-sub">
-              Climate-driven conflict pressure · Horn of Africa situation room
-            </p>
-          </div>
-        </div>
-        <div className="header-meta">
-          {latestCycle ? (
-            <span className="cycle-chip">Cycle {latestCycle}</span>
-          ) : null}
-          <div className="header-status">
-            <span className={sseFailed ? 'status-dot fallback' : 'status-dot'} />
-            {sseFailed ? 'Polling backup every 3s' : 'SSE live'}
-          </div>
-        </div>
-      </header>
+      <MapView
+        situations={mapQuery.data}
+        ackBySituation={ackQuery.data}
+        isLoading={mapQuery.isLoading}
+        cycle={latestCycle}
+        sseFailed={sseFailed}
+      />
 
       {mapQuery.isError ? (
         <p className="error-note app-error">
@@ -127,37 +116,125 @@ function App() {
         </p>
       ) : null}
 
-      <main className="situation-room">
-        <aside className="left-rail" aria-label="Watchlist and economy">
-          <ZoneQueue situations={mapQuery.data} isLoading={mapQuery.isLoading} />
-          <EconomyPanel
-            focusCountry={selectedFeature?.properties.country_iso2 ?? null}
-          />
-        </aside>
+      <LeftDock>
+        {(tab) =>
+          tab === 'watchlist' ? (
+            <ZoneQueue
+              situations={mapQuery.data}
+              isLoading={mapQuery.isLoading}
+            />
+          ) : (
+            <EconomyPanel
+              focusCountry={selectedFeature?.properties.country_iso2 ?? null}
+            />
+          )
+        }
+      </LeftDock>
 
-        <MapView
-          situations={mapQuery.data}
-          ackBySituation={ackQuery.data}
-          isLoading={mapQuery.isLoading}
-        />
-
-        <aside className="right-rail" aria-label="Situation controls">
+      <aside className="right-dock" aria-label="Situation controls">
+        <Section title="Situation" badge={selectedFeature?.properties.zone_name ?? null} defaultOpen>
           <TabiriCard feature={selectedFeature} />
+        </Section>
+        <Section title="Field signals">
           <SignalsList zoneId={selectedZoneId} />
+        </Section>
+        <Section
+          title="Approval gate"
+          badge={pendingCount > 0 ? `${pendingCount} pending` : null}
+          defaultOpen={pendingCount > 0}
+        >
           <AdvisorPanel
             alerts={alertsQuery.data}
             isLoading={alertsQuery.isLoading}
             error={alertsQuery.error}
           />
+        </Section>
+        <Section title="Deliveries">
           <DispatchPanel
             deliveries={deliveriesQuery.data}
             isLoading={deliveriesQuery.isLoading}
             error={deliveriesQuery.error}
           />
+        </Section>
+        <Section title="Ask Dira">
           <AskAdvisor situationId={selectedSituationId} />
-        </aside>
-      </main>
+        </Section>
+      </aside>
     </div>
+  )
+}
+
+type LeftTab = 'watchlist' | 'economy'
+
+function LeftDock({ children }: { children: (tab: LeftTab) => ReactNode }) {
+  const [tab, setTab] = useState<LeftTab>('watchlist')
+  const [open, setOpen] = useState(true)
+
+  return (
+    <aside className={open ? 'left-dock' : 'left-dock collapsed'}>
+      <div className="dock-tabs">
+        <button
+          type="button"
+          className={tab === 'watchlist' && open ? 'dock-tab active' : 'dock-tab'}
+          onClick={() => {
+            setTab('watchlist')
+            setOpen(true)
+          }}
+        >
+          Watchlist
+        </button>
+        <button
+          type="button"
+          className={tab === 'economy' && open ? 'dock-tab active' : 'dock-tab'}
+          onClick={() => {
+            setTab('economy')
+            setOpen(true)
+          }}
+        >
+          Economy
+        </button>
+        <button
+          type="button"
+          className="dock-toggle"
+          aria-label={open ? 'Collapse panel' : 'Expand panel'}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? '‹' : '›'}
+        </button>
+      </div>
+      {open ? <div className="dock-body">{children(tab)}</div> : null}
+    </aside>
+  )
+}
+
+function Section({
+  title,
+  badge = null,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  badge?: string | null
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  const [openOverride, setOpenOverride] = useState<boolean | null>(null)
+  const open = openOverride ?? defaultOpen
+
+  return (
+    <section className={open ? 'dock-section open' : 'dock-section'}>
+      <button
+        type="button"
+        className="dock-section-head"
+        aria-expanded={open}
+        onClick={() => setOpenOverride(!open)}
+      >
+        <span>{title}</span>
+        {badge ? <span className="dock-badge">{badge}</span> : null}
+        <span className="dock-chevron">{open ? '−' : '+'}</span>
+      </button>
+      {open ? <div className="dock-section-body">{children}</div> : null}
+    </section>
   )
 }
 

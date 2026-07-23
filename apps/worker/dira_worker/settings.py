@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     at_username: str | None = None
     at_api_key: str | None = None
+    at_voice_base_url: str | None = None
+    dispatch_mode: Literal["mock", "at"] = "mock"
 
 
 @lru_cache
