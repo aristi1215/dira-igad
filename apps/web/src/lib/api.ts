@@ -2,12 +2,20 @@ import type {
   AdvisorResponse,
   Alert,
   AlertDraftResponse,
+  AnalyticsOverview,
   ApproveAlertResponse,
   Delivery,
   EconomyResponse,
+  FieldReport,
+  Recipient,
+  RegionalIndicators,
   RetryDeliveryResponse,
+  SituationDetail,
   SituationFeatureCollection,
+  SourcesResponse,
+  ZoneProfile,
   ZoneSignal,
+  ZoneSummary,
 } from './types'
 
 /** API base URL for the FastAPI backend. */
@@ -19,10 +27,20 @@ export const API_BASE_URL =
 export const queryKeys = {
   mapSituations: ['map', 'situations'] as const,
   pendingAlerts: ['alerts', 'pending_approval'] as const,
+  allAlerts: ['alerts', 'all'] as const,
   deliveries: ['deliveries'] as const,
   ackBySituation: ['map', 'ackBySituation'] as const,
   economy: ['economy'] as const,
   zoneSignals: (zoneId: string) => ['zones', zoneId, 'signals'] as const,
+  zones: ['zones'] as const,
+  zoneProfile: (zoneId: string) => ['zones', zoneId, 'profile'] as const,
+  regionalIndicators: ['indicators', 'regional'] as const,
+  situationDetail: (id: string) => ['situations', id] as const,
+  fieldReports: (zoneId?: string | null, status?: string | null) =>
+    ['field-reports', zoneId ?? 'all', status ?? 'all'] as const,
+  sources: ['sources'] as const,
+  analytics: ['analytics', 'overview'] as const,
+  recipients: ['recipients'] as const,
 }
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
@@ -126,11 +144,14 @@ export async function prepareAlert(situationId: string): Promise<Alert> {
   }
 }
 
-export function approveAlert(alertId: string): Promise<ApproveAlertResponse> {
+export function approveAlert(
+  alertId: string,
+  approvedBy: string,
+): Promise<ApproveAlertResponse> {
   return requestJson<ApproveAlertResponse>(`/alerts/${alertId}/approve`, {
     method: 'POST',
     body: {
-      approved_by: 'demo-advisor',
+      approved_by: approvedBy,
     },
   })
 }
@@ -158,4 +179,81 @@ export function retryDelivery(deliveryId: string): Promise<RetryDeliveryResponse
     method: 'POST',
     body: {},
   })
+}
+
+// ---------------------------------------------------------------------------
+// Information layer
+// ---------------------------------------------------------------------------
+
+export function fetchZones(): Promise<ZoneSummary[]> {
+  return requestJson<ZoneSummary[]>('/zones')
+}
+
+export function fetchZoneProfile(zoneId: string): Promise<ZoneProfile> {
+  return requestJson<ZoneProfile>(`/zones/${zoneId}/profile`)
+}
+
+export function fetchRegionalIndicators(): Promise<RegionalIndicators> {
+  return requestJson<RegionalIndicators>('/indicators/regional')
+}
+
+export function fetchSituationDetail(id: string): Promise<SituationDetail> {
+  return requestJson<SituationDetail>(`/situations/${id}`)
+}
+
+export function fetchAllAlerts(): Promise<Alert[]> {
+  return requestJson<Alert[]>('/alerts')
+}
+
+export function fetchFieldReports(
+  zoneId?: string | null,
+  status?: string | null,
+): Promise<FieldReport[]> {
+  const params = new URLSearchParams()
+  if (zoneId) params.set('zone_id', zoneId)
+  if (status) params.set('status', status)
+  const suffix = params.size > 0 ? `?${params.toString()}` : ''
+  return requestJson<FieldReport[]>(`/field-reports${suffix}`)
+}
+
+export function createFieldReport(input: {
+  zone_id: string
+  reporter_role: string
+  category: string
+  severity: number
+  narrative: string
+}): Promise<FieldReport> {
+  return requestJson<FieldReport>('/field-reports', { method: 'POST', body: input })
+}
+
+export function verifyFieldReport(
+  reportId: string,
+  verifiedBy: string,
+): Promise<FieldReport> {
+  return requestJson<FieldReport>(`/field-reports/${reportId}/verify`, {
+    method: 'POST',
+    body: { verified_by: verifiedBy },
+  })
+}
+
+export function dismissFieldReport(
+  reportId: string,
+  verifiedBy: string,
+): Promise<FieldReport> {
+  return requestJson<FieldReport>(`/field-reports/${reportId}/dismiss`, {
+    method: 'POST',
+    body: { verified_by: verifiedBy },
+  })
+}
+
+export function fetchSources(): Promise<SourcesResponse> {
+  return requestJson<SourcesResponse>('/sources')
+}
+
+export function fetchAnalytics(): Promise<AnalyticsOverview> {
+  return requestJson<AnalyticsOverview>('/analytics/overview')
+}
+
+export function fetchRecipients(): Promise<Recipient[]> {
+  return requestJson<Recipient[]>('/recipients')
 }

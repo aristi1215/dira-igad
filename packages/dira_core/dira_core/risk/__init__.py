@@ -65,13 +65,45 @@ def _bump(band: RiskBand, steps: int = 1) -> RiskBand:
     return _BAND_ORDER[min(len(_BAND_ORDER) - 1, idx + steps)]
 
 
+def corroboration_from_field_reports(verified_severities: list[int]) -> float:
+    """Corroboration contributed by VERIFIED field-monitor reports.
+
+    Callers must pass severities of verified reports only — unverified or
+    dismissed reports contribute nothing, ever (red line: a raw field report
+    alone never moves the operational band).
+
+    Written rule: base 0.35 for any verified report, +0.15 per severity step
+    above 1 of the worst report, +0.05 per extra report (max 3), capped 0.9.
+    """
+    if not verified_severities:
+        return 0.0
+    worst = max(1, min(3, max(int(s) for s in verified_severities)))
+    extra = min(3, len(verified_severities) - 1)
+    return min(0.9, 0.35 + 0.15 * (worst - 1) + 0.05 * extra)
+
+
+def merge_corroboration(news: float, field: float) -> tuple[float, str]:
+    """Combine the two independent corroboration channels.
+
+    Max, not sum: channels corroborate the same underlying tension; stacking
+    them would double-count. Returns (score, note) — the note is embedded in
+    the persisted combination rule so the channel mix stays auditable.
+    """
+    n = max(0.0, min(1.0, float(news)))
+    f = max(0.0, min(1.0, float(field)))
+    score = max(n, f)
+    note = f"corroboration=max(news {n:.2f}, verified_field_reports {f:.2f})"
+    return score, note
+
+
 def combine_scores(
     model_risk: float,
     corroboration: float,
     *,
     model_band: RiskBand | None = None,
+    corroboration_note: str | None = None,
 ) -> tuple[RiskBand, str]:
-    """Combine pure model_risk with news corroboration.
+    """Combine pure model_risk with corroboration (news + verified field reports).
 
     Returns (operational_band, combination_rule_text). The rule text is
     persisted on assessments so operators can see exactly why a band was chosen.
@@ -97,5 +129,7 @@ def combine_scores(
         rule += f"; corroboration_bump→{band}"
     else:
         rule += f"; no_bump→{band}"
+    if corroboration_note:
+        rule += f"; {corroboration_note}"
 
     return band, rule

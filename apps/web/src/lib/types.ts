@@ -172,3 +172,250 @@ export type Viewport = {
   latitude: number
   zoom: number
 }
+
+// ---------------------------------------------------------------------------
+// Information layer
+// ---------------------------------------------------------------------------
+
+export type ZoneContext = {
+  zone_id: string
+  zone_name: string
+  cluster_id: string
+  country_iso2: string
+  ipc_phase: number | null
+  pop_phase3_plus: number | null
+  ipc_period_start: string | null
+  idps: number | null
+  refugees: number | null
+  displacement_date: string | null
+  staple_pct_vs_3m_avg: number | null
+  staple_commodity: string | null
+  active_hazards: number | null
+  active_health_alerts: number | null
+  verified_field_reports_recent: number | null
+  unverified_field_reports_recent: number | null
+}
+
+export type ZoneSummary = ZoneContext & {
+  cluster_name: string
+  population: number | null
+  pastoralist_share: number | null
+  water_points: number | null
+  markets: number | null
+  operational_band: OperationalBand | null
+  model_risk: number | null
+  situation_id: string | null
+}
+
+export type RegionalIndicatorProperties = ZoneContext & {
+  incidents_180d: number | null
+  fatalities_180d: number | null
+  operational_band: OperationalBand | null
+  model_risk: number | null
+  situation_id: string | null
+}
+
+export type RegionalIndicators = FeatureCollection<
+  Geometry,
+  RegionalIndicatorProperties
+>
+
+export type ClimateRow = {
+  dekad_start: string
+  rain_mm: number | null
+  ndvi_mean: number | null
+}
+
+export type IncidentMonth = {
+  month: string
+  events: number
+  fatalities: number
+}
+
+export type FoodSecurityRow = {
+  period_start: string
+  period_end: string
+  ipc_phase: number
+  pop_phase3_plus: number | null
+  source: string
+}
+
+export type DisplacementRow = {
+  snapshot_date: string
+  idps: number
+  refugees: number
+  returnees: number
+  source: string
+}
+
+export type MarketPriceRow = {
+  market_name: string
+  month: string
+  commodity: string
+  unit: string
+  price: number
+  currency: string
+  pct_vs_3m_avg: number | null
+}
+
+export type HealthRow = {
+  week_start: string
+  disease: string
+  cases: number
+  deaths: number
+  status: 'monitoring' | 'alert' | 'outbreak' | 'closed'
+}
+
+export type HazardBulletin = {
+  id: string
+  hazard_type: 'locust' | 'flood' | 'heat' | 'drought'
+  severity: 'advisory' | 'watch' | 'warning'
+  headline: string
+  detail: string | null
+  valid_from: string
+  valid_to: string | null
+  source: string
+}
+
+export type FieldReportStatus = 'unverified' | 'verified' | 'dismissed'
+
+export type FieldReport = {
+  id: string
+  zone_id?: string
+  zone_name?: string
+  country_iso2?: string
+  reporter_role: string
+  category: string
+  severity: number
+  narrative: string
+  reported_at: string
+  status: FieldReportStatus
+  verified_by: string | null
+  verified_at: string | null
+}
+
+export type AcledEventRow = {
+  event_date: string
+  event_type: string
+  fatalities: number
+  notes: string | null
+}
+
+export type Recipient = {
+  id: string
+  name: string
+  phone_e164: string
+  zone_id: string
+  zone_name?: string
+  channel: string
+  language: string
+  active: boolean
+}
+
+export type ZoneProfile = {
+  zone: {
+    id: string
+    name: string
+    country_iso2: string
+    cluster_id: string
+    cluster_name: string
+    geometry: Geometry
+    lon: number
+    lat: number
+  }
+  exposure: {
+    population: number
+    pastoralist_share: number | null
+    water_points: number | null
+    markets: number | null
+    source: string
+  } | null
+  climate: ClimateRow[]
+  incidents_monthly: IncidentMonth[]
+  recent_events: AcledEventRow[]
+  food_security: FoodSecurityRow[]
+  displacement: DisplacementRow[]
+  market_prices: MarketPriceRow[]
+  health: HealthRow[]
+  hazard_bulletins: HazardBulletin[]
+  field_reports: FieldReport[]
+  news_signals: ZoneSignal[]
+  situation: Record<string, JsonValue> | null
+  recipients: Recipient[]
+}
+
+export type SituationDetail = {
+  situation: {
+    id: string
+    zone_id: string
+    hazard: string
+    status: string
+    opened_cycle: string | null
+    resolved_cycle: string | null
+    created_at: string
+  }
+  assessments: {
+    id: string
+    cycle: string
+    model_risk: number
+    model_band: OperationalBand
+    corroboration: number
+    operational_band: OperationalBand
+    combination_rule: string
+    explanation: string | null
+    shap: ShapBreakdown
+    exposure_snapshot: ExposureSnapshot
+    prob_conflict: number
+    expected_incidents: number
+    created_at: string
+  }[]
+}
+
+export type DataSource = {
+  key: string
+  name: string
+  category: string
+  mode: 'live' | 'seeded'
+  live_capable: boolean
+  live_endpoint: string
+  licence: string
+  cadence: string
+  rows: number | null
+  freshest_available_at: string | null
+}
+
+export type SourcesResponse = {
+  data_mode: string
+  bitemporal_note: string
+  sources: DataSource[]
+}
+
+export type AnalyticsOverview = {
+  band_distribution: { band: string; zones: number }[]
+  incidents_monthly: IncidentMonth[]
+  climate_by_cluster: {
+    cluster_id: string
+    dekad_start: string
+    rain_mm: number | null
+    ndvi_mean: number | null
+  }[]
+  food_security_by_country: {
+    country_iso2: string
+    pop_phase3_plus: number | null
+    worst_ipc_phase: number | null
+  }[]
+  displacement_by_country: {
+    country_iso2: string
+    idps: number | null
+    refugees: number | null
+  }[]
+  field_report_stats: { verified: number; unverified: number; dismissed: number }
+  delivery_stats: { total: number; acked: number; needs_review: number }
+}
+
+export type MapOverlay =
+  | 'pressure'
+  | 'ipc'
+  | 'displacement'
+  | 'incidents'
+  | 'hazards'

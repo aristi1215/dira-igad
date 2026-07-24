@@ -21,10 +21,18 @@ from dira_core.risk import (
     RESOLVE_BELOW_BANDS,
     RiskBand,
     combine_scores,
+    corroboration_from_field_reports,
+    merge_corroboration,
 )
 from dira_core.time import data_cutoff_for_cycle, validate_dekad_start
 from dira_data.adapters import SeededRasterAdapter, get_conflict_source, get_hazard_source
 from dira_data.climate import upsert_climate_first_write_wins
+from dira_data.context import (
+    load_context_snapshot,
+    load_information_fixtures,
+    load_verified_field_severities,
+    refresh_information_layer,
+)
 from dira_data.db import (
     connect,
     load_acled_events,
@@ -170,6 +178,21 @@ def stage_e1_e2(conn: Any, cycle: date, settings: Settings) -> None:
         _ = adapter  # silence unused if path always taken
 
     upsert_climate_first_write_wins(conn, climate_rows)
+
+    # Information layer (IPC, displacement, prices, health, hazards, field
+    # reports): seeded fixtures refresh idempotently every cycle; live-mode
+    # connectors run through the same upserts and degrade to a no-op on failure.
+    try:
+        with conn.cursor() as cur:
+            refresh_information_layer(cur, load_information_fixtures(SEEDED_DIR))
+            if settings.data_mode == "live":
+                from dira_data.live import refresh_information_layer_live
+
+                live_counts = refresh_information_layer_live(cur)
+                logger.info("Live information overlay: %s", live_counts)
+    except Exception as exc:  # noqa: BLE001 — context data must never abort the cycle
+        logger.warning("Information-layer refresh degraded: %s", exc)
+
     TILE_DIR.mkdir(parents=True, exist_ok=True)
     render_placeholder_tile("rain", cycle, TILE_DIR)
     render_placeholder_tile("ndvi", cycle, TILE_DIR)
@@ -207,7 +230,13 @@ def stage_e3(
     corroboration: dict[str, float] = {zid: 0.0 for zid in zone_ids}
     with conn.cursor() as cur:
         # Idempotent rerun: this cycle's signals are fully re-derived each run.
-        cur.execute("DELETE FROM news_signals WHERE cycle = %s", (cycle,))
+        # Drop only signals the LLM no longer produces; surviving rows are
+        # upserted below so their created_at persists across reruns.
+        derived_ids = [_signal_id(sig, cycle) for sig in signals]
+        cur.execute(
+            "DELETE FROM news_signals WHERE cycle = %s AND NOT (id = ANY(%s))",
+            (cycle, derived_ids),
+        )
         for sig in signals:
             doc_id = sig.get("document_id")
             zid = sig.get("zone_id")
@@ -336,6 +365,9 @@ def stage_e4_e7(
     adjacency = load_adjacency_by_zone(conn)
     exposure = load_exposure(conn)
     model_id, model = _active_model(conn)
+    # Second corroboration channel: VERIFIED field-monitor reports inside the
+    # bitemporal window. Unverified reports contribute exactly nothing.
+    field_severities = load_verified_field_severities(conn, cutoff)
 
     prepared: list[dict[str, Any]] = []
     for z in zones:
@@ -350,9 +382,18 @@ def stage_e4_e7(
         )
         assessment: Assessment = model.assess(features)
         model_band = RiskBand(assessment.model_band)
-        corr = float(corroboration.get(zid, 0.0))
-        op_band, rule = combine_scores(assessment.model_risk, corr, model_band=model_band)
+        news_corr = float(corroboration.get(zid, 0.0))
+        field_corr = corroboration_from_field_reports(field_severities.get(zid, []))
+        corr, corr_note = merge_corroboration(news_corr, field_corr)
+        op_band, rule = combine_scores(
+            assessment.model_risk, corr, model_band=model_band, corroboration_note=corr_note
+        )
         explanation = _template_explanation(assessment.shap, op_band)
+        # Exposure snapshot frozen on the assessment; enriched with the latest
+        # humanitarian context (IPC, displacement, staple price anomaly) as of
+        # the cycle cutoff. Context only — these values never enter the model.
+        zone_exposure = dict(exposure.get(zid, {}))
+        zone_exposure.update(load_context_snapshot(conn, zid, data_cutoff_for_cycle(cycle)))
         prepared.append(
             {
                 "zone_id": zid,
@@ -361,7 +402,7 @@ def stage_e4_e7(
                 "operational_band": op_band,
                 "combination_rule": rule,
                 "explanation": explanation,
-                "exposure": exposure.get(zid, {}),
+                "exposure": zone_exposure,
             }
         )
 

@@ -16,20 +16,13 @@ export function SignalsList({ zoneId }: SignalsListProps) {
   const signals = signalsQuery.data ?? []
 
   return (
-    <section className="signals-panel panel-fade" aria-label="News signals">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow">News corroboration</p>
-          <h2>Signals</h2>
-        </div>
-        <span className="count-pill">{signals.length}</span>
-      </div>
-      {signalsQuery.isLoading ? <p className="muted">Loading signals...</p> : null}
+    <div className="signals-panel" aria-label="News signals">
+      {signalsQuery.isLoading ? <p className="loading-note">Loading signals…</p> : null}
       {!signalsQuery.isLoading && signals.length === 0 ? (
-        <p className="muted">No news signals for this zone.</p>
+        <p className="empty-state">No news signals for this zone.</p>
       ) : null}
       <ul className="signals-list">
-        {signals.slice(0, 5).map((signal) => (
+        {signals.slice(0, 6).map((signal) => (
           <li key={signal.id}>
             <div className="signal-head">
               <span className="signal-type">
@@ -45,6 +38,6 @@ export function SignalsList({ zoneId }: SignalsListProps) {
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   )
 }

@@ -1,54 +1,55 @@
 import './App.css'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AdvisorPanel, AskAdvisor } from './features/advisor'
-import { DispatchPanel } from './features/dispatch'
-import { EconomyPanel } from './features/economy'
-import { MapView } from './features/map'
-import { ZoneQueue } from './features/queue'
-import { SignalsList, TabiriCard } from './features/situations'
+import { AskAdvisor } from './features/advisor'
 import {
   apiUrl,
-  fetchDeliveries,
   fetchMapSituations,
-  fetchPendingAlerts,
+  fetchSources,
   queryKeys,
 } from './lib/api'
 import { applySseEvent, parseDiraSseEvent } from './lib/ssePatch'
-import type { AckBySituation } from './lib/types'
 import { useMapUiStore } from './stores/mapUi'
+import { MapScreen } from './screens/MapScreen'
+import { SituationsScreen } from './screens/SituationsScreen'
+import { SituationDetailScreen } from './screens/SituationDetailScreen'
+import { ZonesScreen } from './screens/ZonesScreen'
+import { ZoneDossierScreen } from './screens/ZoneDossierScreen'
+import { DispatchScreen } from './screens/DispatchScreen'
+import { AnalyticsScreen } from './screens/AnalyticsScreen'
+import { SourcesScreen } from './screens/SourcesScreen'
+
+const NAV_ITEMS = [
+  { to: '/', label: 'Map', end: true },
+  { to: '/situations', label: 'Situations', end: false },
+  { to: '/zones', label: 'Zones', end: false },
+  { to: '/dispatch', label: 'Dispatch', end: false },
+  { to: '/analytics', label: 'Analytics', end: false },
+  { to: '/sources', label: 'Sources', end: false },
+]
 
 function App() {
   const queryClient = useQueryClient()
+  const location = useLocation()
   const [sseFailed, setSseFailed] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const selectedSituationId = useMapUiStore((state) => state.selectedSituationId)
-  const selectedZoneId = useMapUiStore((state) => state.selectedZoneId)
-  const fallbackInterval = sseFailed ? 3_000 : false
 
   const mapQuery = useQuery({
     queryKey: queryKeys.mapSituations,
     queryFn: fetchMapSituations,
-    refetchInterval: fallbackInterval,
+    refetchInterval: sseFailed ? 5_000 : false,
   })
-  const alertsQuery = useQuery({
-    queryKey: queryKeys.pendingAlerts,
-    queryFn: fetchPendingAlerts,
-    refetchInterval: fallbackInterval,
+  const sourcesQuery = useQuery({
+    queryKey: queryKeys.sources,
+    queryFn: fetchSources,
+    staleTime: 10 * 60 * 1000,
     retry: 1,
   })
-  const deliveriesQuery = useQuery({
-    queryKey: queryKeys.deliveries,
-    queryFn: fetchDeliveries,
-    refetchInterval: fallbackInterval,
-  })
-  const ackQuery = useQuery<AckBySituation>({
-    queryKey: queryKeys.ackBySituation,
-    queryFn: () => Promise.resolve({}),
-    enabled: false,
-    initialData: {},
-    staleTime: Number.POSITIVE_INFINITY,
-  })
 
+  // One SSE subscription for the whole app: Postgres LISTEN/NOTIFY → /events
+  // → targeted TanStack Query invalidations (see lib/ssePatch.ts).
   useEffect(() => {
     const events = new EventSource(apiUrl('/events'))
 
@@ -83,14 +84,6 @@ function App() {
     }
   }, [queryClient])
 
-  const selectedFeature = useMemo(
-    () =>
-      mapQuery.data?.features.find(
-        (feature) => feature.properties.situation_id === selectedSituationId,
-      ) ?? null,
-    [mapQuery.data?.features, selectedSituationId],
-  )
-
   const latestCycle = useMemo(() => {
     const cycles = (mapQuery.data?.features ?? [])
       .map((f) => f.properties.cycle)
@@ -98,143 +91,69 @@ function App() {
     return cycles.sort().at(-1) ?? null
   }, [mapQuery.data?.features])
 
-  const pendingCount = alertsQuery.data?.length ?? 0
+  const dataMode = sourcesQuery.data?.data_mode ?? null
+  const isMapRoute = location.pathname === '/'
 
   return (
     <div className="app-shell">
-      <MapView
-        situations={mapQuery.data}
-        ackBySituation={ackQuery.data}
-        isLoading={mapQuery.isLoading}
-        cycle={latestCycle}
-        sseFailed={sseFailed}
-      />
+      <header className="command-bar">
+        <div className="brand">
+          <span className="brand-word">DIRA</span>
+          <span className="brand-sub">Early-warning situation room · IGAD</span>
+        </div>
+        <nav className="app-nav" aria-label="Primary">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => (isActive ? 'active' : undefined)}
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="command-bar-right">
+          {latestCycle ? <span className="cycle-chip">Cycle {latestCycle}</span> : null}
+          {dataMode ? (
+            <span className={dataMode === 'live' ? 'mode-chip live' : 'mode-chip'}>
+              {dataMode.toUpperCase()}
+            </span>
+          ) : null}
+          <span className="header-status">
+            <span className={sseFailed ? 'status-dot fallback' : 'status-dot'} />
+            {sseFailed ? 'Polling' : 'Live'}
+          </span>
+          <button
+            type="button"
+            className={drawerOpen ? 'drawer-toggle open' : 'drawer-toggle'}
+            aria-expanded={drawerOpen}
+            onClick={() => setDrawerOpen((value) => !value)}
+          >
+            Ask Dira
+          </button>
+        </div>
+      </header>
 
-      {mapQuery.isError ? (
-        <p className="error-note app-error">
-          Map situations are unavailable: {mapQuery.error.message}
-        </p>
-      ) : null}
+      <main className={isMapRoute ? 'app-main flush' : 'app-main'}>
+        <Routes>
+          <Route path="/" element={<MapScreen sseFailed={sseFailed} />} />
+          <Route path="/situations" element={<SituationsScreen />} />
+          <Route path="/situations/:id" element={<SituationDetailScreen />} />
+          <Route path="/zones" element={<ZonesScreen />} />
+          <Route path="/zones/:id" element={<ZoneDossierScreen />} />
+          <Route path="/dispatch" element={<DispatchScreen />} />
+          <Route path="/analytics" element={<AnalyticsScreen />} />
+          <Route path="/sources" element={<SourcesScreen />} />
+        </Routes>
 
-      <LeftDock>
-        {(tab) =>
-          tab === 'watchlist' ? (
-            <ZoneQueue
-              situations={mapQuery.data}
-              isLoading={mapQuery.isLoading}
-            />
-          ) : (
-            <EconomyPanel
-              focusCountry={selectedFeature?.properties.country_iso2 ?? null}
-            />
-          )
-        }
-      </LeftDock>
-
-      <aside className="right-dock" aria-label="Situation controls">
-        <Section title="Situation" badge={selectedFeature?.properties.zone_name ?? null} defaultOpen>
-          <TabiriCard feature={selectedFeature} />
-        </Section>
-        <Section title="Field signals">
-          <SignalsList zoneId={selectedZoneId} />
-        </Section>
-        <Section
-          title="Approval gate"
-          badge={pendingCount > 0 ? `${pendingCount} pending` : null}
-          defaultOpen={pendingCount > 0}
-        >
-          <AdvisorPanel
-            alerts={alertsQuery.data}
-            isLoading={alertsQuery.isLoading}
-            error={alertsQuery.error}
-          />
-        </Section>
-        <Section title="Deliveries">
-          <DispatchPanel
-            deliveries={deliveriesQuery.data}
-            isLoading={deliveriesQuery.isLoading}
-            error={deliveriesQuery.error}
-          />
-        </Section>
-        <Section title="Ask Dira">
-          <AskAdvisor situationId={selectedSituationId} />
-        </Section>
-      </aside>
+        {drawerOpen ? (
+          <aside className="advisor-drawer" aria-label="Ask Dira advisor">
+            <AskAdvisor situationId={selectedSituationId} />
+          </aside>
+        ) : null}
+      </main>
     </div>
-  )
-}
-
-type LeftTab = 'watchlist' | 'economy'
-
-function LeftDock({ children }: { children: (tab: LeftTab) => ReactNode }) {
-  const [tab, setTab] = useState<LeftTab>('watchlist')
-  const [open, setOpen] = useState(true)
-
-  return (
-    <aside className={open ? 'left-dock' : 'left-dock collapsed'}>
-      <div className="dock-tabs">
-        <button
-          type="button"
-          className={tab === 'watchlist' && open ? 'dock-tab active' : 'dock-tab'}
-          onClick={() => {
-            setTab('watchlist')
-            setOpen(true)
-          }}
-        >
-          Watchlist
-        </button>
-        <button
-          type="button"
-          className={tab === 'economy' && open ? 'dock-tab active' : 'dock-tab'}
-          onClick={() => {
-            setTab('economy')
-            setOpen(true)
-          }}
-        >
-          Economy
-        </button>
-        <button
-          type="button"
-          className="dock-toggle"
-          aria-label={open ? 'Collapse panel' : 'Expand panel'}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? '‹' : '›'}
-        </button>
-      </div>
-      {open ? <div className="dock-body">{children(tab)}</div> : null}
-    </aside>
-  )
-}
-
-function Section({
-  title,
-  badge = null,
-  defaultOpen = false,
-  children,
-}: {
-  title: string
-  badge?: string | null
-  defaultOpen?: boolean
-  children: ReactNode
-}) {
-  const [openOverride, setOpenOverride] = useState<boolean | null>(null)
-  const open = openOverride ?? defaultOpen
-
-  return (
-    <section className={open ? 'dock-section open' : 'dock-section'}>
-      <button
-        type="button"
-        className="dock-section-head"
-        aria-expanded={open}
-        onClick={() => setOpenOverride(!open)}
-      >
-        <span>{title}</span>
-        {badge ? <span className="dock-badge">{badge}</span> : null}
-        <span className="dock-chevron">{open ? '−' : '+'}</span>
-      </button>
-      {open ? <div className="dock-section-body">{children}</div> : null}
-    </section>
   )
 }
 

@@ -1,0 +1,596 @@
+[
+  {
+    "zone_id": "shabelle_corridor",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 127188,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 190619,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 179685,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 92519,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 85609,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 88809,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 112756,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 170691,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 170278,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 80695,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 88107,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 83050,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 114209,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 153787,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 152944,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 79172,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 79214,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 73521,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 100833,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 99406,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 140723,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 76840,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 84413,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 81707,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 99292,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 96549,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 134606,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 82109,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 88641,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 87150,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 91078,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 87704,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 82695,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 41281,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 69340,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 68707,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 44169,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 64893,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 70079,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 34310,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 37774,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 59364,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 39114,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 36078,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 59313,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 34158,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 31197,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 2,
+    "pop_phase3_plus": 32646,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 186318,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 194240,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 5,
+    "pop_phase3_plus": 242416,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 117686,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 158972,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 159055,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 128616,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 168450,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 176809,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 96930,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 103058,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 137353,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 121403,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 176691,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 171778,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "period_start": "2025-07-01",
+    "period_end": "2025-10-31",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 109472,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-07-15T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "period_start": "2025-11-01",
+    "period_end": "2026-02-28",
+    "ipc_phase": 3,
+    "pop_phase3_plus": 106299,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2025-11-20T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "period_start": "2026-03-01",
+    "period_end": "2026-06-30",
+    "ipc_phase": 4,
+    "pop_phase3_plus": 144517,
+    "source": "ipc_fewsnet_seeded",
+    "available_at": "2026-03-05T09:00:00Z"
+  }
+]

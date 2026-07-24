@@ -1,0 +1,1190 @@
+[
+  {
+    "zone_id": "shabelle_corridor",
+    "snapshot_date": "2025-10-01",
+    "idps": 24801,
+    "refugees": 1534,
+    "returnees": 47,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "snapshot_date": "2025-11-01",
+    "idps": 27545,
+    "refugees": 1615,
+    "returnees": 102,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "snapshot_date": "2025-12-01",
+    "idps": 30695,
+    "refugees": 1701,
+    "returnees": 154,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "snapshot_date": "2026-01-01",
+    "idps": 33468,
+    "refugees": 1740,
+    "returnees": 151,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "snapshot_date": "2026-02-01",
+    "idps": 36252,
+    "refugees": 1744,
+    "returnees": 21,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "snapshot_date": "2026-03-01",
+    "idps": 39096,
+    "refugees": 1855,
+    "returnees": 65,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "snapshot_date": "2025-10-01",
+    "idps": 16243,
+    "refugees": 1061,
+    "returnees": 152,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "snapshot_date": "2025-11-01",
+    "idps": 17398,
+    "refugees": 1044,
+    "returnees": 6,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "snapshot_date": "2025-12-01",
+    "idps": 18749,
+    "refugees": 1122,
+    "returnees": 40,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "snapshot_date": "2026-01-01",
+    "idps": 20101,
+    "refugees": 1104,
+    "returnees": 341,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "snapshot_date": "2026-02-01",
+    "idps": 21209,
+    "refugees": 1158,
+    "returnees": 316,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "snapshot_date": "2026-03-01",
+    "idps": 22140,
+    "refugees": 1229,
+    "returnees": 195,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "snapshot_date": "2025-10-01",
+    "idps": 22113,
+    "refugees": 1417,
+    "returnees": 302,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "snapshot_date": "2025-11-01",
+    "idps": 24640,
+    "refugees": 1376,
+    "returnees": 180,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "snapshot_date": "2025-12-01",
+    "idps": 26944,
+    "refugees": 1490,
+    "returnees": 330,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "snapshot_date": "2026-01-01",
+    "idps": 29088,
+    "refugees": 1568,
+    "returnees": 107,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "snapshot_date": "2026-02-01",
+    "idps": 31402,
+    "refugees": 1660,
+    "returnees": 68,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "snapshot_date": "2026-03-01",
+    "idps": 33520,
+    "refugees": 1698,
+    "returnees": 308,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "snapshot_date": "2025-10-01",
+    "idps": 15388,
+    "refugees": 937,
+    "returnees": 437,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "snapshot_date": "2025-11-01",
+    "idps": 16388,
+    "refugees": 996,
+    "returnees": 166,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "snapshot_date": "2025-12-01",
+    "idps": 17373,
+    "refugees": 1081,
+    "returnees": 344,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "snapshot_date": "2026-01-01",
+    "idps": 18334,
+    "refugees": 1145,
+    "returnees": 166,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "snapshot_date": "2026-02-01",
+    "idps": 19452,
+    "refugees": 1184,
+    "returnees": 478,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_inland",
+    "snapshot_date": "2026-03-01",
+    "idps": 20391,
+    "refugees": 1188,
+    "returnees": 279,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "snapshot_date": "2025-10-01",
+    "idps": 20871,
+    "refugees": 7344,
+    "returnees": 325,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "snapshot_date": "2025-11-01",
+    "idps": 23191,
+    "refugees": 7658,
+    "returnees": 88,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "snapshot_date": "2025-12-01",
+    "idps": 25057,
+    "refugees": 7932,
+    "returnees": 75,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "snapshot_date": "2026-01-01",
+    "idps": 26991,
+    "refugees": 8329,
+    "returnees": 148,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "snapshot_date": "2026-02-01",
+    "idps": 28798,
+    "refugees": 8786,
+    "returnees": 158,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "snapshot_date": "2026-03-01",
+    "idps": 30960,
+    "refugees": 9046,
+    "returnees": 55,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "snapshot_date": "2025-10-01",
+    "idps": 13720,
+    "refugees": 4779,
+    "returnees": 193,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "snapshot_date": "2025-11-01",
+    "idps": 14476,
+    "refugees": 4914,
+    "returnees": 521,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "snapshot_date": "2025-12-01",
+    "idps": 15341,
+    "refugees": 5225,
+    "returnees": 579,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "snapshot_date": "2026-01-01",
+    "idps": 16439,
+    "refugees": 5477,
+    "returnees": 435,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "snapshot_date": "2026-02-01",
+    "idps": 17037,
+    "refugees": 5741,
+    "returnees": 50,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "gambella_east",
+    "snapshot_date": "2026-03-01",
+    "idps": 17823,
+    "refugees": 5872,
+    "returnees": 97,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "snapshot_date": "2025-10-01",
+    "idps": 19015,
+    "refugees": 6541,
+    "returnees": 126,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "snapshot_date": "2025-11-01",
+    "idps": 20659,
+    "refugees": 6874,
+    "returnees": 27,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "snapshot_date": "2025-12-01",
+    "idps": 22320,
+    "refugees": 7180,
+    "returnees": 294,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "snapshot_date": "2026-01-01",
+    "idps": 23890,
+    "refugees": 7582,
+    "returnees": 158,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "snapshot_date": "2026-02-01",
+    "idps": 25271,
+    "refugees": 7914,
+    "returnees": 357,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_belt",
+    "snapshot_date": "2026-03-01",
+    "idps": 27200,
+    "refugees": 8175,
+    "returnees": 103,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "snapshot_date": "2025-10-01",
+    "idps": 14380,
+    "refugees": 848,
+    "returnees": 373,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "snapshot_date": "2025-11-01",
+    "idps": 15442,
+    "refugees": 999,
+    "returnees": 127,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "snapshot_date": "2025-12-01",
+    "idps": 16511,
+    "refugees": 935,
+    "returnees": 175,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "snapshot_date": "2026-01-01",
+    "idps": 17159,
+    "refugees": 970,
+    "returnees": 174,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "snapshot_date": "2026-02-01",
+    "idps": 18415,
+    "refugees": 1022,
+    "returnees": 235,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "abyei_north",
+    "snapshot_date": "2026-03-01",
+    "idps": 19023,
+    "refugees": 1101,
+    "returnees": 97,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "snapshot_date": "2025-10-01",
+    "idps": 17255,
+    "refugees": 992,
+    "returnees": 456,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "snapshot_date": "2025-11-01",
+    "idps": 18585,
+    "refugees": 1153,
+    "returnees": 116,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "snapshot_date": "2025-12-01",
+    "idps": 19882,
+    "refugees": 1206,
+    "returnees": 400,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "snapshot_date": "2026-01-01",
+    "idps": 21418,
+    "refugees": 1252,
+    "returnees": 303,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "snapshot_date": "2026-02-01",
+    "idps": 22798,
+    "refugees": 1228,
+    "returnees": 118,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "snapshot_date": "2026-03-01",
+    "idps": 24047,
+    "refugees": 1296,
+    "returnees": 472,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "snapshot_date": "2025-10-01",
+    "idps": 15302,
+    "refugees": 973,
+    "returnees": 346,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "snapshot_date": "2025-11-01",
+    "idps": 16457,
+    "refugees": 967,
+    "returnees": 142,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "snapshot_date": "2025-12-01",
+    "idps": 17494,
+    "refugees": 1101,
+    "returnees": 364,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "snapshot_date": "2026-01-01",
+    "idps": 18533,
+    "refugees": 1113,
+    "returnees": 340,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "snapshot_date": "2026-02-01",
+    "idps": 19340,
+    "refugees": 1185,
+    "returnees": 324,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "snapshot_date": "2026-03-01",
+    "idps": 20515,
+    "refugees": 1139,
+    "returnees": 288,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "snapshot_date": "2025-10-01",
+    "idps": 15883,
+    "refugees": 1008,
+    "returnees": 21,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "snapshot_date": "2025-11-01",
+    "idps": 16729,
+    "refugees": 1011,
+    "returnees": 9,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "snapshot_date": "2025-12-01",
+    "idps": 18160,
+    "refugees": 1028,
+    "returnees": 117,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "snapshot_date": "2026-01-01",
+    "idps": 19292,
+    "refugees": 1071,
+    "returnees": 344,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "snapshot_date": "2026-02-01",
+    "idps": 20345,
+    "refugees": 1158,
+    "returnees": 18,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "snapshot_date": "2026-03-01",
+    "idps": 21238,
+    "refugees": 1243,
+    "returnees": 521,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "snapshot_date": "2025-10-01",
+    "idps": 12512,
+    "refugees": 723,
+    "returnees": 621,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "snapshot_date": "2025-11-01",
+    "idps": 13396,
+    "refugees": 764,
+    "returnees": 405,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "snapshot_date": "2025-12-01",
+    "idps": 14153,
+    "refugees": 800,
+    "returnees": 518,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "snapshot_date": "2026-01-01",
+    "idps": 14853,
+    "refugees": 864,
+    "returnees": 7,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "snapshot_date": "2026-02-01",
+    "idps": 15613,
+    "refugees": 993,
+    "returnees": 651,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "turkana_west",
+    "snapshot_date": "2026-03-01",
+    "idps": 16327,
+    "refugees": 943,
+    "returnees": 240,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "snapshot_date": "2025-10-01",
+    "idps": 12056,
+    "refugees": 676,
+    "returnees": 476,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "snapshot_date": "2025-11-01",
+    "idps": 12513,
+    "refugees": 774,
+    "returnees": 667,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "snapshot_date": "2025-12-01",
+    "idps": 12983,
+    "refugees": 782,
+    "returnees": 326,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "snapshot_date": "2026-01-01",
+    "idps": 13923,
+    "refugees": 825,
+    "returnees": 477,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "snapshot_date": "2026-02-01",
+    "idps": 14568,
+    "refugees": 913,
+    "returnees": 338,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_escarpment",
+    "snapshot_date": "2026-03-01",
+    "idps": 15140,
+    "refugees": 889,
+    "returnees": 380,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "snapshot_date": "2025-10-01",
+    "idps": 9905,
+    "refugees": 630,
+    "returnees": 568,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "snapshot_date": "2025-11-01",
+    "idps": 10519,
+    "refugees": 625,
+    "returnees": 751,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "snapshot_date": "2025-12-01",
+    "idps": 10919,
+    "refugees": 671,
+    "returnees": 286,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "snapshot_date": "2026-01-01",
+    "idps": 11530,
+    "refugees": 683,
+    "returnees": 754,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "snapshot_date": "2026-02-01",
+    "idps": 12030,
+    "refugees": 748,
+    "returnees": 339,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "blue_nile_south",
+    "snapshot_date": "2026-03-01",
+    "idps": 12481,
+    "refugees": 715,
+    "returnees": 556,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "snapshot_date": "2025-10-01",
+    "idps": 10515,
+    "refugees": 744,
+    "returnees": 253,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "snapshot_date": "2025-11-01",
+    "idps": 10918,
+    "refugees": 652,
+    "returnees": 642,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "snapshot_date": "2025-12-01",
+    "idps": 11427,
+    "refugees": 767,
+    "returnees": 682,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "snapshot_date": "2026-01-01",
+    "idps": 11917,
+    "refugees": 812,
+    "returnees": 416,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "snapshot_date": "2026-02-01",
+    "idps": 12573,
+    "refugees": 816,
+    "returnees": 581,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "snapshot_date": "2026-03-01",
+    "idps": 13295,
+    "refugees": 859,
+    "returnees": 586,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "snapshot_date": "2025-10-01",
+    "idps": 8610,
+    "refugees": 503,
+    "returnees": 550,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "snapshot_date": "2025-11-01",
+    "idps": 9227,
+    "refugees": 566,
+    "returnees": 776,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "snapshot_date": "2025-12-01",
+    "idps": 9262,
+    "refugees": 690,
+    "returnees": 36,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "snapshot_date": "2026-01-01",
+    "idps": 9747,
+    "refugees": 658,
+    "returnees": 82,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "snapshot_date": "2026-02-01",
+    "idps": 10134,
+    "refugees": 730,
+    "returnees": 580,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "snapshot_date": "2026-03-01",
+    "idps": 10499,
+    "refugees": 753,
+    "returnees": 451,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "snapshot_date": "2025-10-01",
+    "idps": 26337,
+    "refugees": 9054,
+    "returnees": 120,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "snapshot_date": "2025-11-01",
+    "idps": 29242,
+    "refugees": 9565,
+    "returnees": 13,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "snapshot_date": "2025-12-01",
+    "idps": 32457,
+    "refugees": 9939,
+    "returnees": 129,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "snapshot_date": "2026-01-01",
+    "idps": 35580,
+    "refugees": 10390,
+    "returnees": 19,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "snapshot_date": "2026-02-01",
+    "idps": 38592,
+    "refugees": 10807,
+    "returnees": 179,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "snapshot_date": "2026-03-01",
+    "idps": 41902,
+    "refugees": 11337,
+    "returnees": 121,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "snapshot_date": "2025-10-01",
+    "idps": 21506,
+    "refugees": 1324,
+    "returnees": 255,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "snapshot_date": "2025-11-01",
+    "idps": 23585,
+    "refugees": 1323,
+    "returnees": 181,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "snapshot_date": "2025-12-01",
+    "idps": 25658,
+    "refugees": 1391,
+    "returnees": 360,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "snapshot_date": "2026-01-01",
+    "idps": 28008,
+    "refugees": 1449,
+    "returnees": 99,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "snapshot_date": "2026-02-01",
+    "idps": 30093,
+    "refugees": 1527,
+    "returnees": 146,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "snapshot_date": "2026-03-01",
+    "idps": 31966,
+    "refugees": 1589,
+    "returnees": 345,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "snapshot_date": "2025-10-01",
+    "idps": 23589,
+    "refugees": 8233,
+    "returnees": 145,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "snapshot_date": "2025-11-01",
+    "idps": 26172,
+    "refugees": 8530,
+    "returnees": 276,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "snapshot_date": "2025-12-01",
+    "idps": 28839,
+    "refugees": 8969,
+    "returnees": 9,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "snapshot_date": "2026-01-01",
+    "idps": 31113,
+    "refugees": 9386,
+    "returnees": 118,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "snapshot_date": "2026-02-01",
+    "idps": 33819,
+    "refugees": 9784,
+    "returnees": 58,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "snapshot_date": "2026-03-01",
+    "idps": 36395,
+    "refugees": 10150,
+    "returnees": 97,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "snapshot_date": "2025-10-01",
+    "idps": 18448,
+    "refugees": 1138,
+    "returnees": 402,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "snapshot_date": "2025-11-01",
+    "idps": 19910,
+    "refugees": 1154,
+    "returnees": 417,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "snapshot_date": "2025-12-01",
+    "idps": 21323,
+    "refugees": 1170,
+    "returnees": 197,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "snapshot_date": "2026-01-01",
+    "idps": 22795,
+    "refugees": 1260,
+    "returnees": 260,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "snapshot_date": "2026-02-01",
+    "idps": 24621,
+    "refugees": 1294,
+    "returnees": 374,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_east",
+    "snapshot_date": "2026-03-01",
+    "idps": 26233,
+    "refugees": 1324,
+    "returnees": 251,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "snapshot_date": "2025-10-01",
+    "idps": 22905,
+    "refugees": 1356,
+    "returnees": 245,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "snapshot_date": "2025-11-01",
+    "idps": 25559,
+    "refugees": 1492,
+    "returnees": 162,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "snapshot_date": "2025-12-01",
+    "idps": 27747,
+    "refugees": 1574,
+    "returnees": 221,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "snapshot_date": "2026-01-01",
+    "idps": 30248,
+    "refugees": 1622,
+    "returnees": 287,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "snapshot_date": "2026-02-01",
+    "idps": 32653,
+    "refugees": 1665,
+    "returnees": 118,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "snapshot_date": "2026-03-01",
+    "idps": 35297,
+    "refugees": 1683,
+    "returnees": 190,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "snapshot_date": "2025-10-01",
+    "idps": 19873,
+    "refugees": 1194,
+    "returnees": 122,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-10-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "snapshot_date": "2025-11-01",
+    "idps": 21544,
+    "refugees": 1291,
+    "returnees": 21,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-11-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "snapshot_date": "2025-12-01",
+    "idps": 23378,
+    "refugees": 1255,
+    "returnees": 70,
+    "source": "iom_dtm_seeded",
+    "available_at": "2025-12-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "snapshot_date": "2026-01-01",
+    "idps": 25078,
+    "refugees": 1411,
+    "returnees": 335,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-01-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "snapshot_date": "2026-02-01",
+    "idps": 26792,
+    "refugees": 1352,
+    "returnees": 418,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-02-19T09:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_south",
+    "snapshot_date": "2026-03-01",
+    "idps": 28520,
+    "refugees": 1431,
+    "returnees": 7,
+    "source": "iom_dtm_seeded",
+    "available_at": "2026-03-19T09:00:00Z"
+  }
+]

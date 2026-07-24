@@ -53,7 +53,12 @@ def test_llm_failure_degrades(database_url, db_conn) -> None:
         rows = cur.fetchall()
 
     assert rows
-    assert {float(row["corroboration"]) for row in rows} == {0.0}
+    # The news channel degrades to exactly 0 for every zone; verified field
+    # reports are an independent channel and may still corroborate.
+    assert all("news 0.00" in str(row["combination_rule"]) for row in rows)
+    for row in rows:
+        if float(row["corroboration"]) > 0:
+            assert "verified_field_reports" in str(row["combination_rule"])
     assert all(str(row["explanation"]).startswith("Operational band ") for row in rows)
     assert all(row["combination_rule"] for row in rows)
 
@@ -121,15 +126,22 @@ def test_two_scores_independence(database_url, db_conn) -> None:
     assert pipeline.run_pipeline(cycle, settings=settings, force_llm_failure=True) == 0
     no_news = _assessment_scores(db_conn)
     assert no_news
-    assert {score["corroboration"] for score in no_news.values()} == {0.0}
 
     assert pipeline.run_pipeline(cycle, settings=settings) == 0
     with_news = _assessment_scores(db_conn)
 
+    # Model risk is pure: corroboration (news or field) never feeds back into it.
     assert {zid: score["model_risk"] for zid, score in with_news.items()} == {
         zid: score["model_risk"] for zid, score in no_news.items()
     }
-    assert any(score["corroboration"] > 0 for score in with_news.values())
+    # News is one channel of corroboration: adding it can only raise the merged
+    # score (max of channels), and must raise it somewhere.
+    for zid, score in with_news.items():
+        assert score["corroboration"] >= no_news[zid]["corroboration"]
+    assert any(
+        score["corroboration"] > no_news[zid]["corroboration"]
+        for zid, score in with_news.items()
+    )
 
 
 class _HighRiskModel:

@@ -1,0 +1,211 @@
+[
+  {
+    "zone_id": "shabelle_corridor",
+    "hazard_type": "flood",
+    "severity": "warning",
+    "headline": "GloFAS riverine flood warning — Lower Shabelle Corridor",
+    "detail": "Forecast river discharge above the 5-year return period during the coming Gu/Genna rains; low-lying settlements and cropland exposed.",
+    "valid_from": "2026-03-10",
+    "valid_to": "2026-04-20",
+    "source": "glofas_seeded",
+    "available_at": "2026-03-10T06:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_corridor",
+    "hazard_type": "drought",
+    "severity": "warning",
+    "headline": "Severe drought conditions persist — Lower Shabelle Corridor",
+    "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation collapse; water point congestion and abnormal livestock movement expected.",
+    "valid_from": "2026-02-01",
+    "valid_to": "2026-05-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-02-01T06:00:00Z"
+  },
+  {
+    "zone_id": "shabelle_coast",
+    "hazard_type": "flood",
+    "severity": "watch",
+    "headline": "GloFAS riverine flood watch — Shabelle Coast",
+    "detail": "Forecast river discharge above the 5-year return period during the coming Gu/Genna rains; low-lying settlements and cropland exposed.",
+    "valid_from": "2026-03-10",
+    "valid_to": "2026-04-20",
+    "source": "glofas_seeded",
+    "available_at": "2026-03-10T06:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "hazard_type": "flood",
+    "severity": "warning",
+    "headline": "GloFAS riverine flood warning — Jubaland Coast",
+    "detail": "Forecast river discharge above the 5-year return period during the coming Gu/Genna rains; low-lying settlements and cropland exposed.",
+    "valid_from": "2026-03-10",
+    "valid_to": "2026-04-20",
+    "source": "glofas_seeded",
+    "available_at": "2026-03-10T06:00:00Z"
+  },
+  {
+    "zone_id": "jubaland_coast",
+    "hazard_type": "drought",
+    "severity": "warning",
+    "headline": "Severe drought conditions persist — Jubaland Coast",
+    "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation collapse; water point congestion and abnormal livestock movement expected.",
+    "valid_from": "2026-02-01",
+    "valid_to": "2026-05-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-02-01T06:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "hazard_type": "flood",
+    "severity": "watch",
+    "headline": "GloFAS riverine flood watch — Gambella Lowlands",
+    "detail": "Forecast river discharge above the 5-year return period during the coming Gu/Genna rains; low-lying settlements and cropland exposed.",
+    "valid_from": "2026-03-10",
+    "valid_to": "2026-04-20",
+    "source": "glofas_seeded",
+    "available_at": "2026-03-10T06:00:00Z"
+  },
+  {
+    "zone_id": "gambella_lowlands",
+    "hazard_type": "drought",
+    "severity": "warning",
+    "headline": "Severe drought conditions persist — Gambella Lowlands",
+    "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation collapse; water point congestion and abnormal livestock movement expected.",
+    "valid_from": "2026-02-01",
+    "valid_to": "2026-05-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-02-01T06:00:00Z"
+  },
+  {
+    "zone_id": "marsabit_frontier",
+    "hazard_type": "locust",
+    "severity": "advisory",
+    "headline": "FAO desert locust advisory — Marsabit Frontier",
+    "detail": "Scattered immature swarms reported upwind; conditions favour breeding where vegetation persists. Ground teams advised to maintain surveys.",
+    "valid_from": "2026-02-25",
+    "valid_to": "2026-04-30",
+    "source": "fao_dlis_seeded",
+    "available_at": "2026-02-25T06:00:00Z"
+  },
+  {
+    "zone_id": "moyale_border",
+    "hazard_type": "locust",
+    "severity": "advisory",
+    "headline": "FAO desert locust advisory — Moyale Border",
+    "detail": "Scattered immature swarms reported upwind; conditions favour breeding where vegetation persists. Ground teams advised to maintain surveys.",
+    "valid_from": "2026-02-25",
+    "valid_to": "2026-04-30",
+    "source": "fao_dlis_seeded",
+    "available_at": "2026-02-25T06:00:00Z"
+  },
+  {
+    "zone_id": "karamoja_cluster",
+    "hazard_type": "locust",
+    "severity": "advisory",
+    "headline": "FAO desert locust advisory — Karamoja Cluster",
+    "detail": "Scattered immature swarms reported upwind; conditions favour breeding where vegetation persists. Ground teams advised to maintain surveys.",
+    "valid_from": "2026-02-25",
+    "valid_to": "2026-04-30",
+    "source": "fao_dlis_seeded",
+    "available_at": "2026-02-25T06:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "hazard_type": "locust",
+    "severity": "advisory",
+    "headline": "FAO desert locust advisory — Afar Triangle",
+    "detail": "Scattered immature swarms reported upwind; conditions favour breeding where vegetation persists. Ground teams advised to maintain surveys.",
+    "valid_from": "2026-02-25",
+    "valid_to": "2026-04-30",
+    "source": "fao_dlis_seeded",
+    "available_at": "2026-02-25T06:00:00Z"
+  },
+  {
+    "zone_id": "afar_triangle",
+    "hazard_type": "heat",
+    "severity": "warning",
+    "headline": "Extreme heat warning — Afar Triangle",
+    "detail": "Daytime temperatures 3–5°C above the March average for a third dekad; elevated livestock and human heat stress.",
+    "valid_from": "2026-03-01",
+    "valid_to": "2026-03-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-03-01T06:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "hazard_type": "locust",
+    "severity": "advisory",
+    "headline": "FAO desert locust advisory — Afar Coast",
+    "detail": "Scattered immature swarms reported upwind; conditions favour breeding where vegetation persists. Ground teams advised to maintain surveys.",
+    "valid_from": "2026-02-25",
+    "valid_to": "2026-04-30",
+    "source": "fao_dlis_seeded",
+    "available_at": "2026-02-25T06:00:00Z"
+  },
+  {
+    "zone_id": "afar_coast",
+    "hazard_type": "heat",
+    "severity": "warning",
+    "headline": "Extreme heat warning — Afar Coast",
+    "detail": "Daytime temperatures 3–5°C above the March average for a third dekad; elevated livestock and human heat stress.",
+    "valid_from": "2026-03-01",
+    "valid_to": "2026-03-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-03-01T06:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_north",
+    "hazard_type": "drought",
+    "severity": "warning",
+    "headline": "Severe drought conditions persist — Mandera Kenya North",
+    "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation collapse; water point congestion and abnormal livestock movement expected.",
+    "valid_from": "2026-02-01",
+    "valid_to": "2026-05-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-02-01T06:00:00Z"
+  },
+  {
+    "zone_id": "mandera_ke_south",
+    "hazard_type": "drought",
+    "severity": "warning",
+    "headline": "Severe drought conditions persist — Mandera Kenya South",
+    "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation collapse; water point congestion and abnormal livestock movement expected.",
+    "valid_from": "2026-02-01",
+    "valid_to": "2026-05-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-02-01T06:00:00Z"
+  },
+  {
+    "zone_id": "mandera_et_west",
+    "hazard_type": "drought",
+    "severity": "warning",
+    "headline": "Severe drought conditions persist — Mandera Ethiopia West",
+    "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation collapse; water point congestion and abnormal livestock movement expected.",
+    "valid_from": "2026-02-01",
+    "valid_to": "2026-05-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-02-01T06:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "hazard_type": "heat",
+    "severity": "warning",
+    "headline": "Extreme heat warning — Mandera Somalia North",
+    "detail": "Daytime temperatures 3–5°C above the March average for a third dekad; elevated livestock and human heat stress.",
+    "valid_from": "2026-03-01",
+    "valid_to": "2026-03-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-03-01T06:00:00Z"
+  },
+  {
+    "zone_id": "mandera_so_north",
+    "hazard_type": "drought",
+    "severity": "warning",
+    "headline": "Severe drought conditions persist — Mandera Somalia North",
+    "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation collapse; water point congestion and abnormal livestock movement expected.",
+    "valid_from": "2026-02-01",
+    "valid_to": "2026-05-31",
+    "source": "icpac_seeded",
+    "available_at": "2026-02-01T06:00:00Z"
+  }
+]

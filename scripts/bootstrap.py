@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+from dira_data.context import load_information_fixtures, refresh_information_layer
 
 ROOT = Path(__file__).resolve().parents[1]
 SEEDED = ROOT / "data" / "seeded"
@@ -362,6 +363,7 @@ def main() -> int:
             upsert_climate(cur, climate_rows)
             upsert_news_documents(cur, articles)
             upsert_recipients(cur, recipients)
+            info_counts = refresh_information_layer(cur, load_information_fixtures(SEEDED))
 
     print("[bootstrap] Seeded Mandera + IGAD fixtures loaded.")
     print(f"[bootstrap] clusters={len(clusters)} zones={len(zones_geojson['features'])}")
@@ -369,6 +371,10 @@ def main() -> int:
     print(f"[bootstrap] acled_events={len(acled_events)} null_zone_events={null_event_count}")
     print(f"[bootstrap] climate_dekads={len(climate_rows)} news_documents={len(articles)}")
     print(f"[bootstrap] recipients={len(recipients)}")
+    print(
+        "[bootstrap] information layer: "
+        + " ".join(f"{k}={v}" for k, v in info_counts.items())
+    )
     return 0
 
 

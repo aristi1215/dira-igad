@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from dira_api.context_routes import router as context_router
 from dira_api.settings import Settings, get_settings
 
 logger = logging.getLogger("dira.api")
@@ -24,8 +25,9 @@ logger = logging.getLogger("dira.api")
 app = FastAPI(
     title="Dira API",
     description="Causal situation room for the Horn of Africa",
-    version="0.1.0",
+    version="0.2.0",
 )
+app.include_router(context_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -316,8 +318,23 @@ def zone_signals(zone_id: str) -> list[dict[str, Any]]:
 
 @app.get("/economy")
 def economy() -> dict[str, Any]:
-    """IGAD country economy indicators (seeded snapshot or live World Bank)."""
-    return get_economy_source(_settings().data_mode).indicators()
+    """IGAD country economy indicators (seeded snapshot or live World Bank),
+    enriched with UNHCR refugees-hosted figures when running live."""
+    settings = _settings()
+    payload = get_economy_source(settings.data_mode).indicators()
+    if settings.data_mode == "live":
+        try:
+            from dira_data.live import UnhcrRefugeeAdapter
+
+            for iso2, figures in UnhcrRefugeeAdapter().country_refugees().items():
+                country = payload.get("countries", {}).get(iso2)
+                if country is not None:
+                    country["refugees_hosted"] = figures["refugees_hosted"]
+                    country["refugees_year"] = figures["year"]
+            payload["source"] += " + UNHCR population API"
+        except Exception:
+            logger.exception("UNHCR refresh failed; serving base economy payload")
+    return payload
 
 
 ADVISOR_SYSTEM = (

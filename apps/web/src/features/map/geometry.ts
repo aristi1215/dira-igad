@@ -1,7 +1,7 @@
-import type { SituationFeature } from '../../lib/types'
+import type { Feature, Geometry } from 'geojson'
 
 export function featureCenter(
-  feature: SituationFeature,
+  feature: Feature<Geometry, unknown>,
 ): [number, number] | null {
   const positions = flattenGeometry(feature.geometry)
   if (positions.length === 0) {
@@ -29,9 +29,7 @@ export function featureCenter(
   ]
 }
 
-function flattenGeometry(
-  geometry: SituationFeature['geometry'],
-): [number, number][] {
+function flattenGeometry(geometry: Geometry): [number, number][] {
   if (geometry.type === 'GeometryCollection') {
     return geometry.geometries.flatMap((item) => flattenGeometry(item))
   }

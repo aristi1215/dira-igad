@@ -1,0 +1,17 @@
+# Build the Vite app, then serve the static bundle with nginx.
+# VITE_API_URL is baked at build time (SPA); default targets the compose api service
+# published on the host at :8000.
+FROM node:20-alpine AS build
+WORKDIR /app
+ARG VITE_API_URL=http://localhost:8000
+ENV VITE_API_URL=${VITE_API_URL}
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci
+COPY apps/web/ ./
+RUN npm run build
+
+FROM nginx:1.27-alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+# SPA fallback: every route (e.g. /zones/mandera_ke_north) serves index.html.
+RUN printf 'server {\n  listen 80;\n  root /usr/share/nginx/html;\n  location / {\n    try_files $uri /index.html;\n  }\n}\n' > /etc/nginx/conf.d/default.conf
+EXPOSE 80

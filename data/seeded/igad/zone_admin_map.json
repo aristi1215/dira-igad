@@ -1,0 +1,10 @@
+{
+  "mandera_ke_north": { "iso3": "KEN", "admin1_name": "Mandera", "admin1_pcode": "KE009" },
+  "mandera_ke_south": { "iso3": "KEN", "admin1_name": "Mandera", "admin1_pcode": "KE009" },
+  "marsabit_frontier": { "iso3": "KEN", "admin1_name": "Marsabit", "admin1_pcode": "KE010" },
+  "turkana_west": { "iso3": "KEN", "admin1_name": "Turkana", "admin1_pcode": "KE023" },
+  "gambella_lowlands": { "iso3": "ETH", "admin1_name": "Gambela", "admin1_pcode": "ET12" },
+  "gambella_east": { "iso3": "ETH", "admin1_name": "Gambela", "admin1_pcode": "ET12" },
+  "afar_triangle": { "iso3": "ETH", "admin1_name": "Afar", "admin1_pcode": "ET02" },
+  "moyale_border": { "iso3": "ETH", "admin1_name": "Oromia", "admin1_pcode": "ET04" }
+}

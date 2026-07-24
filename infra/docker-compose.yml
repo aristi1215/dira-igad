@@ -13,7 +13,8 @@ services:
       POSTGRES_PASSWORD: dira
       POSTGRES_DB: dira
     ports:
-      - "5432:5432"
+      # Host 55432 avoids clashing with local Postgres installs on 5432–5434.
+      - "55432:5432"
     volumes:
       - dira_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -68,6 +69,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    profiles:
+      - full
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+      args:
+        # The SPA calls the API from the *browser*, so this must be the
+        # host-reachable URL of the api service, not the compose-internal name.
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
     profiles:
       - full
 

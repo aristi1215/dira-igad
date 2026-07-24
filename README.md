@@ -13,6 +13,12 @@ Dira turns ICPAC-class environmental forecasts into actionable last-mile voice a
 
 **Protagonist cluster:** Mandera (Kenya–Ethiopia–Somalia tri-border), inside a **full IGAD regional view** — 9 clusters / 22 zones across Kenya, Ethiopia, Somalia, South Sudan, Sudan, Uganda, and Djibouti (D-011). A per-country **economy panel** (World Bank WDI-derived, D-012) rounds out the situation room.
 
+Beyond climate + conflict, Dira carries a CEWARN-style **information layer** (D-018): IPC food
+security, displacement (IOM DTM / UNHCR-shaped), WFP-shaped market & livestock prices (incl.
+goat→maize terms of trade), weekly disease surveillance, locust/flood/heat/drought hazard
+bulletins, and human field-monitor reports with a verification gate. All of it is bitemporal
+(`available_at`), context-only for the model, and browsable per zone in the web app.
+
 Authoritative reconstructed spec: [`DIRA-SPEC.md`](DIRA-SPEC.md). Honest deviations: [`DEVIATIONS.md`](DEVIATIONS.md).
 
 ---
@@ -48,9 +54,9 @@ dira-igad/
 ## Safety red lines (schema-enforced where noted)
 
 1. **Human gate** before any dispatch — DB `CHECK` on `alerts` (`approved_by` / `approved_at` required).
-2. **News signals never fire alerts alone** — born `unconfirmed`.
+2. **News signals never fire alerts alone** — born `unconfirmed`. Field-monitor reports are born `unverified` and contribute **exactly 0** to corroboration until a named human verifies them; dismissed reports stay at 0 forever.
 3. **Do-not-harm alert copy** — conditions and actions only; never name actors, ethnicities, clans, or communities.
-4. **Two separate scores** — pure `model_risk` (climate + history) vs news `corroboration`, combined by a **written visible rule**.
+4. **Two separate scores** — pure `model_risk` (climate + history) vs `corroboration` from two independent channels (news signals and **verified** field reports, merged by max, not sum), combined by a **written visible rule** persisted on every assessment.
 5. **Bitemporal features** — only `available_at <= data_cutoff`; climate upserts are first-write-wins per column group.
 6. **No network calls inside open DB transactions.**
 
@@ -91,15 +97,28 @@ npm --prefix apps/web run dev -- --host 0.0.0.0
 - API docs: http://localhost:8000/docs  
 - Web: http://localhost:5173  
 
+### The six screens (D-017)
+
+| Route | Screen | What it's for |
+|-------|--------|---------------|
+| `/` | **Map & watchlist** | Full-bleed light map; choropleth overlays (Conflict pressure · IPC phase · Displacement · Incidents · Hazards); situation markers sized by model risk; ranked watchlist rail; compact zone card with actions |
+| `/situations` | **Situation registry** | Filterable table of every situation → detail with risk trajectory, SHAP drivers, the two-score panel (written combination rule), frozen exposure snapshot, signals, verified field reports, alert timeline |
+| `/zones` | **Zone registry & dossiers** | All 22 zones with context chips → per-zone dossier: rain, NDVI, incidents, IPC, displacement, market prices + terms of trade, health surveillance, hazard bulletins, field reports (verify/dismiss/new), recipients |
+| `/dispatch` | **Onya console** | Approval gate (named signer required), delivery board by status with needs-review retry, keypad-ack semantics, recipient roster |
+| `/analytics` | **Regional analytics** | Incidents & fatalities, band distribution, rainfall heat-strip per cluster, IPC 3+ and IDP totals by country, economy panel |
+| `/sources` | **Data catalog** | Every source with mode (live/seeded), freshness, row counts, licences, the bitemporal note, and the red lines |
+
+An **Ask Dira** advisor drawer is available on every screen (OpenAI in live mode, deterministic canned fallback in seeded mode).
+
 ### Demo script
 
-1. Map shows all 22 IGAD zones (watch → very_high bands); left rail ranks zones by pressure with the country economy panel below.
-2. Select a red zone (map or watchlist) → Tabiri card (risk index, model vs corroboration, trigger indicator, exposure, SHAP drivers) plus that zone's unconfirmed news signals.
-3. Prepare alert → pending approval in advisor panel.
-4. Approve as `demo-advisor` → deliveries queued.
-5. Dispatch worker / MockDispatcher “calls” → simulated ack.
-6. SSE patches Query cache → zone trends green.
-7. Optional: ask the situation advisor (OpenAI in live mode, deterministic canned fallback in seeded mode) about the selected situation.
+1. Map opens on the IGAD region: all 22 zones choropleth-shaded by operational band, open situations as graduated markers, watchlist ranked by model risk.
+2. Flip overlays (IPC / Displacement / Incidents / Hazards) to see the same region through CEWARN's other lenses.
+3. Select the red Mandera zone → zone card → **Open dossier** for the full picture (IPC 5, IDP inflow, staple price spike, cholera alert, verified water-dispute reports).
+4. **View situation** → two-score panel shows pure model risk vs corroboration and the exact written rule, including the `verified_field_reports` channel.
+5. **Prepare alert** → Dispatch screen; read the Swahili draft, type your name, approve → deliveries queue atomically.
+6. Dispatch worker / MockDispatcher "calls" → simulated keypad ack; SSE patches the UI live.
+7. Verify or dismiss an unverified field report in the dossier — only verification by a named person moves corroboration, and only on the next pipeline cycle.
 
 LLM: set `OPENAI_API_KEY` for live alert drafting/advisor (D-010); Anthropic is a fallback and seeded mode needs no key.
 
