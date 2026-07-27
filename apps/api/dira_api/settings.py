@@ -20,10 +20,10 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     acled_email: str | None = None
     acled_password: str | None = None
-    africas_talking_username: str | None = None
-    africas_talking_api_key: str | None = None
     public_base_url: str = "http://localhost:8000"
     webhook_shared_secret: str | None = None
+    twilio_account_sid: str | None = None
+    twilio_auth_token: str | None = None
 
 
 @lru_cache

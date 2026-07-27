@@ -135,6 +135,23 @@ export function fmtDateTime(value: string | null | undefined): string {
   })
 }
 
+/** Human copy for the model's forecast window, e.g. "Next ~30 days (1 Aug – 31 Aug)". */
+export function fmtForecastWindow(
+  windowStart: string | null | undefined,
+  windowEnd: string | null | undefined,
+  horizonDekads?: number | null,
+): string {
+  if (!windowStart || !windowEnd) {
+    return horizonDekads ? `Next ${horizonDekads} dekads (~${horizonDekads * 10} days)` : '—'
+  }
+  const start = new Date(windowStart)
+  const end = new Date(windowEnd)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '—'
+  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
+  return `Next ~${days} days (${start.toLocaleDateString('en-GB', opts)} – ${end.toLocaleDateString('en-GB', opts)})`
+}
+
 export function titleCase(value: string): string {
   return value
     .split('_')

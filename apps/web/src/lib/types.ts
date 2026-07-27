@@ -61,6 +61,9 @@ export type SituationFeatureProperties = {
   exposure_snapshot: ExposureSnapshot
   prob_conflict: number | null
   expected_incidents: number | null
+  horizon_dekads: number | null
+  window_start: string | null
+  window_end: string | null
   acknowledged?: boolean
 }
 
@@ -82,6 +85,8 @@ export type Alert = {
   approved_at?: string | null
   created_at: string
   updated_at?: string | null
+  window_start?: string | null
+  window_end?: string | null
 }
 
 export type AlertDraftResponse = {
@@ -165,6 +170,55 @@ export type EconomyResponse = {
 export type AdvisorResponse = {
   answer: string
   context: Record<string, JsonValue>
+  citations?: AdvisorCitation[]
+  tools_used?: string[]
+  conversation_id?: string
+}
+
+export type AdvisorCitation = {
+  kind: string
+  title: string
+  source?: string | null
+  reference?: string | null
+}
+
+export type ModelCard = {
+  model_id: string
+  kind: string
+  predicts: string
+  horizon_dekads: number
+  horizon_days: number
+  label: string
+  feature_list: string[]
+  rows: number
+  train_rows: number
+  test_rows: number
+  temporal_split: string
+  metrics: {
+    brier: number
+    mae_incidents: number
+    transparent_index?: { brier: number; mae_incidents: number }
+    lightgbm?: { brier: number; mae_incidents: number } | null
+    baselines: Record<string, { brier: number; mae_incidents: number }>
+  }
+  evaluation_runs?: {
+    split_fraction: number
+    train_rows: number
+    test_rows: number
+    test_cycles: string[]
+    transparent_index?: { brier: number; mae_incidents: number }
+    lightgbm?: { brier?: number; unavailable?: string }
+    baselines?: Record<string, { brier: number; mae_incidents: number }>
+  }[]
+  performance_breakdown?: {
+    best_zones: [string, number][]
+    worst_zones: [string, number][]
+    best_cycles: [string, number][]
+    worst_cycles: [string, number][]
+    note: string
+  }
+  fallback_reason?: string | null
+  limitations?: string[]
 }
 
 export type Viewport = {
@@ -368,6 +422,9 @@ export type SituationDetail = {
     prob_conflict: number
     expected_incidents: number
     created_at: string
+    horizon_dekads?: number | null
+    window_start?: string | null
+    window_end?: string | null
   }[]
 }
 

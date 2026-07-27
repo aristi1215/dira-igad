@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from datetime import date, datetime
 from pathlib import Path
@@ -12,6 +13,7 @@ from dira_core.ports import ConflictEvent
 
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SEED_DIR = ROOT / "data" / "seeded"
+logger = logging.getLogger("dira.data.adapters")
 
 
 class SeededAcledAdapter:
@@ -201,7 +203,14 @@ def get_hazard_source(data_mode: str | None = None) -> SeededRasterAdapter | Chi
     if mode == "seeded":
         return SeededRasterAdapter(os.environ.get("SEEDED_DATA_DIR", DEFAULT_SEED_DIR))
     if mode == "live":
-        return ChirpsS3Adapter()
+        if os.environ.get("CHIRPS_S3_BUCKET"):
+            return ChirpsS3Adapter()
+        # Live climate rasters need a CHIRPS bucket; degrade to the seeded
+        # snapshot (independent connector degradation) instead of aborting.
+        logger.warning(
+            "DATA_MODE=live but CHIRPS_S3_BUCKET unset — hazard source degrades to seeded rasters."
+        )
+        return SeededRasterAdapter(os.environ.get("SEEDED_DATA_DIR", DEFAULT_SEED_DIR))
     raise ValueError(f"Unsupported DATA_MODE for hazard source: {mode!r}")
 
 

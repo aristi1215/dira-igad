@@ -13,11 +13,15 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from dira_core.ports import VoiceChannel
+from dira_core.ports import SpeechSynthesizer, VoiceChannel
 from dira_core.time import dispatch_backoff_delta
 from dira_data.db import connect
-from dira_dispatch import MockDispatcher, PrerecordedAudioAdapter
-from dira_dispatch.at_adapter import AfricasTalkingAdapter
+from dira_dispatch import (
+    MockDispatcher,
+    PrerecordedAudioAdapter,
+    TwilioVoiceAdapter,
+    get_speech_synthesizer,
+)
 
 from dira_worker.settings import Settings, get_settings
 
@@ -167,6 +171,7 @@ def process_one(
     settings: Settings,
     *,
     audio_fallback: str,
+    synthesizer: SpeechSynthesizer | None = None,
 ) -> bool:
     """Claim → call outside Tx → record. Returns True if work was done."""
     claimed = claim_next(conn)
@@ -178,6 +183,14 @@ def process_one(
     audio_url = claimed["audio_url"] or audio_fallback
     idem = claimed["idempotency_key"]
     attempts = int(claimed["attempt_count"])
+
+    # Live mode: synthesize alert audio to a public URL (outside any Tx).
+    # TTS failure is non-fatal — the adapter falls back to <Say>.
+    if synthesizer is not None and claimed.get("body_text"):
+        try:
+            audio_url = synthesizer.synthesize(str(claimed["body_text"]), "sw").url
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("TTS synth failed for delivery=%s: %s", delivery_id, exc)
 
     # CRITICAL: no open transaction while calling the provider (invariant 5).
     assert conn.info.transaction_status == 0 or True  # checked via instrumentation in tests
@@ -216,14 +229,27 @@ def run_loop(
     settings = settings or get_settings()
     tts = PrerecordedAudioAdapter()
     audio = tts.synthesize("generic alert", "sw")
+    synthesizer: Any = None
     if voice is None:
-        if settings.dispatch_mode == "at" and settings.at_username and settings.at_api_key:
-            voice = AfricasTalkingAdapter(
-                settings.at_username,
-                settings.at_api_key,
-                base_url=settings.at_voice_base_url,
+        if settings.dispatch_mode == "twilio":
+            voice = TwilioVoiceAdapter(
+                settings.twilio_account_sid,
+                api_key_sid=settings.twilio_api_key_sid,
+                api_key_secret=settings.twilio_api_key_secret,
+                auth_token=settings.twilio_auth_token,
+                from_number=settings.twilio_from_number,
+                api_base_url=settings.twilio_api_base_url,
+                public_base_url=settings.public_base_url,
             )
-            logger.info("Using Africa's Talking dispatcher base_url=%s", voice.base_url)
+            synthesizer = get_speech_synthesizer(
+                tts_provider=settings.tts_provider,
+                tts_api_key=settings.tts_api_key,
+                tts_voice_id=settings.tts_voice_id,
+                public_base_url=settings.public_base_url,
+            )
+            if isinstance(synthesizer, PrerecordedAudioAdapter):
+                synthesizer = None  # file:// URIs are useless to Twilio; use <Say>
+            logger.info("Using Twilio dispatcher base_url=%s", voice.api_base_url)
         else:
             # Disable built-in call()-time ack; process_one schedules ack after Tx B.
             voice = MockDispatcher(
@@ -239,10 +265,12 @@ def run_loop(
 
         while True:
             sweep_zombies(conn, settings)
-            process_one(conn, voice, settings, audio_fallback=audio.url)
+            process_one(conn, voice, settings, audio_fallback=audio.url, synthesizer=synthesizer)
             if once:
                 for _ in range(50):
-                    if not process_one(conn, voice, settings, audio_fallback=audio.url):
+                    if not process_one(
+                        conn, voice, settings, audio_fallback=audio.url, synthesizer=synthesizer
+                    ):
                         break
                 # Allow delayed mock acks to land before exit.
                 time.sleep(max(0.5, float(settings.mock_ack_delay_seconds) + 0.5))

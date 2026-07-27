@@ -404,7 +404,7 @@ def generate_information_layer() -> dict[str, int]:
                 "detail": "Forecast river discharge above the 5-year return period during the "
                           "coming Gu/Genna rains; low-lying settlements and cropland exposed.",
                 "valid_from": "2026-03-10",
-                "valid_to": "2026-04-20",
+                "valid_to": "2026-08-31",
                 "source": "glofas_seeded",
                 "available_at": "2026-03-10T06:00:00Z",
             })
@@ -417,7 +417,7 @@ def generate_information_layer() -> dict[str, int]:
                 "detail": "Scattered immature swarms reported upwind; conditions favour breeding "
                           "where vegetation persists. Ground teams advised to maintain surveys.",
                 "valid_from": "2026-02-25",
-                "valid_to": "2026-04-30",
+                "valid_to": "2026-09-30",
                 "source": "fao_dlis_seeded",
                 "available_at": "2026-02-25T06:00:00Z",
             })
@@ -430,7 +430,7 @@ def generate_information_layer() -> dict[str, int]:
                 "detail": "Daytime temperatures 3–5°C above the March average for a third dekad; "
                           "elevated livestock and human heat stress.",
                 "valid_from": "2026-03-01",
-                "valid_to": "2026-03-31",
+                "valid_to": "2026-08-15",
                 "source": "icpac_seeded",
                 "available_at": "2026-03-01T06:00:00Z",
             })
@@ -443,10 +443,50 @@ def generate_information_layer() -> dict[str, int]:
                 "detail": "Accumulated rainfall deficit beyond the 90th percentile with vegetation "
                           "collapse; water point congestion and abnormal livestock movement expected.",
                 "valid_from": "2026-02-01",
-                "valid_to": "2026-05-31",
+                "valid_to": "2026-12-31",
                 "source": "icpac_seeded",
                 "available_at": "2026-02-01T06:00:00Z",
             })
+
+    # Geological hazards along the East African Rift (USGS/ICPAC style)
+    bulletins.extend([
+        {
+            "zone_id": "afar_triangle",
+            "hazard_type": "volcanic",
+            "severity": "watch",
+            "headline": "Erta Ale volcanic unrest watch — Afar Triangle",
+            "detail": "Elevated thermal anomalies and intermittent gas plumes at the Erta Ale "
+                      "range; ashfall could disrupt grazing and water points downwind.",
+            "valid_from": "2026-03-05",
+            "valid_to": "2026-11-05",
+            "source": "usgs_seeded",
+            "available_at": "2026-03-05T06:00:00Z",
+        },
+        {
+            "zone_id": "afar_coast",
+            "hazard_type": "earthquake",
+            "severity": "advisory",
+            "headline": "Rift seismicity advisory — Afar Coast",
+            "detail": "Swarm of shallow M3–4 earthquakes along the Red Sea rift segment; "
+                      "low structural risk but water infrastructure inspections advised.",
+            "valid_from": "2026-03-12",
+            "valid_to": "2026-10-12",
+            "source": "usgs_seeded",
+            "available_at": "2026-03-12T06:00:00Z",
+        },
+        {
+            "zone_id": "blue_nile_escarpment",
+            "hazard_type": "landslide",
+            "severity": "watch",
+            "headline": "Escarpment landslide watch — Blue Nile Escarpment",
+            "detail": "Saturated slopes after early rains raise landslide susceptibility on "
+                      "the escarpment road corridors; movement of goods may be interrupted.",
+            "valid_from": "2026-03-15",
+            "valid_to": "2026-12-15",
+            "source": "usgs_seeded",
+            "available_at": "2026-03-15T06:00:00Z",
+        },
+    ])
 
     # --- Field reports: CEWARN field-monitor primary channel ------------------
     field_reports = []

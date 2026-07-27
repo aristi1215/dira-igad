@@ -12,6 +12,7 @@ import {
 import {
   BAND_MAP_COLORS,
   fmtCompact,
+  fmtForecastWindow,
   fmtRisk,
 } from '../lib/format'
 import { BandChip, IpcChip } from '../components/ui'
@@ -61,6 +62,15 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
     () => watchlist.find((zone) => zone.zone_id === selectedZoneId) ?? null,
     [selectedZoneId, watchlist],
   )
+
+  const selectedSituationProps = useMemo(() => {
+    if (!selectedZoneId) return null
+    return (
+      situationsQuery.data?.features.find(
+        (feature) => feature.properties.zone_id === selectedZoneId,
+      )?.properties ?? null
+    )
+  }, [selectedZoneId, situationsQuery.data])
 
   const prepareAlertMutation = useMutation({
     mutationFn: (situationId: string) => prepareAlert(situationId),
@@ -158,6 +168,16 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
             <div>
               <dt>Model risk</dt>
               <dd>{fmtRisk(selectedZone.model_risk)}</dd>
+            </div>
+            <div>
+              <dt>Forecast window</dt>
+              <dd>
+                {fmtForecastWindow(
+                  selectedSituationProps?.window_start,
+                  selectedSituationProps?.window_end,
+                  selectedSituationProps?.horizon_dekads,
+                )}
+              </dd>
             </div>
             <div>
               <dt>IDPs</dt>

@@ -7,6 +7,7 @@ import type {
   Delivery,
   EconomyResponse,
   FieldReport,
+  ModelCard,
   Recipient,
   RegionalIndicators,
   RetryDeliveryResponse,
@@ -41,6 +42,7 @@ export const queryKeys = {
   sources: ['sources'] as const,
   analytics: ['analytics', 'overview'] as const,
   recipients: ['recipients'] as const,
+  modelCard: ['model', 'card'] as const,
 }
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
@@ -167,11 +169,21 @@ export function fetchZoneSignals(zoneId: string): Promise<ZoneSignal[]> {
 export function askAdvisor(
   question: string,
   situationId: string | null,
+  options?: { zoneId?: string | null; conversationId?: string | null },
 ): Promise<AdvisorResponse> {
   return requestJson<AdvisorResponse>('/advisor', {
     method: 'POST',
-    body: { question, situation_id: situationId },
+    body: {
+      question,
+      situation_id: situationId,
+      zone_id: options?.zoneId ?? null,
+      conversation_id: options?.conversationId ?? null,
+    },
   })
+}
+
+export function fetchModelCard(): Promise<ModelCard> {
+  return requestJson<ModelCard>('/model/card')
 }
 
 export function retryDelivery(deliveryId: string): Promise<RetryDeliveryResponse> {
