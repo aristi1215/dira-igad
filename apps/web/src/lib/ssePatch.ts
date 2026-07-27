@@ -63,6 +63,10 @@ function invalidationKeys(payload: DiraSseEvent): QueryKey[] {
     return [queryKeys.mapSituations]
   }
 
+  if (payload.table === 'field_reports' || payload.type === 'field_report_updated') {
+    return [['field-reports'], ['zones']]
+  }
+
   return []
 }
 
