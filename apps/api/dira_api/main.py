@@ -590,12 +590,18 @@ def model_card() -> dict[str, Any]:
                 """
             )
             row = cur.fetchone()
+    card: dict[str, Any] | None = None
     if row and row["model_card"]:
-        card = row["model_card"]
-        return card if isinstance(card, dict) else json.loads(card)
-    path = Path(__file__).resolve().parents[3] / "artifacts" / "model_card.json"
-    if path.is_file():
-        return json.loads(path.read_text(encoding="utf-8"))
+        raw = row["model_card"]
+        card = raw if isinstance(raw, dict) else json.loads(raw)
+    # Bootstrap registers a placeholder card without evaluation metrics; the
+    # full evaluated card lives in artifacts/ until scripts/train.py re-registers.
+    if card is None or "metrics" not in card:
+        path = Path(__file__).resolve().parents[3] / "artifacts" / "model_card.json"
+        if path.is_file():
+            return json.loads(path.read_text(encoding="utf-8"))
+    if card is not None:
+        return card
     raise HTTPException(404, "No trained model card available — run scripts/train.py")
 
 

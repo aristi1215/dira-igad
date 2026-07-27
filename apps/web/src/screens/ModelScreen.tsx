@@ -46,11 +46,27 @@ export function ModelScreen() {
   }
 
   const card = cardQuery.data
-  const baselines = card.metrics.baselines ?? {}
+  if (!card.metrics) {
+    return (
+      <div className="screen">
+        <PageHeader
+          eyebrow="Amani engine"
+          title="Model card"
+          description="What the risk model predicts, how it was trained, and how accurate it is."
+        />
+        <EmptyState>
+          No evaluated model card yet — the active model was registered without
+          evaluation metrics. Run scripts/train.py to train and evaluate.
+        </EmptyState>
+      </div>
+    )
+  }
+  const metrics = card.metrics
+  const baselines = metrics.baselines ?? {}
   const active = card.kind === 'lightgbm' ? 'LightGBM' : 'Transparent index'
   const beatsBaselines =
     Object.keys(baselines).length > 0 &&
-    Object.values(baselines).every((b) => card.metrics.brier < b.brier)
+    Object.values(baselines).every((b) => metrics.brier < b.brier)
 
   return (
     <div className="screen">
@@ -74,12 +90,12 @@ export function ModelScreen() {
         />
         <StatTile
           label="Brier score"
-          value={fmtMetric(card.metrics.brier)}
+          value={fmtMetric(metrics.brier)}
           detail="Lower is better (0 = perfect)"
         />
         <StatTile
           label="MAE incidents"
-          value={fmtMetric(card.metrics.mae_incidents)}
+          value={fmtMetric(metrics.mae_incidents)}
           detail="Expected-incident error"
         />
         <StatTile
@@ -130,17 +146,17 @@ export function ModelScreen() {
                   <td>
                     <strong>{active} (active)</strong>
                   </td>
-                  <td className="num">{fmtMetric(card.metrics.brier)}</td>
-                  <td className="num">{fmtMetric(card.metrics.mae_incidents)}</td>
+                  <td className="num">{fmtMetric(metrics.brier)}</td>
+                  <td className="num">{fmtMetric(metrics.mae_incidents)}</td>
                 </tr>
-                {card.metrics.transparent_index && card.kind === 'lightgbm' ? (
+                {metrics.transparent_index && card.kind === 'lightgbm' ? (
                   <tr>
                     <td>Transparent index</td>
                     <td className="num">
-                      {fmtMetric(card.metrics.transparent_index.brier)}
+                      {fmtMetric(metrics.transparent_index.brier)}
                     </td>
                     <td className="num">
-                      {fmtMetric(card.metrics.transparent_index.mae_incidents)}
+                      {fmtMetric(metrics.transparent_index.mae_incidents)}
                     </td>
                   </tr>
                 ) : null}

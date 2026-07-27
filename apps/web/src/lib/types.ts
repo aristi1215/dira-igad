@@ -194,7 +194,7 @@ export type ModelCard = {
   train_rows: number
   test_rows: number
   temporal_split: string
-  metrics: {
+  metrics?: {
     brier: number
     mae_incidents: number
     transparent_index?: { brier: number; mae_incidents: number }
