@@ -37,7 +37,7 @@ dira-igad/
 │   ├── dira_data/      ACLED / CHIRPS / PostGIS adapters
 │   ├── dira_ml/        LightGBM, baselines, SHAP/transparent index
 │   ├── dira_llm/       LLM, prompts, signal extraction
-│   └── dira_dispatch/  Africa's Talking, TTS, MockDispatcher
+│   └── dira_dispatch/  Voice dispatch (Twilio migration; MockDispatcher default), TTS
 ├── artifacts/          model artifacts + PNG tiles
 ├── data/seeded/        Mandera fixtures — demo insurance
 ├── infra/              docker-compose, Dockerfiles, Alembic
@@ -124,6 +124,17 @@ LLM: set `OPENAI_API_KEY` for live alert drafting/advisor (D-010); Anthropic is 
 
 `make demo` twice is idempotent (same final storefront state for the three cycles).
 
+### Live APIs (brief)
+
+**ACLED** (`DATA_MODE=live`) — set `ACLED_EMAIL` / `ACLED_PASSWORD` (myACLED Research+). OAuth:
+
+1. `POST https://acleddata.com/oauth/token` with `username`, `password`, `grant_type=password`, `client_id=acled`, `scope=authenticated`
+2. `GET https://acleddata.com/api/acled/read?…` with `Authorization: Bearer <token>`
+
+Research tier: event-level data excludes the **past 12 months**; use older years for event reads. Docs: [Getting started](https://acleddata.com/api-documentation/getting-started). Adapter: `packages/dira_data/dira_data/adapters.py` (`AcledApiAdapter`).
+
+**Twilio** (voice) — **replacing Africa's Talking**. Env: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (or API key SID/secret), `TWILIO_FROM_NUMBER` (E.164, number you own/verified). `DISPATCH_MODE=mock` until the Twilio adapter is wired; then `DISPATCH_MODE=twilio`. `PUBLIC_BASE_URL` must be publicly reachable for Gather/status webhooks. **Must be updated throughout the app** (worker settings, `dira_dispatch`, AT webhook routes, README/AGENTS/DEVIATIONS) — AT remains only as legacy code until removed.
+
 ---
 
 ## Process inventory
@@ -154,7 +165,7 @@ Integration tests require a real Postgres (`DATABASE_URL`). They never use SQLit
 ## When we would change these decisions
 
 - Swap TransparentIndex for a freshly trained LightGBM when Mandera history is long enough for honest lift over the three baselines.
-- Replace MockDispatcher with Africa's Talking only after webhook signature verification is wired in live mode.
+- Replace MockDispatcher with **Twilio** (not Africa's Talking) once the adapter + webhook signature verification are wired; finish the AT→Twilio sweep across dispatch/API/docs.
 - Add WhatsApp/SMS channels only after the voice Mandera loop is rock-solid (spec cut order).
 - Move embeddings from precomputed/hash to local BGE-M3 once GPU/CPU budget allows.
 

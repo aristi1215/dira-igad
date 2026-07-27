@@ -12,7 +12,7 @@ Dira is a fully implemented modular monorepo (not a scaffold — see `CLAUDE.md`
 | API (FastAPI) | `apps/api` | `uv run uvicorn dira_api.main:app --reload --port 8000` | Full REST + SSE + webhooks — see `apps/api/dira_api/main.py`, `context_routes.py` |
 | Web (React+Vite) | `apps/web` | `npm --prefix apps/web run dev` (add `-- --host 0.0.0.0`) | Multi-screen situation room, light Carbon style (react-router: Map / Situations / Zones / Dispatch / Analytics / Sources; MapLibre, TanStack Query, Zustand, recharts) |
 | Worker — pipeline | `apps/worker` | `uv run python -m dira_worker.pipeline --cycle YYYY-MM-DD` | Runs the E1–E7 dekadal cycle end-to-end; day must be 1/11/21 |
-| Worker — dispatch | `apps/worker` | `uv run python -m dira_worker.dispatch` | LISTEN/NOTIFY + 30s poll daemon; `DISPATCH_MODE=mock` by default (Africa's Talking wired but sandbox key rejected — D-016) |
+| Worker — dispatch | `apps/worker` | `uv run python -m dira_worker.dispatch` | LISTEN/NOTIFY + 30s poll daemon; `DISPATCH_MODE=mock` by default (Twilio replacing AT — adapter TBD; D-016) |
 | DB (Postgres+PostGIS+pgvector) | `infra/docker-compose.yml` | `docker compose -f infra/docker-compose.yml up -d db` | Required — everything above connects to it; schema applied via Alembic, not init scripts |
 
 - API docs / manual testing: `http://localhost:8000/docs` (Swagger). Web dev server: `http://localhost:5173`.
@@ -43,6 +43,16 @@ Dira is a fully implemented modular monorepo (not a scaffold — see `CLAUDE.md`
 
 - Copy `.env.example` to `.env`. Keep `DATA_MODE=seeded` for local work — it's deterministic and
   network-free (canned LLM responses, seeded conflict/hazard data, `MockDispatcher`). All live-mode
-  secrets (OpenAI/Anthropic, ACLED, HDX, Africa's Talking, TTS) are optional in seeded mode.
+  secrets (OpenAI/Anthropic, ACLED, HDX, Twilio, TTS) are optional in seeded mode.
 - Default `DATABASE_URL` in `.env.example` points at host port `55432` (Compose maps it there to avoid
   clashing with a local Postgres on 5432–5434).
+
+### Live integrations (brief)
+
+- **ACLED:** `ACLED_EMAIL` + `ACLED_PASSWORD` → OAuth password grant (`client_id=acled`) →
+  `GET /api/acled/read` with Bearer token. Research tier: no event-level data for the last 12 months.
+  See [ACLED getting started](https://acleddata.com/api-documentation/getting-started).
+- **Twilio (voice, replacing Africa's Talking):** `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` (or
+  API key SID/secret) + `TWILIO_FROM_NUMBER` (E.164 owned/verified number). Keep `DISPATCH_MODE=mock`
+  until the Twilio adapter lands; then `DISPATCH_MODE=twilio`. **Sweep AT→Twilio across the whole
+  app** (settings, `dira_dispatch`, webhooks, docs) — do not leave half AT / half Twilio.

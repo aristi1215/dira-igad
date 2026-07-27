@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Dira is a causal situation room for the Horn of Africa (IGAD Husika Hackathon 2026): it turns
 climate/conflict data into risk assessments per zone, drafts human-gated voice alerts, and dispatches
-them via Africa's Talking (or a mock in seeded mode). Full architecture, safety red lines, and the
+them via voice dispatch (Twilio migration underway; mock in seeded mode). Full architecture, safety red lines, and the
 process inventory are in [`README.md`](README.md) — read it first, it is not duplicated here.
 
 **Ignore `docs/IMPLEMENTATION.md`.** It describes an earlier scaffold-only state ("worker exits 1",
@@ -77,7 +77,7 @@ packages/dira_data       Adapters: db.py (psycopg3), climate.py, context.py (inf
 packages/dira_ml         LightGBMAdapter, TransparentIndexAdapter (fallback), baselines, train.py
 packages/dira_llm        OpenAIAdapter / AnthropicAdapter / CannedResponseAdapter, factory.py
                           (get_language_model: OpenAI → Anthropic → Canned), signals.py, prompts.py
-packages/dira_dispatch   MockDispatcher (seeded), Africa's Talking adapter (at_adapter.py), tts.py
+packages/dira_dispatch   MockDispatcher (seeded), legacy AT adapter; Twilio replacing AT (D-016), tts.py
 ```
 
 ### `DATA_MODE=seeded|live`

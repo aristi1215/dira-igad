@@ -96,13 +96,13 @@ This file records honest deviations from the authoritative specification for hum
 
 **Why:** Explicit user request, inspired by koala73/worldmonitor. The World Bank API returned 5xx errors during development, so the seeded snapshot guarantees the panel always renders.
 
-## D-013 — ACLED live adapter authenticated but read access denied
+## D-013 — ACLED live adapter (Research access unlocked)
 
 **Spec said:** Live ACLED ingestion in live mode.
 
-**What we did:** Implemented the full OAuth password-grant + `/api/acled/read` adapter for all eight IGAD countries. With the supplied credentials, token acquisition succeeds but the read endpoint returns `{"message":"Access denied"}` (account-level API permission). Seeded events remain the default.
+**What we did:** Implemented the full OAuth password-grant + `/api/acled/read` adapter for all eight IGAD countries. Open-tier accounts previously got `Access denied` on read; the project account is now **Research**, so authenticated reads succeed. Research still **embargoes the past 12 months** of event-level data (aggregated/real-time weekly is separate). Seeded events remain the demo default (`DATA_MODE=seeded`).
 
-**Why:** The adapter is ready; unlocking it only requires enabling API access on the ACLED account.
+**Why:** Live path is credential-ready; demo stays deterministic until `DATA_MODE=live` is intentional.
 
 ## D-014 — Fixed broken import-linter configuration
 
@@ -116,11 +116,11 @@ This file records honest deviations from the authoritative specification for hum
 
 **Why:** Explicit user request — prioritize a professional, presentation-ready look (hackathon value proposition) over information density.
 
-## D-016 — Africa's Talking dispatcher wired but sandbox key rejected
+## D-016 — Voice provider: Africa's Talking → Twilio (in progress)
 
-**What we did:** Added `DISPATCH_MODE=at` to switch the dispatch daemon from MockDispatcher to the Africa's Talking voice API (`AT_USERNAME`/`AT_API_KEY`/`AT_VOICE_BASE_URL`). The supplied sandbox API key returned HTTP 401 "The supplied authentication is invalid" on both the voice and sandbox messaging endpoints, so the default remains `DISPATCH_MODE=mock`.
+**What we did:** Originally wired `DISPATCH_MODE=at` for Africa's Talking; sandbox keys returned 401, so default stayed `DISPATCH_MODE=mock`. **Provider change:** voice is moving to **Twilio** (`TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` or API key / `TWILIO_FROM_NUMBER`). Env templates updated; application code (adapter, worker `dispatch_mode`, AT webhooks, docs references) **must be updated throughout** — do not ship a mixed AT/Twilio stack.
 
-**Why:** Keeps the golden path demonstrable while making live dispatch a one-line env change once a valid key exists.
+**Why:** Reliable auth/DX for demos; AT remains legacy until the Twilio sweep is complete. Mock stays the golden path until `DISPATCH_MODE=twilio` works end-to-end.
 
 ## D-017 — Multi-screen light-Carbon frontend (supersedes D-015)
 
