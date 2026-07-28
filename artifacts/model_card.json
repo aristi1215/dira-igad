@@ -26,15 +26,15 @@
   "test_rows": 66,
   "temporal_split": "80/20 by cycle with embargo (train label windows never cross the split)",
   "metrics": {
-    "brier": 0.2601207119610332,
-    "mae_incidents": 0.6253617314384747,
+    "brier": 0.30300125560822494,
+    "mae_incidents": 0.6512812065195978,
     "transparent_index": {
-      "brier": 0.2815625825057202,
-      "mae_incidents": 1.2271801770158062
+      "brier": 0.28748047892359474,
+      "mae_incidents": 1.3391852424086992
     },
     "lightgbm": {
-      "brier": 0.2601207119610332,
-      "mae_incidents": 0.6253617314384747
+      "brier": 0.30300125560822494,
+      "mae_incidents": 0.6512812065195978
     },
     "baselines": {
       "persistence": {
@@ -61,11 +61,11 @@
         "2026-02-21"
       ],
       "transparent_index": {
-        "brier": 0.2751020049417935,
-        "mae_incidents": 1.1836756921879117
+        "brier": 0.28125059795919477,
+        "mae_incidents": 1.341929518062367
       },
       "lightgbm": {
-        "brier": 0.25907057078920737
+        "brier": 0.2578820846508224
       },
       "baselines": {
         "persistence": {
@@ -91,11 +91,11 @@
         "2026-02-21"
       ],
       "transparent_index": {
-        "brier": 0.27895344527988236,
-        "mae_incidents": 1.2007911089745233
+        "brier": 0.2827550706212479,
+        "mae_incidents": 1.3383959468775428
       },
       "lightgbm": {
-        "brier": 0.2511005999745061
+        "brier": 0.29017974037280664
       },
       "baselines": {
         "persistence": {
@@ -121,11 +121,11 @@
         "2026-02-21"
       ],
       "transparent_index": {
-        "brier": 0.2815625825057202,
-        "mae_incidents": 1.2271801770158062
+        "brier": 0.28748047892359474,
+        "mae_incidents": 1.3391852424086992
       },
       "lightgbm": {
-        "brier": 0.2601207119610332
+        "brier": 0.30300125560822494
       },
       "baselines": {
         "persistence": {
@@ -146,58 +146,58 @@
   "performance_breakdown": {
     "best_zones": [
       [
-        "mandera_et_east",
-        0.08488926082804078
+        "moyale_border",
+        0.03099253761685752
       ],
       [
         "gambella_lowlands",
-        0.08742274323954417
+        0.03189257464503716
       ],
       [
-        "jubaland_coast",
-        0.09060525914313637
+        "blue_nile_escarpment",
+        0.13948451922096847
       ]
     ],
     "worst_zones": [
       [
         "marsabit_frontier",
-        0.5042649773332651
+        0.6876092090041356
+      ],
+      [
+        "afar_coast",
+        0.5890061634787891
       ],
       [
         "jubaland_inland",
-        0.49705945982373656
-      ],
-      [
-        "mandera_ke_north",
-        0.4898539423142079
+        0.41764633143875335
       ]
     ],
     "best_cycles": [
       [
-        "2026-02-11",
-        0.2300776221492564
+        "2026-02-01",
+        0.26267522547753397
       ],
       [
         "2026-02-21",
-        0.27470655060342686
+        0.31806676881819784
       ],
       [
-        "2026-02-01",
-        0.27557796313041644
+        "2026-02-11",
+        0.3282617725289429
       ]
     ],
     "worst_cycles": [
       [
-        "2026-02-01",
-        0.27557796313041644
+        "2026-02-11",
+        0.3282617725289429
       ],
       [
         "2026-02-21",
-        0.27470655060342686
+        0.31806676881819784
       ],
       [
-        "2026-02-11",
-        0.2300776221492564
+        "2026-02-01",
+        0.26267522547753397
       ]
     ],
     "note": "Brier per zone/cycle on held-out test dekads; lower is better. The model performs best in zones with stable seasonal patterns and worst around sudden regime shifts with no climate precursor."

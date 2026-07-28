@@ -31,6 +31,28 @@ def load_zones(conn: Connection[Any]) -> list[dict[str, Any]]:
     )
 
 
+def load_zone_geoms_geojson(conn: Connection[Any]) -> dict[str, dict[str, Any]]:
+    """Return ``{zone_id: GeoJSON geometry}`` for raster zonal stats / PIP."""
+    import json
+
+    rows = _fetch_all(
+        conn,
+        """
+        SELECT id, ST_AsGeoJSON(geom) AS geom_json
+        FROM zones
+        WHERE geom IS NOT NULL
+        ORDER BY id
+        """,
+    )
+    out: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        raw = row.get("geom_json")
+        if not raw:
+            continue
+        out[str(row["id"])] = json.loads(raw) if isinstance(raw, str) else raw
+    return out
+
+
 def load_adjacency(conn: Connection[Any]) -> list[dict[str, Any]]:
     return _fetch_all(
         conn,

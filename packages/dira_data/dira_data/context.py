@@ -128,10 +128,12 @@ def upsert_health(cur: Any, rows: list[dict[str, Any]]) -> None:
 
 def upsert_hazard_bulletins(cur: Any, rows: list[dict[str, Any]]) -> None:
     for r in rows:
-        bulletin_id = deterministic_id(
-            "hazard_bulletin",
-            f"{r['zone_id']}:{r['hazard_type']}:{r['valid_from']}:{r['headline']}",
+        # Optional external_key keeps live multi-zone fan-outs unique without
+        # mangling the human-readable headline.
+        key = r.get("external_key") or (
+            f"{r['zone_id']}:{r['hazard_type']}:{r['valid_from']}:{r['headline']}"
         )
+        bulletin_id = deterministic_id("hazard_bulletin", str(key))
         cur.execute(
             """
             INSERT INTO hazard_bulletins (

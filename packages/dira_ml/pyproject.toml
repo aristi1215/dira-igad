@@ -16,7 +16,11 @@ dependencies = [
 
 [project.optional-dependencies]
 explain = [
-  "shap>=0.46",
+  # TreeSHAP. Pin numba/llvmlite so the resolver does not pick ancient
+  # source builds that fail on Python 3.11–3.13.
+  "shap>=0.47",
+  "numba>=0.60",
+  "llvmlite>=0.43",
 ]
 
 [build-system]

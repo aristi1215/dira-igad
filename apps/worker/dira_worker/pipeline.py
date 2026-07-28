@@ -24,7 +24,14 @@ from dira_core.risk import (
     corroboration_from_field_reports,
     merge_corroboration,
 )
-from dira_core.time import data_cutoff_for_cycle, dekad_end, next_dekad, validate_dekad_start
+from dira_core.time import (
+    data_cutoff_for_cycle,
+    dekad_end,
+    next_dekad,
+    previous_dekad,
+    validate_dekad_start,
+)
+from dira_data.acled_ingest import upsert_acled_events
 from dira_data.adapters import SeededRasterAdapter, get_conflict_source, get_hazard_source
 from dira_data.climate import upsert_climate_first_write_wins
 from dira_data.context import (
@@ -39,6 +46,7 @@ from dira_data.db import (
     load_adjacency_by_zone,
     load_climate_rows,
     load_exposure,
+    load_zone_geoms_geojson,
     load_zones,
 )
 from dira_data.tiles import render_placeholder_tile
@@ -114,51 +122,62 @@ def stage_e1_e2(conn: Any, cycle: date, settings: Settings) -> None:
     """Ingest conflict/hazard observations + first-write-wins climate + tiles."""
     zones = load_zones(conn)
     zone_ids = [str(z["id"]) for z in zones]
+    zone_geoms = load_zone_geoms_geojson(conn)
     conflict = get_conflict_source(settings.data_mode)
-    hazard = get_hazard_source(settings.data_mode)
+    hazard = get_hazard_source(settings.data_mode, zone_geoms_geojson=zone_geoms)
 
-    events = conflict.events(zone_ids, since=date(2012, 1, 1))
+    # Full history on first live attribution pass; later cycles stay incremental.
+    since = date(2012, 1, 1)
     with conn.cursor() as cur:
-        for ev in events:
-            cur.execute(
-                """
-                INSERT INTO acled_events (
-                  event_id, event_date, zone_id, event_type, fatalities,
-                  actor1, actor2, notes, available_at, source
-                ) VALUES (
-                  %(event_id)s, %(event_date)s, %(zone_id)s, %(event_type)s,
-                  %(fatalities)s, %(actor1)s, %(actor2)s, %(notes)s,
-                  %(available_at)s, 'acled'
-                )
-                ON CONFLICT (event_id) DO NOTHING
-                """,
+        cur.execute(
+            "SELECT COUNT(*) AS n FROM acled_events WHERE geom IS NOT NULL AND zone_id IS NOT NULL"
+        )
+        attributed = int(cur.fetchone()["n"])
+    if settings.data_mode == "live" and attributed >= 1000:
+        since = date(cycle.year - 2, cycle.month, 1)
+
+    events = conflict.events(zone_ids, since=since)
+    stats = upsert_acled_events(conn, events)
+    logger.info("ACLED upsert: %s (since=%s)", stats, since.isoformat())
+
+    climate_rows: list[dict[str, Any]] = []
+
+    def _extend_fetched(dekad: date, fetched: dict[str, dict[str, Any]]) -> None:
+        for zid, vals in fetched.items():
+            climate_rows.append(
                 {
-                    "event_id": ev.event_id,
-                    "event_date": ev.event_date,
-                    "zone_id": ev.zone_id,
-                    "event_type": ev.event_type,
-                    "fatalities": ev.fatalities,
-                    "actor1": ev.actor1,
-                    "actor2": ev.actor2,
-                    "notes": ev.notes,
-                    "available_at": ev.available_at
-                    or datetime.combine(ev.event_date, datetime.min.time(), tzinfo=UTC),
-                },
+                    "zone_id": zid,
+                    "dekad_start": dekad,
+                    "rain_mm": vals.get("rain_mm"),
+                    "rain_available_at": vals.get("rain_available_at"),
+                    "ndvi_mean": vals.get("ndvi_mean"),
+                    "ndvi_available_at": vals.get("ndvi_available_at"),
+                }
             )
 
-    fetched = hazard.fetch_dekadal(zone_ids, cycle)
-    climate_rows: list[dict[str, Any]] = []
-    for zid, vals in fetched.items():
-        climate_rows.append(
-            {
-                "zone_id": zid,
-                "dekad_start": cycle,
-                "rain_mm": vals.get("rain_mm"),
-                "rain_available_at": vals.get("rain_available_at"),
-                "ndvi_mean": vals.get("ndvi_mean"),
-                "ndvi_available_at": vals.get("ndvi_available_at"),
-            }
-        )
+    # Current cycle (+ prior dekads in live so training sees real rain history).
+    dekads_to_fetch = [cycle]
+    if settings.data_mode == "live":
+        d = cycle
+        for _ in range(11):
+            d = previous_dekad(d)
+            dekads_to_fetch.append(d)
+
+    for dekad in dekads_to_fetch:
+        _extend_fetched(dekad, hazard.fetch_dekadal(zone_ids, dekad))
+
+    # Live CHIRPS replaces prior seeded rain for the fetched dekads (NDVI kept).
+    if settings.data_mode == "live" and climate_rows:
+        dekad_list = sorted({row["dekad_start"] for row in climate_rows})
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE zone_climate_dekadal
+                SET rain_mm = NULL, rain_available_at = NULL
+                WHERE dekad_start = ANY(%s)
+                """,
+                (dekad_list,),
+            )
 
     # Seeded: also allow backfill of prior dekads from fixtures (idempotent FWW).
     if settings.data_mode == "seeded":

@@ -13,8 +13,9 @@ Run it in its own terminal once the API + dispatch worker are up:
     uv run python -m scripts.demo_pulse            # default ~12 min scenario
     uv run python -m scripts.demo_pulse --fast     # 10x speed for rehearsal
 
-Restart-safe: every step is idempotent (deterministic narratives are deduped
-by exact text; alert drafting is skipped when a pending alert already exists).
+Restart-safe: field-report steps dedupe on exact narrative text. Alert drafts
+are always created when requested — multiple pending alerts per zone/situation
+are allowed (the human gate is approval, not drafting).
 Refuses to start unless DATA_MODE=seeded.
 """
 
@@ -85,6 +86,8 @@ SCENARIO: list[dict[str, Any]] = [
 ]
 
 STEP_SECONDS = 70.0  # ~12 minutes for the full scenario
+# During heartbeat, draft a new alert every N ticks (rotating zone).
+HEARTBEAT_ALERT_EVERY = 6
 
 
 def _require_seeded(client: httpx.Client) -> None:
@@ -156,16 +159,19 @@ def _step_prepare_alert(client: httpx.Client, step: dict[str, Any]) -> None:
     if situation_id is None:
         logger.info("no open situation for %s — skipping alert draft", step["zone_id"])
         return
-    pending = client.get(f"{API}/alerts", params={"status": "pending_approval"})
-    if pending.status_code == 200 and any(
-        a["situation_id"] == situation_id for a in pending.json()
-    ):
-        logger.info("pending alert already exists for %s — skipping", step["zone_id"])
+    try:
+        client.post(
+            f"{API}/situations/{situation_id}/alert",
+            json={"created_by": "demo-pulse", "language": "sw"},
+            timeout=120.0,
+        ).raise_for_status()
+    except httpx.HTTPError as exc:
+        logger.warning(
+            "alert draft failed for %s (continuing pulse): %s",
+            step["zone_id"],
+            exc,
+        )
         return
-    client.post(
-        f"{API}/situations/{situation_id}/alert",
-        json={"created_by": "demo-pulse", "language": "sw"},
-    ).raise_for_status()
     logger.info(
         "alert DRAFTED for %s — it now waits at the human approval gate",
         step["zone_id"],
@@ -208,6 +214,8 @@ def _heartbeat(client: httpx.Client, tick: int, delay: float) -> None:
                 json={"verified_by": "demo-duty-officer"},
             ).raise_for_status()
             logger.info("heartbeat: verified previous report in %s", prev_zone)
+    if tick > 0 and tick % HEARTBEAT_ALERT_EVERY == 0:
+        _step_prepare_alert(client, {"zone_id": zone})
     time.sleep(delay)
 
 
@@ -223,7 +231,7 @@ def main() -> None:
     args = parser.parse_args()
     delay = 0.0 if args.once else STEP_SECONDS / (10 if args.fast else 1)
 
-    with httpx.Client(timeout=30) as client:
+    with httpx.Client(timeout=60.0) as client:
         _require_seeded(client)
         logger.info(
             "starting Mandera-first scenario: %d steps, %.0fs apart (~%.0f min)",

@@ -430,7 +430,7 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
         "key": "chirps",
         "name": "CHIRPS v3 — rainfall estimates (UCSB CHG)",
         "category": "Climate · rainfall",
-        "live_endpoint": "CHIRPS dekadal COGs (public bucket)",
+        "live_endpoint": "UCSB CHC africa_dekad HTTPS (public)",
         "licence": "Public domain (CC0)",
         "cadence": "Dekadal (~10 days)",
         "count_sql": (
@@ -452,11 +452,11 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "news",
-        "name": "News corpus (authorized sources) + ReliefWeb",
+        "name": "GDELT DOC 2.0 — Horn of Africa news (E3 signals)",
         "category": "Unstructured · media",
-        "live_endpoint": "ReliefWeb API (key-free)",
-        "licence": "Per-source; ReliefWeb open",
-        "cadence": "Continuous",
+        "live_endpoint": "GDELT DOC 2.0 ArtList (key-free); optional ReliefWeb overlay",
+        "licence": "GDELT open; ReliefWeb open when configured",
+        "cadence": "Continuous (15-min GDELT refresh window)",
         "count_sql": "SELECT count(*), max(available_at) FROM news_documents",
     },
     {
@@ -510,7 +510,7 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
         "key": "fao_locust",
         "name": "FAO DLIS — desert locust bulletins",
         "category": "Hazards",
-        "live_endpoint": "FAO Locust Hub (ArcGIS services)",
+        "live_endpoint": "FAO Locust Hub (no clean key-free JSON — seeded)",
         "licence": "FAO open data",
         "cadence": "Monthly + flash updates",
         "count_sql": (
@@ -520,11 +520,11 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "glofas",
-        "name": "GloFAS / ICPAC — flood, heat & drought bulletins",
+        "name": "GDACS — flood & drought alerts (GloFAS-backed)",
         "category": "Hazards",
-        "live_endpoint": "Copernicus EWDS (CDS API token)",
-        "licence": "Copernicus open licence",
-        "cadence": "Daily forecasts / dekadal bulletins",
+        "live_endpoint": "GDACS SEARCH GeoJSON (key-free)",
+        "licence": "GDACS / Copernicus open",
+        "cadence": "Event-driven (near-real-time)",
         "count_sql": (
             "SELECT count(*), max(available_at) FROM hazard_bulletins "
             "WHERE hazard_type <> 'locust'"
@@ -559,7 +559,17 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
 ]
 
-LIVE_CAPABLE = {"acled", "news", "ipc", "dtm", "unhcr", "wfp_prices", "worldbank"}
+LIVE_CAPABLE = {
+    "acled",
+    "chirps",
+    "news",
+    "ipc",
+    "dtm",
+    "unhcr",
+    "wfp_prices",
+    "worldbank",
+    "glofas",
+}
 
 
 @router.get("/sources")

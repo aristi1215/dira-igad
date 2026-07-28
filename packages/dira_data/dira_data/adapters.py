@@ -175,18 +175,19 @@ class AcledApiAdapter:
 
 
 class ChirpsS3Adapter:
-    """Live CHIRPS/NDVI hazard adapter placeholder."""
+    """Deprecated alias — live climate uses public UCSB CHIRPS HTTP (see rasters)."""
 
     def __init__(self, bucket: str | None = None) -> None:
+        from dira_data.rasters import ChirpsHttpAdapter
+
+        self._inner = ChirpsHttpAdapter()
         self.bucket = bucket or os.environ.get("CHIRPS_S3_BUCKET")
-        if not self.bucket:
-            raise RuntimeError("DATA_MODE=live requires CHIRPS_S3_BUCKET for ChirpsS3Adapter.")
+
+    def bind_zone_geoms(self, zone_geoms_geojson: dict[str, dict[str, Any]]) -> None:
+        self._inner.bind_zone_geoms(zone_geoms_geojson)
 
     def fetch_dekadal(self, zone_ids: list[str], dekad_start: date) -> dict[str, dict[str, Any]]:
-        raise RuntimeError(
-            "Live hazard raster fetching is not implemented in this scaffold; "
-            "use DATA_MODE=seeded."
-        )
+        return self._inner.fetch_dekadal(zone_ids, dekad_start)
 
 
 def get_conflict_source(data_mode: str | None = None) -> SeededAcledAdapter | AcledApiAdapter:
@@ -198,19 +199,28 @@ def get_conflict_source(data_mode: str | None = None) -> SeededAcledAdapter | Ac
     raise ValueError(f"Unsupported DATA_MODE for conflict source: {mode!r}")
 
 
-def get_hazard_source(data_mode: str | None = None) -> SeededRasterAdapter | ChirpsS3Adapter:
+def get_hazard_source(
+    data_mode: str | None = None,
+    *,
+    zone_geoms_geojson: dict[str, dict[str, Any]] | None = None,
+) -> SeededRasterAdapter | Any:
     mode = (data_mode or os.environ.get("DATA_MODE", "seeded")).lower()
     if mode == "seeded":
         return SeededRasterAdapter(os.environ.get("SEEDED_DATA_DIR", DEFAULT_SEED_DIR))
     if mode == "live":
-        if os.environ.get("CHIRPS_S3_BUCKET"):
-            return ChirpsS3Adapter()
-        # Live climate rasters need a CHIRPS bucket; degrade to the seeded
-        # snapshot (independent connector degradation) instead of aborting.
-        logger.warning(
-            "DATA_MODE=live but CHIRPS_S3_BUCKET unset — hazard source degrades to seeded rasters."
-        )
-        return SeededRasterAdapter(os.environ.get("SEEDED_DATA_DIR", DEFAULT_SEED_DIR))
+        try:
+            import rasterio  # noqa: F401
+        except ImportError:
+            logger.warning(
+                "DATA_MODE=live but rasterio is not installed — hazard source "
+                "degrades to seeded rasters. Install with: "
+                "uv pip install 'rasterio>=1.4'  (or uv sync --extra rasters --package dira-data)"
+            )
+            return SeededRasterAdapter(os.environ.get("SEEDED_DATA_DIR", DEFAULT_SEED_DIR))
+        from dira_data.rasters import ChirpsHttpAdapter
+
+        adapter = ChirpsHttpAdapter(zone_geoms_geojson=zone_geoms_geojson)
+        return adapter
     raise ValueError(f"Unsupported DATA_MODE for hazard source: {mode!r}")
 
 

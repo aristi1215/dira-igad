@@ -14,10 +14,10 @@ Connectors:
   - HDX HAPI (hapi.humdata.org, free app identifier): IPC food security,
     IOM DTM IDPs, WFP food prices.
   - UNHCR population API (key-free): refugees hosted per country.
-  - ReliefWeb API (registered appname): reports into news_documents, where the
-    existing E3 LLM extraction turns them into zone signals.
-  - FAO locust / GloFAS flood: no key-free JSON API — port documented here,
-    seeded bulletins remain the operative source (stated in /sources).
+  - GDELT DOC 2.0 (key-free): Horn-of-Africa news → news_documents → E3 signals.
+  - ReliefWeb API (optional registered appname): additive news overlay.
+  - GDACS (key-free): flood/drought alerts → hazard_bulletins (country→zones).
+  - FAO locust remains seeded-only (no clean key-free JSON API).
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -52,17 +52,53 @@ def _now_iso() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def normalize_hdx_app_identifier(raw: str) -> str:
+    """HAPI expects a base64 ``app:email`` token, not the plaintext form.
+
+    Accepts either:
+      - already-encoded identifier (``HDX_APP_ENCODED`` / encoded ``HDX_APP_IDENTIFIER``)
+      - plaintext ``app:email`` (auto-encoded)
+    See https://hapi.humdata.org/docs#/Generate%20App%20Identifier
+    """
+    import base64
+    import binascii
+    import re
+
+    value = (raw or "").strip()
+    if not value:
+        return ""
+    # Prefer explicit encoded env when the caller passed the plaintext default.
+    encoded_env = os.environ.get("HDX_APP_ENCODED", "").strip()
+    if encoded_env and (":" in value) and "@" in value:
+        return encoded_env
+    if ":" in value and "@" in value and not re.fullmatch(r"[A-Za-z0-9+/=]+", value):
+        return base64.b64encode(value.encode("utf-8")).decode("ascii")
+    try:
+        decoded = base64.b64decode(value, validate=True).decode("utf-8")
+        if ":" in decoded:
+            return value
+    except (binascii.Error, UnicodeDecodeError):
+        pass
+    if ":" in value:
+        return base64.b64encode(value.encode("utf-8")).decode("ascii")
+    return value
+
+
 class HdxHapiAdapter:
     """HDX Humanitarian API — one connector, three CEWARN indicator families.
 
     Requires HDX_APP_IDENTIFIER (base64 "app:email", free self-service:
     https://hapi.humdata.org/docs#/Generate%20App%20Identifier).
+    Plaintext ``app:email`` is auto-encoded; ``HDX_APP_ENCODED`` wins when set.
     """
 
     BASE = "https://hapi.humdata.org/api/v2"
 
     def __init__(self, app_identifier: str | None = None) -> None:
-        self.app_identifier = app_identifier or os.environ.get("HDX_APP_IDENTIFIER", "")
+        raw = app_identifier
+        if raw is None:
+            raw = os.environ.get("HDX_APP_ENCODED") or os.environ.get("HDX_APP_IDENTIFIER", "")
+        self.app_identifier = normalize_hdx_app_identifier(raw)
 
     def available(self) -> bool:
         return bool(self.app_identifier)
@@ -222,10 +258,75 @@ class UnhcrRefugeeAdapter:
         return out
 
 
-class ReliefWebNewsAdapter:
-    """ReliefWeb reports → news_documents rows (E3 extraction does the rest).
+class GdeltNewsAdapter:
+    """GDELT DOC 2.0 ArtList → news_documents (E3 LLM extraction does the rest).
 
-    Requires a registered appname (RELIEFWEB_APPNAME): apidoc.reliefweb.int.
+    Key-free public API: https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
+    ArtList returns title/url/domain (no fulltext) — we store a compact body
+    stub so E3 still has enough text for signal extraction.
+    """
+
+    BASE = "https://api.gdeltproject.org/api/v2/doc/doc"
+    DEFAULT_QUERY = (
+        "(Kenya OR Ethiopia OR Somalia OR \"South Sudan\" OR Sudan OR Uganda "
+        "OR Djibouti OR Eritrea OR Mandera OR \"Horn of Africa\") "
+        "(drought OR flood OR conflict OR displacement OR pastoralist OR famine "
+        "OR IPC OR \"food insecurity\" OR locust)"
+    )
+
+    def available(self) -> bool:
+        return True
+
+    def fetch_articles(
+        self,
+        query: str | None = None,
+        *,
+        maxrecords: int = 40,
+        timespan: str = "14d",
+    ) -> list[dict[str, Any]]:
+        import httpx
+
+        params = {
+            "query": query or self.DEFAULT_QUERY,
+            "mode": "ArtList",
+            "format": "json",
+            "maxrecords": max(1, min(250, maxrecords)),
+            "timespan": timespan,
+            "sort": "DateDesc",
+        }
+        with httpx.Client(timeout=60, follow_redirects=True) as client:
+            resp = client.get(self.BASE, params=params)
+            resp.raise_for_status()
+            payload = resp.json()
+        articles: list[dict[str, Any]] = []
+        for item in payload.get("articles") or []:
+            title = (item.get("title") or "").strip()
+            url = (item.get("url") or "").strip()
+            if not title or not url:
+                continue
+            domain = str(item.get("domain") or "gdelt")
+            country = str(item.get("sourcecountry") or "")
+            published = _gdelt_seendate_to_iso(item.get("seendate"))
+            body = (
+                f"{title}\n\nSource: {domain}"
+                + (f" ({country})" if country else "")
+                + f"\nURL: {url}"
+            )
+            articles.append({
+                "id": f"gdelt-{_stable_slug(url)}",
+                "title": title[:500],
+                "body": body[:8000],
+                "source": f"GDELT/{domain}",
+                "published_at": published,
+                "available_at": _now_iso(),
+            })
+        return articles
+
+
+class ReliefWebNewsAdapter:
+    """Optional ReliefWeb overlay (requires RELIEFWEB_APPNAME).
+
+    Kept as an additive source; GDELT is the primary live news feed.
     """
 
     BASE = "https://api.reliefweb.int/v2/reports"
@@ -277,58 +378,240 @@ class ReliefWebNewsAdapter:
         return articles
 
 
+_GDACS_EVENT_TO_HAZARD = {
+    "FL": "flood",
+    "DR": "drought",
+}
+_GDACS_ALERT_TO_SEVERITY = {
+    "green": "advisory",
+    "orange": "watch",
+    "red": "warning",
+}
+
+
+class GdacsHazardAdapter:
+    """GDACS SEARCH GeoJSON → hazard_bulletins (flood / drought).
+
+    Key-free: https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH
+    Country-level events fan out to every Dira zone in that ISO2 country.
+    """
+
+    BASE = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH"
+    IGAD_ISO3 = set(ISO2_TO_ISO3.values())
+
+    def available(self) -> bool:
+        return True
+
+    def fetch_events(
+        self,
+        *,
+        lookback_days: int = 180,
+    ) -> list[dict[str, Any]]:
+        import httpx
+
+        today = datetime.now(UTC).date()
+        params = {
+            "eventlist": "FL;DR",
+            "fromdate": (today - timedelta(days=lookback_days)).isoformat(),
+            "todate": today.isoformat(),
+            "alertlevel": "Green;Orange;Red",
+        }
+        with httpx.Client(timeout=60, follow_redirects=True) as client:
+            resp = client.get(self.BASE, params=params)
+            resp.raise_for_status()
+            payload = resp.json()
+        events: list[dict[str, Any]] = []
+        for feature in payload.get("features") or []:
+            props = feature.get("properties") or {}
+            event_type = str(props.get("eventtype") or "").upper()
+            hazard_type = _GDACS_EVENT_TO_HAZARD.get(event_type)
+            if hazard_type is None:
+                continue
+            iso3 = str(props.get("iso3") or "").upper()
+            affected = props.get("affectedcountries") or []
+            iso3_hits = {
+                str(c.get("iso3") or "").upper()
+                for c in affected
+                if isinstance(c, dict)
+            }
+            if iso3:
+                iso3_hits.add(iso3)
+            igad_hits = iso3_hits & self.IGAD_ISO3
+            if not igad_hits:
+                continue
+            iso3_list = sorted(igad_hits)
+            alert = str(props.get("alertlevel") or "Green").lower()
+            severity = _GDACS_ALERT_TO_SEVERITY.get(alert, "advisory")
+            name = (
+                props.get("name")
+                or props.get("description")
+                or props.get("htmldescription")
+                or f"{hazard_type} alert"
+            )
+            valid_from = str(props.get("fromdate") or "")[:10]
+            valid_to = str(props.get("todate") or "")[:10] or None
+            if not valid_from:
+                valid_from = datetime.now(UTC).strftime("%Y-%m-%d")
+            event_id = props.get("eventid")
+            episode = props.get("episodeid")
+            detail_bits = [
+                str(props.get("htmldescription") or props.get("description") or "").strip(),
+                f"GDACS alert={props.get('alertlevel')}",
+                f"source={props.get('source') or 'GDACS'}",
+            ]
+            report_url = (props.get("url") or {}).get("report") if isinstance(
+                props.get("url"), dict
+            ) else None
+            if report_url:
+                detail_bits.append(str(report_url))
+            for target_iso3 in iso3_list:
+                events.append({
+                    "event_key": f"{event_type}-{event_id}-{episode}-{target_iso3}",
+                    "iso3": target_iso3,
+                    "hazard_type": hazard_type,
+                    "severity": severity,
+                    "headline": str(name)[:240],
+                    "detail": " | ".join(b for b in detail_bits if b)[:2000],
+                    "valid_from": valid_from,
+                    "valid_to": valid_to,
+                    "source": "gdacs_live",
+                    "available_at": _now_iso(),
+                })
+        return events
+
+    def bulletin_rows(
+        self, events: list[dict[str, Any]], zones_by_iso2: dict[str, list[str]]
+    ) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for event in events:
+            iso2 = ISO3_TO_ISO2.get(event["iso3"])
+            if not iso2:
+                continue
+            for zone_id in zones_by_iso2.get(iso2, []):
+                rows.append({
+                    "zone_id": zone_id,
+                    "hazard_type": event["hazard_type"],
+                    "severity": event["severity"],
+                    "headline": event["headline"],
+                    "detail": event["detail"],
+                    "valid_from": event["valid_from"],
+                    "valid_to": event.get("valid_to"),
+                    "source": event["source"],
+                    "available_at": event["available_at"],
+                    "external_key": f"{zone_id}:{event['event_key']}",
+                })
+        return rows
+
+
+def _gdelt_seendate_to_iso(raw: Any) -> str:
+    """GDELT seendate looks like ``20260722T100000Z`` → ISO-8601."""
+    text = str(raw or "").strip()
+    if len(text) >= 15 and text[8] == "T":
+        return f"{text[0:4]}-{text[4:6]}-{text[6:8]}T{text[9:11]}:{text[11:13]}:{text[13:15]}Z"
+    return _now_iso()
+
+
+def _stable_slug(url: str) -> str:
+    import hashlib
+
+    return hashlib.sha1(url.encode("utf-8")).hexdigest()[:20]
+
+
+def _insert_news_articles(cur: Any, articles: list[dict[str, Any]]) -> int:
+    inserted = 0
+    for a in articles:
+        cur.execute(
+            """
+            INSERT INTO news_documents (
+              external_id, title, body, source, published_at, available_at
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (external_id) DO NOTHING
+            """,
+            (a["id"], a["title"], a["body"], a["source"],
+             a["published_at"], a["available_at"]),
+        )
+        inserted += 1
+    return inserted
+
+
+def _zones_by_iso2(cur: Any) -> dict[str, list[str]]:
+    cur.execute("SELECT id, country_iso2 FROM zones ORDER BY id")
+    out: dict[str, list[str]] = {}
+    for row in cur.fetchall():
+        data = dict(row) if hasattr(row, "keys") else {"id": row[0], "country_iso2": row[1]}
+        iso2 = str(data.get("country_iso2") or "")
+        zid = str(data.get("id") or "")
+        if iso2 and zid:
+            out.setdefault(iso2, []).append(zid)
+    return out
+
+
 def refresh_information_layer_live(cur: Any) -> dict[str, int]:
     """Overlay live rows on top of the seeded baseline. Per-connector
     degradation: one failing source never blocks the others."""
     from dira_data.context import (
         upsert_displacement,
         upsert_food_security,
+        upsert_hazard_bulletins,
         upsert_market_prices,
     )
 
-    counts = {"food_security": 0, "displacement": 0, "market_prices": 0, "news": 0}
+    counts = {
+        "food_security": 0,
+        "displacement": 0,
+        "market_prices": 0,
+        "news": 0,
+        "hazard_bulletins": 0,
+    }
     zone_map = load_zone_admin_map()
-    if not zone_map:
-        logger.info("No zone_admin_map.json entries — live overlay skipped")
-        return counts
 
-    hapi = HdxHapiAdapter()
-    if hapi.available():
-        for kind, fetch, upsert in (
-            ("food_security", hapi.food_security_rows, upsert_food_security),
-            ("displacement", hapi.idp_rows, upsert_displacement),
-            ("market_prices", hapi.food_price_rows, upsert_market_prices),
-        ):
-            try:
-                rows = fetch(zone_map)
-                upsert(cur, rows)
-                counts[kind] = len(rows)
-            except Exception as exc:  # noqa: BLE001
-                logger.warning("HAPI %s refresh degraded: %s", kind, exc)
+    if zone_map:
+        hapi = HdxHapiAdapter()
+        if hapi.available():
+            for kind, fetch, upsert in (
+                ("food_security", hapi.food_security_rows, upsert_food_security),
+                ("displacement", hapi.idp_rows, upsert_displacement),
+                ("market_prices", hapi.food_price_rows, upsert_market_prices),
+            ):
+                try:
+                    rows = fetch(zone_map)
+                    upsert(cur, rows)
+                    counts[kind] = len(rows)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("HAPI %s refresh degraded: %s", kind, exc)
+        else:
+            logger.info("HDX_APP_IDENTIFIER unset — HAPI overlay skipped")
     else:
-        logger.info("HDX_APP_IDENTIFIER unset — HAPI overlay skipped")
+        logger.info("No zone_admin_map.json entries — HAPI overlay skipped")
 
+    # Primary live news: GDELT (key-free).
+    gdelt = GdeltNewsAdapter()
+    try:
+        articles = gdelt.fetch_articles()
+        counts["news"] = _insert_news_articles(cur, articles)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("GDELT refresh degraded: %s", exc)
+
+    # Optional additive ReliefWeb overlay.
     reliefweb = ReliefWebNewsAdapter()
     if reliefweb.available():
         try:
-            articles = reliefweb.fetch_articles(
+            rw_articles = reliefweb.fetch_articles(
                 "drought OR displacement OR pastoralist conflict OR flood"
             )
-            for a in articles:
-                cur.execute(
-                    """
-                    INSERT INTO news_documents (
-                      external_id, title, body, source, published_at, available_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (external_id) DO NOTHING
-                    """,
-                    (a["id"], a["title"], a["body"], a["source"],
-                     a["published_at"], a["available_at"]),
-                )
-            counts["news"] = len(articles)
+            counts["news"] += _insert_news_articles(cur, rw_articles)
         except Exception as exc:  # noqa: BLE001
             logger.warning("ReliefWeb refresh degraded: %s", exc)
-    else:
-        logger.info("RELIEFWEB_APPNAME unset — ReliefWeb overlay skipped")
+
+    # Live hazard bulletins: GDACS flood/drought → IGAD zones.
+    gdacs = GdacsHazardAdapter()
+    try:
+        events = gdacs.fetch_events()
+        zones = _zones_by_iso2(cur)
+        bulletins = gdacs.bulletin_rows(events, zones)
+        upsert_hazard_bulletins(cur, bulletins)
+        counts["hazard_bulletins"] = len(bulletins)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("GDACS hazard refresh degraded: %s", exc)
 
     return counts

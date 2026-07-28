@@ -235,7 +235,7 @@ export function SituationDetailScreen() {
 
         <Card
           title="Model drivers"
-          subtitle="Feature attributions for the latest assessment (|SHAP|)"
+          subtitle="TreeSHAP feature attributions for the latest assessment (signed; bars use |SHAP|)"
         >
           {shapEntries.length > 0 ? (
             <ul className="drivers-list">

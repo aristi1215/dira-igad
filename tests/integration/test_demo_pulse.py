@@ -43,3 +43,47 @@ def test_refuses_to_run_outside_seeded(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_scenario_is_mandera_first() -> None:
     first_report = next(s for s in demo_pulse.SCENARIO if s["kind"] == "report")
     assert first_report["zone_id"].startswith("mandera_")
+
+
+def test_prepare_alert_drafts_even_when_pending_exists(monkeypatch) -> None:
+    """Multiple pending alerts per situation must be allowed (demo + ops)."""
+    posted: list[str] = []
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.status_code = 200
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+        def raise_for_status(self):
+            return None
+
+    class FakeClient:
+        situation_id = "11111111-1111-1111-1111-111111111111"
+
+        def get(self, url, params=None):
+            if url.endswith("/map/situations"):
+                return FakeResponse(
+                    {
+                        "features": [
+                            {
+                                "properties": {
+                                    "zone_id": "mandera_ke_north",
+                                    "situation_id": self.situation_id,
+                                }
+                            }
+                        ]
+                    }
+                )
+            raise AssertionError(f"unexpected GET {url}")
+
+        def post(self, url, json=None, **kwargs):
+            posted.append(url)
+            return FakeResponse({"id": "new-alert", "status": "pending_approval"})
+
+    demo_pulse._step_prepare_alert(FakeClient(), {"zone_id": "mandera_ke_north"})
+    assert posted == [
+        f"{demo_pulse.API}/situations/{FakeClient.situation_id}/alert"
+    ]

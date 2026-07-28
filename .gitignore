@@ -27,6 +27,7 @@ apps/web/.vite/
 # Data / heavy artifacts (keep cards; ignore large binaries if needed)
 data/seeded/**/*.tif
 data/seeded/**/*.nc
+data/cache/
 *.lgb
 !artifacts/.gitkeep
 
