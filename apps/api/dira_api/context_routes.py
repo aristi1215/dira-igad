@@ -130,7 +130,8 @@ def zone_profile(zone_id: str) -> dict[str, Any]:
 
             cur.execute(
                 """
-                SELECT event_date, event_type, fatalities, notes
+                SELECT event_id, event_date, event_type, fatalities, actor1, actor2,
+                       notes, source, available_at
                 FROM acled_events WHERE zone_id = %s
                 ORDER BY event_date DESC LIMIT 12
                 """,
@@ -178,7 +179,8 @@ def zone_profile(zone_id: str) -> dict[str, Any]:
 
             cur.execute(
                 """
-                SELECT id, hazard_type, severity, headline, detail, valid_from, valid_to, source
+                SELECT id, hazard_type, severity, headline, detail, valid_from, valid_to,
+                       source, available_at
                 FROM hazard_bulletins WHERE zone_id = %s
                 ORDER BY valid_from DESC
                 """,
@@ -189,7 +191,7 @@ def zone_profile(zone_id: str) -> dict[str, Any]:
             cur.execute(
                 """
                 SELECT id, reporter_role, category, severity, narrative, reported_at,
-                       status, verified_by, verified_at
+                       status, verified_by, verified_at, available_at
                 FROM field_reports WHERE zone_id = %s
                 ORDER BY reported_at DESC LIMIT 40
                 """,
@@ -200,7 +202,8 @@ def zone_profile(zone_id: str) -> dict[str, Any]:
             cur.execute(
                 """
                 SELECT ns.id, ns.signal_type, ns.confidence, ns.status, ns.excerpt, ns.cycle,
-                       nd.title, nd.source, nd.published_at
+                       ns.created_at, nd.title, nd.source, nd.published_at, nd.available_at,
+                       nd.external_id, left(nd.body, 700) AS body_excerpt
                 FROM news_signals ns
                 LEFT JOIN news_documents nd ON nd.id = ns.document_id
                 WHERE ns.zone_id = %s

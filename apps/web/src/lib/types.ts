@@ -142,9 +142,13 @@ export type ZoneSignal = {
   status: string
   excerpt: string | null
   cycle: string
+  created_at?: string | null
   title: string | null
   source: string | null
   published_at: string | null
+  available_at?: string | null
+  external_id?: string | null
+  body_excerpt?: string | null
 }
 
 export type CountryEconomy = {
@@ -322,13 +326,14 @@ export type HealthRow = {
 
 export type HazardBulletin = {
   id: string
-  hazard_type: 'locust' | 'flood' | 'heat' | 'drought'
+  hazard_type: string
   severity: 'advisory' | 'watch' | 'warning'
   headline: string
   detail: string | null
   valid_from: string
   valid_to: string | null
   source: string
+  available_at?: string | null
 }
 
 export type FieldReportStatus = 'unverified' | 'verified' | 'dismissed'
@@ -346,13 +351,19 @@ export type FieldReport = {
   status: FieldReportStatus
   verified_by: string | null
   verified_at: string | null
+  available_at?: string | null
 }
 
 export type AcledEventRow = {
+  event_id?: string
   event_date: string
   event_type: string
   fatalities: number
+  actor1?: string | null
+  actor2?: string | null
   notes: string | null
+  source?: string | null
+  available_at?: string | null
 }
 
 export type Recipient = {

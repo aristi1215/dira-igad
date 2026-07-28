@@ -29,6 +29,12 @@ import {
   StatusChip,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
+import {
+  ConflictEvents,
+  FieldReportModal,
+  HazardBulletins,
+  SignalsList,
+} from '../features/situations'
 import type { FieldReport, MarketPriceRow } from '../lib/types'
 
 const REPORT_CATEGORIES = [
@@ -327,71 +333,31 @@ export function ZoneDossierScreen() {
           )}
         </Card>
 
-        <Card title="Hazard bulletins" subtitle="Locust, flood, heat and drought advisories">
-          {profile.hazard_bulletins.length > 0 ? (
-            <ul className="feed-list">
-              {profile.hazard_bulletins.map((bulletin) => (
-                <li key={bulletin.id} className="feed-item">
-                  <div className="feed-item-head">
-                    <StatusChip
-                      tone={
-                        bulletin.severity === 'warning'
-                          ? 'error'
-                          : bulletin.severity === 'watch'
-                            ? 'warning'
-                            : 'info'
-                      }
-                    >
-                      {bulletin.severity}
-                    </StatusChip>
-                    <strong>{titleCase(bulletin.hazard_type)}</strong>
-                    <span className="spacer" />
-                    <small>
-                      {fmtDate(bulletin.valid_from)} →{' '}
-                      {bulletin.valid_to ? fmtDate(bulletin.valid_to) : 'open'}
-                    </small>
-                  </div>
-                  <p>{bulletin.headline}</p>
-                  {bulletin.detail ? <small>{bulletin.detail}</small> : null}
-                  <small className="muted">{bulletin.source}</small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState>No active or recent bulletins.</EmptyState>
-          )}
+        <Card
+          title="Hazard bulletins"
+          subtitle="Drought, flood, heat, locust and geological advisories — click for validity, source and preparedness actions"
+        >
+          <HazardBulletins
+            bulletins={profile.hazard_bulletins}
+            zoneName={profile.zone.name}
+          />
         </Card>
 
         <Card
           title="Recent conflict events"
-          subtitle="Most recent ACLED-shaped events in this zone"
+          subtitle="Observed ACLED-shaped events — click a row for actors, source and its contribution to zone risk"
         >
-          {profile.recent_events.length > 0 ? (
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th className="num">Fatalities</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {profile.recent_events.slice(0, 10).map((event, index) => (
-                    <tr key={`${event.event_date}-${index}`}>
-                      <td>{fmtDate(event.event_date)}</td>
-                      <td>{event.event_type}</td>
-                      <td className="num">{event.fatalities}</td>
-                      <td className="muted">{event.notes ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState>No recent events.</EmptyState>
-          )}
+          <ConflictEvents
+            events={profile.recent_events.slice(0, 10)}
+            zoneName={profile.zone.name}
+          />
+        </Card>
+
+        <Card
+          title="News signals"
+          subtitle="Media monitoring feeding the corroboration channel — click for source and full context"
+        >
+          <SignalsList zoneId={id} zoneName={profile.zone.name} />
         </Card>
 
         <Card
@@ -469,6 +435,7 @@ function FieldReportsCard({
   const queryClient = useQueryClient()
   const [signer, setSigner] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<FieldReport | null>(null)
   const [form, setForm] = useState({
     reporter_role: REPORTER_ROLES[0],
     category: REPORT_CATEGORIES[0],
@@ -640,6 +607,15 @@ function FieldReportsCard({
                   ? ` · ${report.status} by ${report.verified_by}`
                   : ''}
               </small>
+              <div className="feed-actions">
+                <button
+                  type="button"
+                  className="button button-secondary button-small"
+                  onClick={() => setSelectedReport(report)}
+                >
+                  Full context
+                </button>
+              </div>
               {report.status === 'unverified' ? (
                 <div className="feed-actions">
                   <button
@@ -670,6 +646,12 @@ function FieldReportsCard({
       )}
       {verifyMutation.isError ? <ErrorNote error={verifyMutation.error} /> : null}
       {dismissMutation.isError ? <ErrorNote error={dismissMutation.error} /> : null}
+      {selectedReport ? (
+        <FieldReportModal
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+        />
+      ) : null}
     </Card>
   )
 }
