@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dira_data.acled_ingest import upsert_acled_events
 from dira_data.adapters import (
     AcledApiAdapter,
     ChirpsS3Adapter,
@@ -10,7 +11,6 @@ from dira_data.adapters import (
     get_conflict_source,
     get_hazard_source,
 )
-from dira_data.acled_ingest import upsert_acled_events
 from dira_data.climate import CLIMATE_FIRST_WRITE_WINS_SQL, upsert_climate_first_write_wins
 from dira_data.db import (
     connect,

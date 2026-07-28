@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchAllAlerts,
   fetchFieldReports,
   fetchSituationDetail,
+  fetchZoneProfile,
   fetchZones,
   prepareAlert,
   queryKeys,
@@ -31,12 +32,21 @@ import {
   StatusChip,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
-import { SignalsList } from '../features/situations'
+import {
+  FieldReportModal,
+  HazardBulletins,
+  ScoreExplainer,
+  ShapDrivers,
+  SignalsList,
+} from '../features/situations'
+import type { FieldReport } from '../lib/types'
 
 export function SituationDetailScreen() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [showScoreExplainer, setShowScoreExplainer] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<FieldReport | null>(null)
 
   const detailQuery = useQuery({
     queryKey: queryKeys.situationDetail(id),
@@ -61,6 +71,11 @@ export function SituationDetailScreen() {
   const reportsQuery = useQuery({
     queryKey: queryKeys.fieldReports(detail?.situation.zone_id, null),
     queryFn: () => fetchFieldReports(detail?.situation.zone_id, null),
+    enabled: Boolean(detail?.situation.zone_id),
+  })
+  const profileQuery = useQuery({
+    queryKey: queryKeys.zoneProfile(detail?.situation.zone_id ?? 'none'),
+    queryFn: () => fetchZoneProfile(detail?.situation.zone_id ?? ''),
     enabled: Boolean(detail?.situation.zone_id),
   })
 
@@ -97,12 +112,6 @@ export function SituationDetailScreen() {
     model_risk: a.model_risk,
     corroboration: a.corroboration,
   }))
-
-  const shapEntries = Object.entries(latest?.shap ?? {})
-    .map(([feature, value]) => ({ feature, value }))
-    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
-    .slice(0, 8)
-  const shapMax = Math.max(0.001, ...shapEntries.map((e) => Math.abs(e.value)))
 
   const situationAlerts = (alertsQuery.data ?? []).filter(
     (alert) => alert.situation_id === id,
@@ -208,6 +217,17 @@ export function SituationDetailScreen() {
         <Card
           title="Two-score combination"
           subtitle="The band is never a black box — the exact rule is stored on every assessment"
+          actions={
+            latest ? (
+              <button
+                type="button"
+                className="button button-secondary button-small"
+                onClick={() => setShowScoreExplainer(true)}
+              >
+                How is this calculated?
+              </button>
+            ) : undefined
+          }
         >
           <div className="score-panel">
             <div className="score-line">
@@ -234,31 +254,10 @@ export function SituationDetailScreen() {
         </Card>
 
         <Card
-          title="Model drivers"
-          subtitle="TreeSHAP feature attributions for the latest assessment (signed; bars use |SHAP|)"
+          title="Model drivers (SHAP)"
+          subtitle="What the model relied on for this prediction — click a driver for its explanation"
         >
-          {shapEntries.length > 0 ? (
-            <ul className="drivers-list">
-              {shapEntries.map((entry) => (
-                <li key={entry.feature}>
-                  <span>{titleCase(entry.feature)}</span>
-                  <span className="driver-bar">
-                    <span
-                      style={{
-                        width: `${(Math.abs(entry.value) / shapMax) * 100}%`,
-                      }}
-                    />
-                  </span>
-                  <span className="driver-value">
-                    {entry.value >= 0 ? '+' : '−'}
-                    {Math.abs(entry.value).toFixed(3)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState>No driver attribution available.</EmptyState>
-          )}
+          <ShapDrivers shap={latest?.shap ?? {}} />
         </Card>
 
         <Card
@@ -294,9 +293,12 @@ export function SituationDetailScreen() {
 
         <Card
           title="News signals"
-          subtitle="LLM-extracted signals feeding the news corroboration channel"
+          subtitle="LLM-extracted signals feeding the news corroboration channel — click for source, place and full context"
         >
-          <SignalsList zoneId={detail.situation.zone_id} />
+          <SignalsList
+            zoneId={detail.situation.zone_id}
+            zoneName={zone?.zone_name}
+          />
         </Card>
 
         <Card
@@ -306,24 +308,41 @@ export function SituationDetailScreen() {
           {verifiedReports.length > 0 ? (
             <ul className="feed-list">
               {verifiedReports.slice(0, 6).map((report) => (
-                <li key={report.id} className="feed-item">
-                  <div className="feed-item-head">
-                    <StatusChip tone="success">verified</StatusChip>
-                    <strong>{titleCase(report.category)}</strong>
-                    <span className="spacer" />
-                    <small>{fmtDate(report.reported_at)}</small>
-                  </div>
-                  <p>{report.narrative}</p>
-                  <small>
-                    {titleCase(report.reporter_role)} · severity {report.severity}/3
-                    {report.verified_by ? ` · verified by ${report.verified_by}` : ''}
-                  </small>
+                <li key={report.id}>
+                  <button
+                    type="button"
+                    className="feed-item feed-item-button"
+                    onClick={() => setSelectedReport(report)}
+                  >
+                    <span className="feed-item-head">
+                      <StatusChip tone="success">verified</StatusChip>
+                      <strong>{titleCase(report.category)}</strong>
+                      <span className="spacer" />
+                      <small>{fmtDate(report.reported_at)}</small>
+                    </span>
+                    <p>{report.narrative}</p>
+                    <small>
+                      {titleCase(report.reporter_role)} · severity {report.severity}/3
+                      {report.verified_by ? ` · verified by ${report.verified_by}` : ''}
+                      {' · click for full context'}
+                    </small>
+                  </button>
                 </li>
               ))}
             </ul>
           ) : (
             <EmptyState>No verified field reports for this zone.</EmptyState>
           )}
+        </Card>
+
+        <Card
+          title="Hazard bulletins"
+          subtitle="Active and recent hazard advisories for this zone — click for validity, source and preparedness actions"
+        >
+          <HazardBulletins
+            bulletins={profileQuery.data?.hazard_bulletins ?? []}
+            zoneName={zone?.zone_name}
+          />
         </Card>
       </div>
 
@@ -365,6 +384,20 @@ export function SituationDetailScreen() {
           </EmptyState>
         )}
       </Card>
+
+      {showScoreExplainer && latest ? (
+        <ScoreExplainer
+          assessment={latest}
+          onClose={() => setShowScoreExplainer(false)}
+        />
+      ) : null}
+      {selectedReport ? (
+        <FieldReportModal
+          report={selectedReport}
+          zoneName={zone?.zone_name}
+          onClose={() => setSelectedReport(null)}
+        />
+      ) : null}
     </div>
   )
 }

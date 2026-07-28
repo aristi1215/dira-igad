@@ -95,7 +95,8 @@ class ChirpsHttpAdapter:
         return out
 
     def _ensure_raster(self, dekad_start: date) -> Path:
-        name = f"chirps-v2.0.{dekad_start.year}.{dekad_start.month:02d}.{dekad_index(dekad_start)}.tif"
+        stamp = f"{dekad_start.year}.{dekad_start.month:02d}.{dekad_index(dekad_start)}"
+        name = f"chirps-v2.0.{stamp}.tif"
         dest = self.cache_dir / name
         if dest.exists() and dest.stat().st_size > 0:
             return dest
