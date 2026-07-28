@@ -21,10 +21,16 @@ class Settings(BaseSettings):
     mock_ack_delay_seconds: float = 2.0
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
-    at_username: str | None = None
-    at_api_key: str | None = None
-    at_voice_base_url: str | None = None
-    dispatch_mode: Literal["mock", "at"] = "mock"
+    dispatch_mode: Literal["mock", "twilio"] = "mock"
+    twilio_account_sid: str | None = None
+    twilio_api_key_sid: str | None = None
+    twilio_api_key_secret: str | None = None
+    twilio_auth_token: str | None = None
+    twilio_from_number: str | None = None
+    twilio_api_base_url: str = "https://api.twilio.com"
+    tts_provider: str | None = None
+    tts_api_key: str | None = None
+    tts_voice_id: str | None = None
 
 
 @lru_cache

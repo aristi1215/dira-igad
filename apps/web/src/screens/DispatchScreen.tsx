@@ -8,7 +8,7 @@ import {
   queryKeys,
   retryDelivery,
 } from '../lib/api'
-import { BAND_MAP_COLORS, fmtDateTime, titleCase } from '../lib/format'
+import { BAND_MAP_COLORS, fmtDateTime, fmtForecastWindow, titleCase } from '../lib/format'
 import {
   Card,
   EmptyState,
@@ -150,6 +150,12 @@ export function DispatchScreen() {
                   </small>
                 </div>
                 <p className="alert-body-text">{alert.body_text}</p>
+                {alert.window_start && alert.window_end ? (
+                  <small className="muted">
+                    Forecast window:{' '}
+                    {fmtForecastWindow(alert.window_start, alert.window_end)}
+                  </small>
+                ) : null}
                 <div className="approve-row">
                   <button
                     type="button"

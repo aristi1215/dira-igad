@@ -1,4 +1,4 @@
-.PHONY: lint test seed demo migrate up-db down-db sync ensure-db
+.PHONY: lint test seed demo pulse migrate up-db down-db sync ensure-db
 
 UV ?= uv
 COMPOSE ?= docker compose -f infra/docker-compose.yml
@@ -46,3 +46,9 @@ seed: migrate
 demo: seed
 	$(UV) run python -m scripts.demo
 	@echo "Demo ready (seeded). Start API + web + dispatch for the live script."
+
+# Long-running seeded feeder that makes the UI visibly evolve during a demo.
+# Requires the API to be up; refuses to run outside DATA_MODE=seeded.
+pulse:
+	$(UV) run python -m scripts.demo_pulse
+

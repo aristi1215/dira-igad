@@ -1,6 +1,10 @@
 {
   "model_id": "model_v1",
   "kind": "lightgbm",
+  "predicts": "Probability of at least one conflict incident per zone over the next 3 dekads (~30 days), plus an expected incident count. Not a calendar date, actor, or guaranteed event.",
+  "horizon_dekads": 3,
+  "horizon_days": 30,
+  "label": "incidents in dekads t+1..t+3; features frozen at the end of dekad t (bitemporal cutoff \u2014 no future information)",
   "feature_list": [
     "rain_mm",
     "rain_lag1",
@@ -17,25 +21,191 @@
     "month_cos"
   ],
   "feature_notes_policy": "ACLED notes are excluded from FEATURE_NAMES and artifacts.",
-  "rows": 330,
-  "train_rows": 264,
+  "rows": 264,
+  "train_rows": 132,
   "test_rows": 66,
+  "temporal_split": "80/20 by cycle with embargo (train label windows never cross the split)",
   "metrics": {
-    "brier": 2.8808850052198444e-05,
-    "mae_incidents": 0.019140041556694277,
+    "brier": 0.2601207119610332,
+    "mae_incidents": 0.6253617314384747,
+    "transparent_index": {
+      "brier": 0.2815625825057202,
+      "mae_incidents": 1.2271801770158062
+    },
+    "lightgbm": {
+      "brier": 0.2601207119610332,
+      "mae_incidents": 0.6253617314384747
+    },
     "baselines": {
       "persistence": {
-        "brier": 0.22727272727272727,
-        "mae_incidents": 0.24242424242424243
+        "brier": 0.5,
+        "mae_incidents": 0.8333333333333334
       },
       "climatology": {
-        "brier": 0.12786076676938027,
-        "mae_incidents": 0.241098515178518
+        "brier": 0.3090872008934331,
+        "mae_incidents": 0.6971432077346094
       },
       "cast_aggregate": {
-        "brier": 0.1717171717171717,
-        "mae_incidents": 0.25757575757575757
+        "brier": 0.4166666666666667,
+        "mae_incidents": 0.7878787878787878
       }
     }
-  }
+  },
+  "evaluation_runs": [
+    {
+      "split_fraction": 0.6,
+      "train_rows": 88,
+      "test_rows": 110,
+      "test_cycles": [
+        "2026-01-11",
+        "2026-02-21"
+      ],
+      "transparent_index": {
+        "brier": 0.2751020049417935,
+        "mae_incidents": 1.1836756921879117
+      },
+      "lightgbm": {
+        "brier": 0.25907057078920737
+      },
+      "baselines": {
+        "persistence": {
+          "brier": 0.4818181818181818,
+          "mae_incidents": 0.7363636363636363
+        },
+        "climatology": {
+          "brier": 0.30289632201341243,
+          "mae_incidents": 0.6522891553203964
+        },
+        "cast_aggregate": {
+          "brier": 0.41363636363636364,
+          "mae_incidents": 0.7454545454545455
+        }
+      }
+    },
+    {
+      "split_fraction": 0.7,
+      "train_rows": 110,
+      "test_rows": 88,
+      "test_cycles": [
+        "2026-01-21",
+        "2026-02-21"
+      ],
+      "transparent_index": {
+        "brier": 0.27895344527988236,
+        "mae_incidents": 1.2007911089745233
+      },
+      "lightgbm": {
+        "brier": 0.2511005999745061
+      },
+      "baselines": {
+        "persistence": {
+          "brier": 0.48863636363636365,
+          "mae_incidents": 0.7727272727272727
+        },
+        "climatology": {
+          "brier": 0.30547573049316107,
+          "mae_incidents": 0.6641844020819534
+        },
+        "cast_aggregate": {
+          "brier": 0.4289772727272727,
+          "mae_incidents": 0.7556818181818182
+        }
+      }
+    },
+    {
+      "split_fraction": 0.8,
+      "train_rows": 132,
+      "test_rows": 66,
+      "test_cycles": [
+        "2026-02-01",
+        "2026-02-21"
+      ],
+      "transparent_index": {
+        "brier": 0.2815625825057202,
+        "mae_incidents": 1.2271801770158062
+      },
+      "lightgbm": {
+        "brier": 0.2601207119610332
+      },
+      "baselines": {
+        "persistence": {
+          "brier": 0.5,
+          "mae_incidents": 0.8333333333333334
+        },
+        "climatology": {
+          "brier": 0.3090872008934331,
+          "mae_incidents": 0.6971432077346094
+        },
+        "cast_aggregate": {
+          "brier": 0.4166666666666667,
+          "mae_incidents": 0.7878787878787878
+        }
+      }
+    }
+  ],
+  "performance_breakdown": {
+    "best_zones": [
+      [
+        "mandera_et_east",
+        0.08488926082804078
+      ],
+      [
+        "gambella_lowlands",
+        0.08742274323954417
+      ],
+      [
+        "jubaland_coast",
+        0.09060525914313637
+      ]
+    ],
+    "worst_zones": [
+      [
+        "marsabit_frontier",
+        0.5042649773332651
+      ],
+      [
+        "jubaland_inland",
+        0.49705945982373656
+      ],
+      [
+        "mandera_ke_north",
+        0.4898539423142079
+      ]
+    ],
+    "best_cycles": [
+      [
+        "2026-02-11",
+        0.2300776221492564
+      ],
+      [
+        "2026-02-21",
+        0.27470655060342686
+      ],
+      [
+        "2026-02-01",
+        0.27557796313041644
+      ]
+    ],
+    "worst_cycles": [
+      [
+        "2026-02-01",
+        0.27557796313041644
+      ],
+      [
+        "2026-02-21",
+        0.27470655060342686
+      ],
+      [
+        "2026-02-11",
+        0.2300776221492564
+      ]
+    ],
+    "note": "Brier per zone/cycle on held-out test dekads; lower is better. The model performs best in zones with stable seasonal patterns and worst around sudden regime shifts with no climate precursor."
+  },
+  "fallback_reason": null,
+  "limitations": [
+    "Trained on the seeded Mandera history unless live ACLED data is ingested first; seeded metrics describe fixture skill, not field accuracy.",
+    "Short history (dekadal, single region) limits LightGBM; the transparent index remains the honest default when there is no lift (DEVIATIONS D-009).",
+    "Does not predict the exact day of conflict, actor identity, or guarantee that violence will occur \u2014 it estimates pressure over the forecast window."
+  ]
 }

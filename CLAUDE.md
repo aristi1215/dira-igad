@@ -118,7 +118,7 @@ flips the alert to `approved`. The dispatch daemon then claims deliveries in two
 transactions is a hard rule throughout this codebase. `idempotency_key` (our side) and
 `provider_message_id` (provider side) are both `UNIQUE`; zombies (`sending` for
 `ZOMBIE_TIMEOUT_MINUTES`) become `needs_review` with no auto-retry. Acks land via
-`/webhooks/at/dtmf` and `/webhooks/at/status`, not the dispatch worker itself, and are idempotent
+`/webhooks/twilio/gather` and `/webhooks/twilio/status`, not the dispatch worker itself, and are idempotent
 against repeated provider callbacks.
 
 ### Frontend

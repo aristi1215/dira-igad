@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchZones, queryKeys } from '../lib/api'
 import {
+  BAND_LABELS,
+  BAND_MAP_COLORS,
+  BAND_ORDER,
   COUNTRY_NAMES,
   fmtCompact,
   fmtPct,
@@ -15,6 +18,7 @@ import {
   IpcChip,
   LoadingNote,
   PageHeader,
+  StatTile,
   StatusChip,
 } from '../components/ui'
 
@@ -35,6 +39,22 @@ export function ZonesScreen() {
   const countries = useMemo(
     () => [...new Set(zones.map((z) => z.country_iso2))].sort(),
     [zones],
+  )
+
+  const bandCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const zone of zones) {
+      const band = zone.operational_band ?? 'none'
+      counts.set(band, (counts.get(band) ?? 0) + 1)
+    }
+    return counts
+  }, [zones])
+  const highOrWorse =
+    (bandCounts.get('high') ?? 0) + (bandCounts.get('very_high') ?? 0)
+  const totalHazards = zones.reduce((sum, z) => sum + (z.active_hazards ?? 0), 0)
+  const totalUnverified = zones.reduce(
+    (sum, z) => sum + (z.unverified_field_reports_recent ?? 0),
+    0,
   )
 
   const filtered = zones.filter(
@@ -82,6 +102,51 @@ export function ZonesScreen() {
       {zonesQuery.isLoading ? <LoadingNote /> : null}
       {zonesQuery.isError ? <ErrorNote error={zonesQuery.error} /> : null}
 
+      <div className="stat-row">
+        <StatTile
+          label="High / very high"
+          value={highOrWorse}
+          detail="Zones needing attention now"
+          accent={BAND_MAP_COLORS.high}
+        />
+        <StatTile
+          label="Elevated"
+          value={bandCounts.get('elevated') ?? 0}
+          accent={BAND_MAP_COLORS.elevated}
+        />
+        <StatTile
+          label="Watch / low"
+          value={(bandCounts.get('watch') ?? 0) + (bandCounts.get('low') ?? 0)}
+          accent={BAND_MAP_COLORS.watch}
+        />
+        <StatTile label="Active hazards" value={totalHazards} />
+        <StatTile
+          label="Unverified reports"
+          value={totalUnverified}
+          detail="Contribute exactly 0 until verified"
+        />
+      </div>
+
+      {zones.length > 0 ? (
+        <div className="band-distribution" aria-label="Risk band distribution">
+          {BAND_ORDER.filter((band) => (bandCounts.get(band) ?? 0) > 0).map(
+            (band) => (
+              <span
+                key={band}
+                className="band-distribution-segment"
+                style={{
+                  flexGrow: bandCounts.get(band) ?? 0,
+                  background: BAND_MAP_COLORS[band],
+                }}
+                title={`${BAND_LABELS[band]}: ${bandCounts.get(band)} zones`}
+              >
+                {bandCounts.get(band)}
+              </span>
+            ),
+          )}
+        </div>
+      ) : null}
+
       <div className="card">
         <div className="card-body flush table-scroll">
           <table className="data-table">
@@ -114,7 +179,20 @@ export function ZonesScreen() {
                   <td>
                     <BandChip band={zone.operational_band} />
                   </td>
-                  <td className="num">{fmtRisk(zone.model_risk)}</td>
+                  <td className="num">
+                    <span className="risk-cell">
+                      <span className="risk-cell-bar">
+                        <span
+                          style={{
+                            width: `${Math.min(100, (zone.model_risk ?? 0))}%`,
+                            background:
+                              BAND_MAP_COLORS[zone.operational_band ?? 'none'],
+                          }}
+                        />
+                      </span>
+                      {fmtRisk(zone.model_risk)}
+                    </span>
+                  </td>
                   <td>
                     <IpcChip phase={zone.ipc_phase} />
                   </td>

@@ -14,6 +14,7 @@ import {
   CHART,
   fmtDate,
   fmtDateTime,
+  fmtForecastWindow,
   fmtProbability,
   fmtRisk,
   titleCase,
@@ -157,11 +158,25 @@ export function SituationDetailScreen() {
         <StatTile
           label="P(conflict)"
           value={fmtProbability(latest?.prob_conflict)}
-          detail="Next dekad"
+          detail={fmtForecastWindow(
+            latest?.window_start,
+            latest?.window_end,
+            latest?.horizon_dekads,
+          )}
         />
         <StatTile
           label="Expected incidents"
           value={latest ? latest.expected_incidents.toFixed(1) : '—'}
+          detail="Over the forecast window"
+        />
+        <StatTile
+          label="Forecast window"
+          value={fmtForecastWindow(
+            latest?.window_start,
+            latest?.window_end,
+            latest?.horizon_dekads,
+          )}
+          detail="The model predicts pressure over this window — not an exact date"
         />
       </div>
 

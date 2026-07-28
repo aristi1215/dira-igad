@@ -11,7 +11,7 @@ import json
 import logging
 import sys
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,7 @@ from dira_core.risk import (
     corroboration_from_field_reports,
     merge_corroboration,
 )
-from dira_core.time import data_cutoff_for_cycle, validate_dekad_start
+from dira_core.time import data_cutoff_for_cycle, dekad_end, next_dekad, validate_dekad_start
 from dira_data.adapters import SeededRasterAdapter, get_conflict_source, get_hazard_source
 from dira_data.climate import upsert_climate_first_write_wins
 from dira_data.context import (
@@ -45,6 +45,7 @@ from dira_data.tiles import render_placeholder_tile
 from dira_features import build_feature_row
 from dira_llm import CannedResponseAdapter, extract_signals, get_language_model
 from dira_ml import LightGBMAdapter, TransparentIndexAdapter
+from dira_ml.train import FORECAST_HORIZON_DEKADS
 
 from dira_worker.settings import Settings, get_settings
 
@@ -406,6 +407,13 @@ def stage_e4_e7(
             }
         )
 
+    # Forecast window shown on cards: the H dekads after the assessed dekad.
+    window_start = dekad_end(cycle) + timedelta(days=1)
+    horizon_cycle = cycle
+    for _ in range(FORECAST_HORIZON_DEKADS):
+        horizon_cycle = next_dekad(horizon_cycle)
+    window_end = dekad_end(horizon_cycle)
+
     for item in prepared:
         if inject_fail_at == "E7_mid" and item["zone_id"] == "mandera_ke_north":
             raise RuntimeError("injected failure mid E7")
@@ -426,12 +434,12 @@ def stage_e4_e7(
                       id, situation_id, zone_id, cycle, model_version_id,
                       prob_conflict, expected_incidents, model_risk, model_band,
                       corroboration, operational_band, combination_rule, explanation,
-                      shap, exposure_snapshot
+                      shap, exposure_snapshot, horizon_dekads, window_start, window_end
                     ) VALUES (
                       %s, %s, %s, %s, %s,
                       %s, %s, %s, %s,
                       %s, %s, %s, %s,
-                      %s::jsonb, %s::jsonb
+                      %s::jsonb, %s::jsonb, %s, %s, %s
                     )
                     ON CONFLICT (zone_id, cycle) DO UPDATE SET
                       situation_id = COALESCE(EXCLUDED.situation_id, assessments.situation_id),
@@ -445,7 +453,10 @@ def stage_e4_e7(
                       combination_rule = EXCLUDED.combination_rule,
                       explanation = EXCLUDED.explanation,
                       shap = EXCLUDED.shap,
-                      exposure_snapshot = EXCLUDED.exposure_snapshot
+                      exposure_snapshot = EXCLUDED.exposure_snapshot,
+                      horizon_dekads = EXCLUDED.horizon_dekads,
+                      window_start = EXCLUDED.window_start,
+                      window_end = EXCLUDED.window_end
                     """,
                     (
                         uuid.uuid4(),
@@ -463,6 +474,9 @@ def stage_e4_e7(
                         item["explanation"],
                         json.dumps(a.shap),
                         json.dumps(item["exposure"], default=str),
+                        FORECAST_HORIZON_DEKADS,
+                        window_start,
+                        window_end,
                     ),
                 )
 

@@ -87,8 +87,8 @@ def test_webhook_spoof_rejected(
     make_delivery(status="sent", provider_message_id=provider_message_id)
 
     response = api_client.post(
-        "/webhooks/at/dtmf",
-        json={"sessionId": provider_message_id, "dtmfDigits": "1"},
+        "/webhooks/twilio/gather",
+        json={"CallSid": provider_message_id, "Digits": "1"},
     )
 
     assert response.status_code == 403
@@ -106,13 +106,13 @@ def test_webhook_duplicate_deduped(api_client: TestClient, db_conn, make_deliver
     headers = {"x-dira-webhook-secret": WEBHOOK_SECRET}
 
     first = api_client.post(
-        "/webhooks/at/dtmf",
-        json={"sessionId": provider_message_id, "dtmfDigits": "1"},
+        "/webhooks/twilio/gather",
+        json={"CallSid": provider_message_id, "Digits": "1"},
         headers=headers,
     )
     duplicate = api_client.post(
-        "/webhooks/at/dtmf",
-        json={"sessionId": provider_message_id, "dtmfDigits": "2"},
+        "/webhooks/twilio/gather",
+        json={"CallSid": provider_message_id, "Digits": "2"},
         headers=headers,
     )
 
@@ -149,8 +149,8 @@ def test_dtmf_mapping(
     make_delivery(status="sent", provider_message_id=provider_message_id)
 
     response = api_client.post(
-        "/webhooks/at/dtmf",
-        json={"sessionId": provider_message_id, "dtmfDigits": digit},
+        "/webhooks/twilio/gather",
+        json={"CallSid": provider_message_id, "Digits": digit},
         headers={"x-dira-webhook-secret": WEBHOOK_SECRET},
     )
 

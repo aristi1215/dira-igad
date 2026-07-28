@@ -133,7 +133,7 @@ LLM: set `OPENAI_API_KEY` for live alert drafting/advisor (D-010); Anthropic is 
 
 Research tier: event-level data excludes the **past 12 months**; use older years for event reads. Docs: [Getting started](https://acleddata.com/api-documentation/getting-started). Adapter: `packages/dira_data/dira_data/adapters.py` (`AcledApiAdapter`).
 
-**Twilio** (voice) — **replacing Africa's Talking**. Env: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (or API key SID/secret), `TWILIO_FROM_NUMBER` (E.164, number you own/verified). `DISPATCH_MODE=mock` until the Twilio adapter is wired; then `DISPATCH_MODE=twilio`. `PUBLIC_BASE_URL` must be publicly reachable for Gather/status webhooks. **Must be updated throughout the app** (worker settings, `dira_dispatch`, AT webhook routes, README/AGENTS/DEVIATIONS) — AT remains only as legacy code until removed.
+**Twilio** (voice) — the live dispatch provider (Africa's Talking fully removed — D-016/D-018). Env: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (or `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET`), `TWILIO_FROM_NUMBER` (E.164, a number you own or verified). Set `DISPATCH_MODE=twilio` to go live; `mock` is the seeded default. `PUBLIC_BASE_URL` must be publicly reachable (e.g. ngrok) so Twilio can fetch `<Play>` audio and post to `/webhooks/twilio/gather` and `/webhooks/twilio/status`. Live TTS: `TTS_PROVIDER=elevenlabs` + `TTS_API_KEY` + `TTS_VOICE_ID` synthesizes the Swahili alert audio served from `/audio/`.
 
 ---
 
@@ -146,6 +146,7 @@ Research tier: event-level data excludes the **past 12 months**; use older years
 | Pipeline | `python -m dira_worker.pipeline --cycle YYYY-MM-DD` | E1–E7; day must be 1/11/21 |
 | Dispatch | `python -m dira_worker.dispatch` | LISTEN + 30s poll |
 | API | uvicorn | REST + webhooks + SSE |
+| Demo pulse | `make pulse` (API must be up) | Seeded-only feeder: field reports → verification → alert drafts on a ~12-min Mandera-first script; never approves/dispatches |
 
 ---
 
@@ -165,7 +166,7 @@ Integration tests require a real Postgres (`DATABASE_URL`). They never use SQLit
 ## When we would change these decisions
 
 - Swap TransparentIndex for a freshly trained LightGBM when Mandera history is long enough for honest lift over the three baselines.
-- Replace MockDispatcher with **Twilio** (not Africa's Talking) once the adapter + webhook signature verification are wired; finish the AT→Twilio sweep across dispatch/API/docs.
+- MockDispatcher is only the seeded default now — `DISPATCH_MODE=twilio` uses `TwilioVoiceAdapter`; enable real calls by owning/verifying a Twilio FROM number and making `PUBLIC_BASE_URL` public.
 - Add WhatsApp/SMS channels only after the voice Mandera loop is rock-solid (spec cut order).
 - Move embeddings from precomputed/hash to local BGE-M3 once GPU/CPU budget allows.
 

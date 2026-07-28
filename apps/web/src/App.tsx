@@ -19,6 +19,8 @@ import { ZoneDossierScreen } from './screens/ZoneDossierScreen'
 import { DispatchScreen } from './screens/DispatchScreen'
 import { AnalyticsScreen } from './screens/AnalyticsScreen'
 import { SourcesScreen } from './screens/SourcesScreen'
+import { ModelScreen } from './screens/ModelScreen'
+import { OnboardingTour, hasSeenOnboarding } from './components/OnboardingTour'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Map', end: true },
@@ -26,6 +28,7 @@ const NAV_ITEMS = [
   { to: '/zones', label: 'Zones', end: false },
   { to: '/dispatch', label: 'Dispatch', end: false },
   { to: '/analytics', label: 'Analytics', end: false },
+  { to: '/model', label: 'Model', end: false },
   { to: '/sources', label: 'Sources', end: false },
 ]
 
@@ -34,6 +37,7 @@ function App() {
   const location = useLocation()
   const [sseFailed, setSseFailed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(() => !hasSeenOnboarding())
   const selectedSituationId = useMapUiStore((state) => state.selectedSituationId)
 
   const mapQuery = useQuery({
@@ -126,6 +130,13 @@ function App() {
           </span>
           <button
             type="button"
+            className="drawer-toggle"
+            onClick={() => setTourOpen(true)}
+          >
+            Tour
+          </button>
+          <button
+            type="button"
             className={drawerOpen ? 'drawer-toggle open' : 'drawer-toggle'}
             aria-expanded={drawerOpen}
             onClick={() => setDrawerOpen((value) => !value)}
@@ -144,6 +155,7 @@ function App() {
           <Route path="/zones/:id" element={<ZoneDossierScreen />} />
           <Route path="/dispatch" element={<DispatchScreen />} />
           <Route path="/analytics" element={<AnalyticsScreen />} />
+          <Route path="/model" element={<ModelScreen />} />
           <Route path="/sources" element={<SourcesScreen />} />
         </Routes>
 
@@ -152,6 +164,8 @@ function App() {
             <AskAdvisor situationId={selectedSituationId} />
           </aside>
         ) : null}
+
+        {tourOpen ? <OnboardingTour onClose={() => setTourOpen(false)} /> : null}
       </main>
     </div>
   )

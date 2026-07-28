@@ -12,7 +12,7 @@ Dira is a fully implemented modular monorepo (not a scaffold — see `CLAUDE.md`
 | API (FastAPI) | `apps/api` | `uv run uvicorn dira_api.main:app --reload --port 8000` | Full REST + SSE + webhooks — see `apps/api/dira_api/main.py`, `context_routes.py` |
 | Web (React+Vite) | `apps/web` | `npm --prefix apps/web run dev` (add `-- --host 0.0.0.0`) | Multi-screen situation room, light Carbon style (react-router: Map / Situations / Zones / Dispatch / Analytics / Sources; MapLibre, TanStack Query, Zustand, recharts) |
 | Worker — pipeline | `apps/worker` | `uv run python -m dira_worker.pipeline --cycle YYYY-MM-DD` | Runs the E1–E7 dekadal cycle end-to-end; day must be 1/11/21 |
-| Worker — dispatch | `apps/worker` | `uv run python -m dira_worker.dispatch` | LISTEN/NOTIFY + 30s poll daemon; `DISPATCH_MODE=mock` by default (Twilio replacing AT — adapter TBD; D-016) |
+| Worker — dispatch | `apps/worker` | `uv run python -m dira_worker.dispatch` | LISTEN/NOTIFY + 30s poll daemon; `DISPATCH_MODE=mock` (seeded) or `twilio` (live — `TwilioVoiceAdapter`; D-016) |
 | DB (Postgres+PostGIS+pgvector) | `infra/docker-compose.yml` | `docker compose -f infra/docker-compose.yml up -d db` | Required — everything above connects to it; schema applied via Alembic, not init scripts |
 
 - API docs / manual testing: `http://localhost:8000/docs` (Swagger). Web dev server: `http://localhost:5173`.
@@ -52,7 +52,8 @@ Dira is a fully implemented modular monorepo (not a scaffold — see `CLAUDE.md`
 - **ACLED:** `ACLED_EMAIL` + `ACLED_PASSWORD` → OAuth password grant (`client_id=acled`) →
   `GET /api/acled/read` with Bearer token. Research tier: no event-level data for the last 12 months.
   See [ACLED getting started](https://acleddata.com/api-documentation/getting-started).
-- **Twilio (voice, replacing Africa's Talking):** `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` (or
-  API key SID/secret) + `TWILIO_FROM_NUMBER` (E.164 owned/verified number). Keep `DISPATCH_MODE=mock`
-  until the Twilio adapter lands; then `DISPATCH_MODE=twilio`. **Sweep AT→Twilio across the whole
-  app** (settings, `dira_dispatch`, webhooks, docs) — do not leave half AT / half Twilio.
+- **Twilio (voice):** `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` (or `TWILIO_API_KEY_SID`/`TWILIO_API_KEY_SECRET`)
+  + `TWILIO_FROM_NUMBER` (E.164 owned/verified number). `DISPATCH_MODE=twilio` enables
+  `TwilioVoiceAdapter`; webhooks are `/webhooks/twilio/gather` and `/webhooks/twilio/status`, and
+  `PUBLIC_BASE_URL` must be publicly reachable for TwiML `<Play>` audio + callbacks. Africa's
+  Talking is fully removed (D-016). Live TTS: `TTS_PROVIDER=elevenlabs` + `TTS_API_KEY` + `TTS_VOICE_ID`.

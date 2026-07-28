@@ -116,11 +116,11 @@ This file records honest deviations from the authoritative specification for hum
 
 **Why:** Explicit user request — prioritize a professional, presentation-ready look (hackathon value proposition) over information density.
 
-## D-016 — Voice provider: Africa's Talking → Twilio (in progress)
+## D-016 — Voice provider: Africa's Talking → Twilio (complete)
 
-**What we did:** Originally wired `DISPATCH_MODE=at` for Africa's Talking; sandbox keys returned 401, so default stayed `DISPATCH_MODE=mock`. **Provider change:** voice is moving to **Twilio** (`TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` or API key / `TWILIO_FROM_NUMBER`). Env templates updated; application code (adapter, worker `dispatch_mode`, AT webhooks, docs references) **must be updated throughout** — do not ship a mixed AT/Twilio stack.
+**What we did:** Originally wired `DISPATCH_MODE=at` for Africa's Talking; sandbox keys returned 401, so default stayed `DISPATCH_MODE=mock`. The migration to **Twilio** is now complete: `TwilioVoiceAdapter` (Calls API, TwiML `<Play>`/`<Say>` + `<Gather>`, API-key or auth-token credentials), worker `dispatch_mode: mock|twilio`, webhooks `/webhooks/twilio/gather` and `/webhooks/twilio/status` (idempotent; unknown `CallSid` logged and discarded with 200), and ElevenLabs TTS (`TTS_PROVIDER=elevenlabs`) whose mp3s are served from `/audio/` for `<Play>`. The Africa's Talking adapter, `at` mode, `AT_*` settings, and `/webhooks/at/*` routes are removed.
 
-**Why:** Reliable auth/DX for demos; AT remains legacy until the Twilio sweep is complete. Mock stays the golden path until `DISPATCH_MODE=twilio` works end-to-end.
+**Why:** Reliable auth/DX for demos. Mock stays the seeded golden path; real outbound calls additionally require a Twilio-owned/verified FROM number and a public `PUBLIC_BASE_URL` (the provided account has neither, so live dispatch was verified up to Twilio account auth + request shape, not an actual completed call).
 
 ## D-017 — Multi-screen light-Carbon frontend (supersedes D-015)
 
@@ -135,3 +135,15 @@ This file records honest deviations from the authoritative specification for hum
 **Why:** The spec's climate+conflict+news triangle is far narrower than what CEWARN actually monitors; the user asked for "more information and types of information… from more sources". The two-channel merge keeps the red line intact: an unverified report contributes exactly 0, and a verified one can corroborate even when the news channel degrades (this changed `test_llm_failure_degrades`, which now asserts news-channel-zero rather than corroboration-zero).
 
 **Also fixed while verifying:** E3 previously deleted and re-inserted the whole cycle's `news_signals`, resetting `created_at` and breaking the rerun-idempotence invariant; it now deletes only signals the LLM no longer derives and upserts the rest (pre-existing bug, caught by `test_pipeline_rerun_is_idempotent`).
+
+## D-019 — Future-horizon labels, forecast window, and an honest model card
+
+**What we did:** Training labels moved from same-dekad incident counts (nowcasting, leakage-prone) to **future incidence over t+1..t+3 dekads** (`FORECAST_HORIZON_DEKADS=3`, ≈30 days), with features frozen at the dekad end, a strict temporal train/test split plus embargo (no training label window crossing into the test period), and leakage assertions that fail the build. Evaluation compares TransparentIndex and LightGBM against persistence, climatology, and a CAST-style neighborhood baseline over three split fractions; LightGBM is only activated when its held-out Brier beats every baseline, otherwise TransparentIndex stays active with the reason recorded. Migration `0003` adds `horizon_dekads`/`window_start`/`window_end` to `assessments` (and window columns to `alerts`); the pipeline persists them, the API serves them, and the UI shows "Next ~30 days (start – end)" on situation, map, and dispatch cards. A `/model/card` route + Model screen expose the full card (target, features, split, metrics, per-zone best/worst, limitations).
+
+**Why:** improvements.md §§1–3 — the previous card said "conflict predicted" with no window and the model was trained on contemporaneous labels. All reported metrics are on the seeded/synthetic history (only Mandera is real, D-011); they are demo evidence of honest lift, **not** field accuracy.
+
+## D-020 — Grounded advisor + demo pulse
+
+**What we did:** `/advisor` is now a grounded, read-only agent: deterministic retrieval "tools" (situation, zone context via `v_zone_context`, news signals, hazard bulletins, field reports) scoped to the selected zone, multi-turn history persisted in `advisor_conversations`/`advisor_messages` (migration `0003`), and citations + tools-used returned to the UI (chat log in the Ask Dira drawer). It has no mutating tools — approval and dispatch remain exclusively behind the human gate. `scripts/demo_pulse.py` (`make pulse`) is a seeded-only, restart-safe feeder that walks a Mandera-first scenario through the public API (reports → verification → alert drafts) so the room visibly evolves during a presentation; it never approves or dispatches.
+
+**Why:** improvements.md §§4, 6. Full pgvector/RAG embedding retrieval was scoped down to deterministic SQL retrieval with citations: with 12 seeded news documents the vector index adds latency and nondeterminism without improving grounding; the schema (pgvector, `advisor_messages.citations`) is in place to add it when the corpus grows.
