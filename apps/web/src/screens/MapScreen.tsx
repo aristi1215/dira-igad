@@ -10,12 +10,17 @@ import {
   queryKeys,
 } from '../lib/api'
 import {
+  BAND_COLORS,
+  BAND_GUIDANCE,
+  BAND_LABELS,
   BAND_MAP_COLORS,
+  COUNTRY_NAMES,
   fmtCompact,
   fmtForecastWindow,
   fmtRisk,
+  fmtRiskScore,
 } from '../lib/format'
-import { BandChip, IpcChip } from '../components/ui'
+import { BandChip, IpcChip, ScoreMeter } from '../components/ui'
 import type { AckBySituation, ZoneSummary } from '../lib/types'
 import { useMapUiStore } from '../stores/mapUi'
 
@@ -85,6 +90,8 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
     setSelectedSituationId(zone.situation_id)
   }
 
+  const selectedBand = selectedZone?.operational_band ?? 'none'
+
   return (
     <div className="map-screen">
       <MapView
@@ -103,7 +110,7 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
       <aside className="map-rail" aria-label="Zone watchlist">
         <div className="map-rail-head">
           <h2>Watchlist</h2>
-          <p>All 22 zones, ranked by model risk (latest cycle)</p>
+          <p>Ranked by conflict pressure</p>
         </div>
         <div className="map-rail-list">
           {watchlist.map((zone) => (
@@ -128,7 +135,7 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
                   {zone.country_iso2} · {zone.cluster_name}
                 </small>
               </span>
-              <span className="risk-index">{fmtRisk(zone.model_risk)}</span>
+              <span className="risk-index">{fmtRiskScore(zone.model_risk)}</span>
             </button>
           ))}
           {zonesQuery.isLoading ? (
@@ -139,12 +146,13 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
 
       {selectedZone ? (
         <section className="map-zone-card" aria-label="Selected zone">
-          <div className="map-zone-card-head">
+          <header className="mzc-head">
             <div>
               <h2>{selectedZone.zone_name}</h2>
-              <small>
-                {selectedZone.country_iso2} · {selectedZone.cluster_name}
-              </small>
+              <p className="mzc-sub">
+                {COUNTRY_NAMES[selectedZone.country_iso2] ?? selectedZone.country_iso2}{' '}
+                · {selectedZone.cluster_name}
+              </p>
             </div>
             <button
               type="button"
@@ -157,54 +165,86 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
             >
               ×
             </button>
+          </header>
+
+          <div className="mzc-hero" data-band={selectedBand}>
+            <div className="mzc-hero-top">
+              <span className="mzc-band-label">
+                {BAND_LABELS[selectedBand]} risk
+              </span>
+              <IpcChip phase={selectedZone.ipc_phase} />
+            </div>
+            <p className="mzc-guidance">{BAND_GUIDANCE[selectedBand]}</p>
+            <div className="mzc-meter">
+              <ScoreMeter
+                value={selectedZone.model_risk}
+                color={BAND_COLORS[selectedBand]}
+                track="#e8e8e8"
+              />
+              <span className="mzc-meter-val">
+                {fmtRiskScore(selectedZone.model_risk)}
+                <small>/100</small>
+              </span>
+            </div>
+            <span className="mzc-meter-cap">Conflict pressure (forecast)</span>
           </div>
 
-          <div className="feed-item-head">
-            <BandChip band={selectedZone.operational_band} />
-            <IpcChip phase={selectedZone.ipc_phase} />
+          <div className="mzc-stats">
+            <div className="mzc-stat">
+              <span className="mzc-stat-val">{fmtCompact(selectedZone.population)}</span>
+              <span className="mzc-stat-lbl">People</span>
+            </div>
+            <div className="mzc-stat">
+              <span className="mzc-stat-val">{fmtCompact(selectedZone.idps)}</span>
+              <span className="mzc-stat-lbl">Displaced</span>
+            </div>
+            <div className="mzc-stat">
+              <span className="mzc-stat-val">
+                {selectedZone.verified_field_reports_recent ?? 0}
+              </span>
+              <span className="mzc-stat-lbl">Verified reports</span>
+            </div>
+            <div className="mzc-stat">
+              <span className="mzc-stat-val">{selectedZone.active_hazards ?? 0}</span>
+              <span className="mzc-stat-lbl">Active hazards</span>
+            </div>
           </div>
 
-          <dl className="map-zone-facts">
-            <div>
-              <dt>Model risk</dt>
-              <dd>{fmtRisk(selectedZone.model_risk)}</dd>
-            </div>
-            <div>
-              <dt>Forecast window</dt>
-              <dd>
-                {fmtForecastWindow(
-                  selectedSituationProps?.window_start,
-                  selectedSituationProps?.window_end,
-                  selectedSituationProps?.horizon_dekads,
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>IDPs</dt>
-              <dd>{fmtCompact(selectedZone.idps)}</dd>
-            </div>
-            <div>
-              <dt>Population</dt>
-              <dd>{fmtCompact(selectedZone.population)}</dd>
-            </div>
-            <div>
-              <dt>Verified reports</dt>
-              <dd>{selectedZone.verified_field_reports_recent ?? 0}</dd>
-            </div>
-            <div>
-              <dt>Hazards</dt>
-              <dd>{selectedZone.active_hazards ?? 0}</dd>
-            </div>
-            <div>
-              <dt>Health alerts</dt>
-              <dd>{selectedZone.active_health_alerts ?? 0}</dd>
-            </div>
-          </dl>
+          <p className="mzc-forecast">
+            Forecast ·{' '}
+            {fmtForecastWindow(
+              selectedSituationProps?.window_start,
+              selectedSituationProps?.window_end,
+              selectedSituationProps?.horizon_dekads,
+            )}
+          </p>
 
-          <div className="card-actions">
+          <details className="mzc-tech">
+            <summary>Technical detail</summary>
+            <dl>
+              <div>
+                <dt>Model risk</dt>
+                <dd>{fmtRisk(selectedZone.model_risk)}</dd>
+              </div>
+              <div>
+                <dt>IPC phase</dt>
+                <dd>{selectedZone.ipc_phase ?? '—'}</dd>
+              </div>
+              <div>
+                <dt>Health alerts</dt>
+                <dd>{selectedZone.active_health_alerts ?? 0}</dd>
+              </div>
+              <div>
+                <dt>Operational band</dt>
+                <dd><BandChip band={selectedZone.operational_band} /></dd>
+              </div>
+            </dl>
+          </details>
+
+          <div className="mzc-actions">
             <button
               type="button"
-              className="button button-primary button-small"
+              className="button button-primary"
               onClick={() => void navigate(`/zones/${selectedZone.zone_id}`)}
             >
               Open dossier →
@@ -213,7 +253,7 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
               <>
                 <button
                   type="button"
-                  className="button button-secondary button-small"
+                  className="button button-secondary"
                   onClick={() =>
                     void navigate(`/situations/${selectedZone.situation_id}`)
                   }
@@ -222,7 +262,7 @@ export function MapScreen({ sseFailed }: { sseFailed: boolean }) {
                 </button>
                 <button
                   type="button"
-                  className="button button-secondary button-small"
+                  className="button button-secondary"
                   disabled={prepareAlertMutation.isPending}
                   onClick={() =>
                     prepareAlertMutation.mutate(selectedZone.situation_id!)

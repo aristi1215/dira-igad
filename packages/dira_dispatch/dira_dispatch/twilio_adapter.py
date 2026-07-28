@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import urlencode
 from xml.sax.saxutils import escape
 
 import httpx
@@ -22,6 +23,25 @@ FALLBACK_SAY = (
     "Tahadhari ya Dira. Hali ya hatari imeongezeka katika eneo lako. "
     "Tafadhali chukua hatua za maandalizi."
 )
+
+
+def build_voice_twiml(audio_url: str, gather_action: str) -> str:
+    """Build the outbound-call TwiML: play the alert audio (or <Say> fallback),
+    then gather one DTMF digit to the acknowledgement webhook."""
+    if audio_url.startswith(("http://", "https://")):
+        payload = f"<Play>{escape(audio_url)}</Play>"
+    else:
+        payload = f'<Say language="sw-KE">{escape(FALLBACK_SAY)}</Say>'
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        "<Response>"
+        f"{payload}"
+        f'<Gather action="{escape(gather_action, {chr(34): "&quot;"})}" '
+        'method="POST" numDigits="1" timeout="8">'
+        '<Say language="sw-KE">Bonyeza moja kuthibitisha kupokea tahadhari hii.</Say>'
+        "</Gather>"
+        "</Response>"
+    )
 
 
 class TwilioVoiceAdapter:
@@ -64,30 +84,28 @@ class TwilioVoiceAdapter:
             )
 
     def twiml(self, audio_url: str) -> str:
-        gather_action = f"{self.public_base_url}/webhooks/twilio/gather"
-        if audio_url.startswith(("http://", "https://")):
-            payload = f"<Play>{escape(audio_url)}</Play>"
-        else:
-            payload = f'<Say language="sw-KE">{escape(FALLBACK_SAY)}</Say>'
+        return build_voice_twiml(
+            audio_url,
+            f"{self.public_base_url}/webhooks/twilio/gather",
+        )
+
+    def voice_url(self, audio_url: str) -> str:
         return (
-            '<?xml version="1.0" encoding="UTF-8"?>'
-            "<Response>"
-            f"{payload}"
-            f'<Gather action="{escape(gather_action, {chr(34): "&quot;"})}" '
-            'method="POST" numDigits="1" timeout="8">'
-            '<Say language="sw-KE">Bonyeza moja kuthibitisha kupokea tahadhari hii.</Say>'
-            "</Gather>"
-            "</Response>"
+            f"{self.public_base_url}/webhooks/twilio/voice?"
+            f"{urlencode({'audio_url': audio_url})}"
         )
 
     def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef:
         status_callback = f"{self.public_base_url}/webhooks/twilio/status"
+        # Twilio defaults both the TwiML `Url` fetch and the `StatusCallback`
+        # POST to HTTP POST, so we omit the explicit `Method`/`StatusCallbackMethod`
+        # params: behaviour is identical on paid accounts, and trial accounts
+        # reject those two params ("disallowed parameters" 400).
         payload = {
             "To": phone,
             "From": self.from_number,
-            "Twiml": self.twiml(audio_url),
+            "Url": self.voice_url(audio_url),
             "StatusCallback": status_callback,
-            "StatusCallbackMethod": "POST",
             "StatusCallbackEvent": "completed",
         }
         url = f"{self.api_base_url}/2010-04-01/Accounts/{self.account_sid}/Calls.json"

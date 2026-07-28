@@ -12,6 +12,7 @@ from uuid import UUID
 from dira_core.alerts import derive_idempotency_key
 from dira_data.db import connect
 from dira_data.economy import get_economy_source
+from dira_dispatch import build_voice_twiml
 from dira_llm import ALERT_DRAFT_SYSTEM, CannedResponseAdapter, get_language_model
 from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -729,6 +730,15 @@ async def webhook_gather(
                     (ack_status, ack_method, ack_status, row["id"]),
                 )
     return twiml_ok
+
+
+@app.api_route("/webhooks/twilio/voice", methods=["GET", "POST"])
+async def webhook_voice(audio_url: str | None = Query(default=None)) -> Response:
+    """Public TwiML for outbound calls — Twilio fetches this via the call's Url."""
+    settings = _settings()
+    base = settings.public_base_url.rstrip("/")
+    twiml = build_voice_twiml(audio_url or "", f"{base}/webhooks/twilio/gather")
+    return Response(content=twiml, media_type="text/xml")
 
 
 @app.post("/webhooks/twilio/status")

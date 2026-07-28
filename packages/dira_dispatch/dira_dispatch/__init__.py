@@ -8,7 +8,7 @@ from dira_dispatch.tts import (
     PrerecordedAudioAdapter,
     get_speech_synthesizer,
 )
-from dira_dispatch.twilio_adapter import TwilioVoiceAdapter
+from dira_dispatch.twilio_adapter import TwilioVoiceAdapter, build_voice_twiml
 
 __all__ = [
     "ElevenLabsAdapter",
@@ -16,5 +16,6 @@ __all__ = [
     "MockDispatcher",
     "PrerecordedAudioAdapter",
     "TwilioVoiceAdapter",
+    "build_voice_twiml",
     "get_speech_synthesizer",
 ]

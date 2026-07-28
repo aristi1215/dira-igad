@@ -251,7 +251,7 @@ export function useMapLayers({
     map.setPaintProperty(
       ZONE_FILL_LAYER_ID,
       'fill-opacity',
-      overlay === 'pressure' ? 0.5 : 0.65,
+      overlay === 'pressure' ? 0.22 : 0.48,
     )
   }, [map, overlay])
 
@@ -328,7 +328,7 @@ function zoneFillLayer(overlay: MapOverlay): LayerSpecification {
     source: ZONE_SOURCE_ID,
     paint: {
       'fill-color': overlayFillColor(overlay),
-      'fill-opacity': overlay === 'pressure' ? 0.5 : 0.65,
+      'fill-opacity': overlay === 'pressure' ? 0.22 : 0.48,
     },
   } as LayerSpecification
 }
@@ -340,8 +340,8 @@ function zoneLineLayer(): LayerSpecification {
     source: ZONE_SOURCE_ID,
     paint: {
       'line-color': '#ffffff',
-      'line-opacity': 0.9,
-      'line-width': 1,
+      'line-opacity': 0.35,
+      'line-width': 0.6,
     },
   }
 }
