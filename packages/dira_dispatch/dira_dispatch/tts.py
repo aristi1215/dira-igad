@@ -16,11 +16,23 @@ DEFAULT_AUDIO_DIR = ROOT / "data" / "seeded" / "audio"
 DEFAULT_SYNTH_DIR = ROOT / "artifacts" / "audio"
 
 
+def _default_audio_dir() -> Path:
+    """Locate the seeded audio fixtures.
+
+    The ``__file__``-relative default only works for an editable install; when
+    the package is pip-installed (e.g. in the prod containers) it resolves into
+    site-packages where no ``data/`` exists. Honour ``SEEDED_DATA_DIR`` — the
+    same convention the data adapters use — so the fixtures are found there.
+    """
+    seeded = os.environ.get("SEEDED_DATA_DIR")
+    return Path(seeded) / "audio" if seeded else DEFAULT_AUDIO_DIR
+
+
 class PrerecordedAudioAdapter:
     """Return seeded pre-recorded audio/text references by language."""
 
-    def __init__(self, audio_dir: str | Path = DEFAULT_AUDIO_DIR) -> None:
-        self.audio_dir = Path(audio_dir)
+    def __init__(self, audio_dir: str | Path | None = None) -> None:
+        self.audio_dir = Path(audio_dir) if audio_dir is not None else _default_audio_dir()
 
     def synthesize(self, text: str, language: str) -> AudioRef:
         language_dir = self.audio_dir / language
