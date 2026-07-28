@@ -94,5 +94,10 @@ def test_call_uses_url_not_inline_twiml(
     assert isinstance(payload, dict)
     assert "Url" in payload
     assert "Twiml" not in payload
-    assert payload["Method"] == "POST"
+    # Trial accounts reject explicit HTTP-method params; Twilio defaults both to
+    # POST, so they must be omitted (behaviour-neutral on paid accounts).
+    assert "Method" not in payload
+    assert "StatusCallbackMethod" not in payload
+    assert payload["StatusCallback"].endswith("/webhooks/twilio/status")
+    assert payload["StatusCallbackEvent"] == "completed"
     assert provider_ref.provider_message_id == "CAfake"

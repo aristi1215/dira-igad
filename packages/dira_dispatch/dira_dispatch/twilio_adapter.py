@@ -97,13 +97,15 @@ class TwilioVoiceAdapter:
 
     def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef:
         status_callback = f"{self.public_base_url}/webhooks/twilio/status"
+        # Twilio defaults both the TwiML `Url` fetch and the `StatusCallback`
+        # POST to HTTP POST, so we omit the explicit `Method`/`StatusCallbackMethod`
+        # params: behaviour is identical on paid accounts, and trial accounts
+        # reject those two params ("disallowed parameters" 400).
         payload = {
             "To": phone,
             "From": self.from_number,
             "Url": self.voice_url(audio_url),
-            "Method": "POST",
             "StatusCallback": status_callback,
-            "StatusCallbackMethod": "POST",
             "StatusCallbackEvent": "completed",
         }
         url = f"{self.api_base_url}/2010-04-01/Accounts/{self.account_sid}/Calls.json"
