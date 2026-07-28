@@ -861,31 +861,36 @@ textarea:focus-visible,
   position: absolute;
   right: 0.85rem;
   top: 0.85rem;
-  width: min(21rem, 86vw);
+  width: min(22.5rem, 88vw);
   z-index: 21;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: var(--shadow-lg);
-  padding: 0.85rem 1rem;
-  display: grid;
-  gap: 0.55rem;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.map-zone-card-head {
+.mzc-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
+  padding: 1rem 1.15rem 0.75rem;
 }
 
-.map-zone-card-head h2 {
+.mzc-head h2 {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
-.map-zone-card-head small {
+.mzc-sub {
+  margin: 0.15rem 0 0;
   color: var(--faint);
+  font-size: 0.8rem;
 }
 
 .map-zone-card .close-button {
@@ -897,34 +902,194 @@ textarea:focus-visible,
   padding: 0.1rem 0.3rem;
 }
 
-.map-zone-facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.45rem;
-  margin: 0;
+.mzc-hero {
+  margin: 0 1.15rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--faint);
+  background: color-mix(in srgb, var(--faint) 10%, white);
 }
 
-.map-zone-facts div {
-  display: grid;
-  gap: 0.05rem;
+.mzc-hero[data-band='very_high'] {
+  border-left-color: var(--band-very-high);
+  background: color-mix(in srgb, var(--band-very-high) 10%, white);
 }
 
-.map-zone-facts dt {
+.mzc-hero[data-band='high'] {
+  border-left-color: var(--band-high);
+  background: color-mix(in srgb, var(--band-high) 10%, white);
+}
+
+.mzc-hero[data-band='elevated'] {
+  border-left-color: var(--band-elevated);
+  background: color-mix(in srgb, var(--band-elevated) 10%, white);
+}
+
+.mzc-hero[data-band='watch'] {
+  border-left-color: var(--band-watch);
+  background: color-mix(in srgb, var(--band-watch) 10%, white);
+}
+
+.mzc-hero[data-band='low'] {
+  border-left-color: var(--band-low);
+  background: color-mix(in srgb, var(--band-low) 10%, white);
+}
+
+.mzc-hero[data-band='none'] {
+  border-left-color: var(--faint);
+  background: color-mix(in srgb, var(--faint) 10%, white);
+}
+
+.mzc-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mzc-band-label {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.mzc-guidance {
+  margin: 0.35rem 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.mzc-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mzc-meter .score-meter {
+  flex: 1;
+}
+
+.mzc-meter-val {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mzc-meter-val small {
   color: var(--faint);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
+.mzc-meter-cap {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--faint);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.map-zone-facts dd {
-  margin: 0;
+.mzc-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0.9rem 1.15rem 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--border);
+}
+
+.mzc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.8rem;
+  background: var(--surface);
+}
+
+.mzc-stat-val {
+  color: var(--ink);
+  font-size: 1.15rem;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.9rem;
 }
 
-.map-zone-card .card-actions {
+.mzc-stat-lbl {
+  color: var(--faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.mzc-forecast {
+  margin: 0.6rem 1.15rem 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.mzc-tech {
+  margin: 0.7rem 1.15rem 0;
+}
+
+.mzc-tech summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.mzc-tech[open] summary {
+  margin-bottom: 0.4rem;
+}
+
+.mzc-tech dl {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.mzc-tech dl div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mzc-tech dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.mzc-tech dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.mzc-actions {
+  display: flex;
   flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.9rem 1.15rem 1.1rem;
+}
+
+.mzc-actions .button-primary {
+  flex-basis: 100%;
+}
+
+.mzc-actions .button-secondary {
+  flex: 1;
+}
+
+.mzc-actions .button {
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8rem;
 }
 
 .map-attrib-note {

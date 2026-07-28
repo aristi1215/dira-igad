@@ -26,6 +26,15 @@ export const BAND_LABELS: Record<OperationalBand | 'none', string> = {
   none: 'No band',
 }
 
+export const BAND_GUIDANCE: Record<OperationalBand | 'none', string> = {
+  very_high: 'Escalation likely — prepare to alert communities now.',
+  high: 'Elevated risk — ready contacts and review the situation.',
+  elevated: 'Pressure rising — monitor this zone closely.',
+  watch: 'Some pressure building — keep watch.',
+  low: 'Stable — routine monitoring.',
+  none: 'Not yet assessed this cycle.',
+}
+
 export const BAND_ORDER: (OperationalBand | 'none')[] = [
   'very_high',
   'high',
@@ -102,6 +111,11 @@ export function fmtPct(value: number | null | undefined, digits = 0): string {
 export function fmtRisk(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return '—'
   return value.toFixed(2)
+}
+
+export function fmtRiskScore(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return '—'
+  return String(Math.round(value * 100))
 }
 
 export function fmtProbability(value: number | null | undefined): string {

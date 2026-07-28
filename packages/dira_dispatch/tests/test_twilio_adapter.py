@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import httpx
 import pytest
 from dira_dispatch import TwilioVoiceAdapter
 
@@ -54,3 +55,44 @@ def test_twiml_escapes_xml() -> None:
     twiml = _adapter().twiml("https://example.org/a.mp3?x=1&y=2")
     assert "&amp;" in twiml
     assert "&y=2" not in twiml
+
+
+def test_voice_url_encodes_audio() -> None:
+    voice_url = _adapter().voice_url("https://example.org/audio/a.mp3?x=1&y=2")
+    assert "/webhooks/twilio/voice?audio_url=" in voice_url
+    assert "%3A%2F%2F" in voice_url
+    assert "://" not in voice_url.split("?", 1)[1]
+
+
+def test_call_uses_url_not_inline_twiml(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_post(
+        _client: httpx.Client,
+        url: str,
+        **kwargs: object,
+    ) -> httpx.Response:
+        captured["url"] = url
+        captured.update(kwargs)
+        return httpx.Response(
+            201,
+            json={"sid": "CAfake"},
+            request=httpx.Request("POST", url),
+        )
+
+    monkeypatch.setattr(httpx.Client, "post", fake_post)
+
+    provider_ref = _adapter().call(
+        "+15551234567",
+        "https://example.org/audio/a.mp3",
+        "idem-1",
+    )
+
+    payload = captured["data"]
+    assert isinstance(payload, dict)
+    assert "Url" in payload
+    assert "Twiml" not in payload
+    assert payload["Method"] == "POST"
+    assert provider_ref.provider_message_id == "CAfake"

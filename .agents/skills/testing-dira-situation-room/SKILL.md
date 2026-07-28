@@ -37,6 +37,10 @@ The UI is a routed multi-screen app: Map / Situations / Zones / Dispatch / Analy
 - Live ACLED read access may be denied at the account level even with valid OAuth credentials (DEVIATIONS D-013); seeded mode is the reliable default.
 - The World Bank API can return HTML/5xx; the economy endpoint falls back to seeded data automatically.
 - Twilio live mode (`DISPATCH_MODE=twilio`) requires a Twilio-owned/verified `TWILIO_FROM_NUMBER` **and** a public `PUBLIC_BASE_URL` (ngrok) for `<Play>` audio + `/webhooks/twilio/*` callbacks; without them keep `DISPATCH_MODE=mock`. Webhook payloads are form-encoded (`CallSid`, `Digits`, `CallStatus`); tests may post JSON.
+- The Vite dev proxy forwards `/situations`, `/alerts`, `/deliveries`, `/map`, `/events` to the API, so a browser hard-refresh on a client route like `/situations/{id}` may return raw API JSON. Navigate via in-app links/tables instead; if it recurs, narrow the proxy match in `apps/web/vite.config.ts`.
+- In live mode, verify the actual per-source mode on `/sources` before asserting "live": NDVI, health surveillance, FAO locust, CEWARN monitors and WorldPop may intentionally show `seeded` (independent degradation is expected behavior, not a failure).
+- The rich detail modals (news signals, field reports, hazard bulletins, conflict events, score explainer) close on Escape and overlay click; assert against the persisted `combination_rule` text and SHAP values rather than recomputing — the UI must mirror stored values exactly.
+- The `dira-db` Docker container can be stopped after a VM restart (`docker start dira-db`); a dead DB manifests as empty screens, not errors.
 
 ## Devin Secrets Needed
 
