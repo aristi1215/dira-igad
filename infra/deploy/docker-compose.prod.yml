@@ -1,0 +1,118 @@
+services:
+  db:
+    build:
+      context: ..
+      dockerfile: Dockerfile.db
+    image: dira-db:prod
+    environment:
+      POSTGRES_USER: dira
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dira_demo_2026}
+      POSTGRES_DB: dira
+    volumes:
+      - dira_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dira -d dira"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/Dockerfile.api
+    image: dira-api:prod
+    environment:
+      DATABASE_URL: postgresql://dira:${POSTGRES_PASSWORD:-dira_demo_2026}@db:5432/dira
+      DATA_MODE: ${DATA_MODE:-seeded}
+      SEEDED_DATA_DIR: /app/data/seeded
+      DISPATCH_MODE: ${DISPATCH_MODE:-mock}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      ACLED_EMAIL: ${ACLED_EMAIL:-}
+      ACLED_PASSWORD: ${ACLED_PASSWORD:-}
+      HDX_APP_IDENTIFIER: ${HDX_APP_IDENTIFIER:-}
+      HDX_APP_ENCODED: ${HDX_APP_ENCODED:-}
+      TTS_PROVIDER: ${TTS_PROVIDER:-elevenlabs}
+      TTS_API_KEY: ${TTS_API_KEY:-}
+      TTS_VOICE_ID: ${TTS_VOICE_ID:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_API_KEY_SID: ${TWILIO_API_KEY_SID:-}
+      TWILIO_API_KEY_SECRET: ${TWILIO_API_KEY_SECRET:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      ZOMBIE_TIMEOUT_MINUTES: "10"
+      DISPATCH_POLL_SECONDS: "30"
+      MAX_DISPATCH_ATTEMPTS: "5"
+      RESOLVE_AFTER_CYCLES_BELOW_THRESHOLD: "3"
+      MOCK_ACK_DELAY_SECONDS: "2"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-dispatch:
+    build:
+      context: ../..
+      dockerfile: infra/Dockerfile.worker
+    image: dira-worker:prod
+    command: ["python", "-m", "dira_worker.dispatch"]
+    environment:
+      DATABASE_URL: postgresql://dira:${POSTGRES_PASSWORD:-dira_demo_2026}@db:5432/dira
+      DATA_MODE: ${DATA_MODE:-seeded}
+      SEEDED_DATA_DIR: /app/data/seeded
+      DISPATCH_MODE: ${DISPATCH_MODE:-mock}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      TTS_PROVIDER: ${TTS_PROVIDER:-elevenlabs}
+      TTS_API_KEY: ${TTS_API_KEY:-}
+      TTS_VOICE_ID: ${TTS_VOICE_ID:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_API_KEY_SID: ${TWILIO_API_KEY_SID:-}
+      TWILIO_API_KEY_SECRET: ${TWILIO_API_KEY_SECRET:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      ZOMBIE_TIMEOUT_MINUTES: "10"
+      DISPATCH_POLL_SECONDS: "30"
+      MAX_DISPATCH_ATTEMPTS: "5"
+      MOCK_ACK_DELAY_SECONDS: "2"
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/Dockerfile.web
+      args:
+        VITE_API_URL: ""
+    image: dira-web:prod
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  ops:
+    build:
+      context: ../..
+      dockerfile: infra/Dockerfile.ops
+    image: dira-ops:prod
+    profiles: ["ops"]
+    environment:
+      DATABASE_URL: postgresql://dira:${POSTGRES_PASSWORD:-dira_demo_2026}@db:5432/dira
+      DATA_MODE: seeded
+      SEEDED_DATA_DIR: /app/data/seeded
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  dira_pgdata:

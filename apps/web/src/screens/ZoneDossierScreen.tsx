@@ -1,13 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  createFieldReport,
-  dismissFieldReport,
-  fetchZoneProfile,
-  queryKeys,
-  verifyFieldReport,
-} from '../lib/api'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowRight } from 'lucide-react'
+import { fetchZoneProfile, queryKeys } from '../lib/api'
 import {
   CHART,
   COUNTRY_NAMES,
@@ -15,39 +10,33 @@ import {
   fmtDate,
   fmtMonth,
   fmtNumber,
-  fmtPct,
   titleCase,
 } from '../lib/format'
 import {
+  Button,
   Card,
   EmptyState,
   ErrorNote,
   IpcChip,
-  LoadingNote,
   PageHeader,
-  StatTile,
+  Screen,
+  ScreenSkeleton,
+  Stat,
+  StatRow,
   StatusChip,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
-import {
-  ConflictEvents,
-  FieldReportModal,
-  HazardBulletins,
-  SignalsList,
-} from '../features/situations'
-import type { FieldReport, MarketPriceRow } from '../lib/types'
+import { ConflictEvents, HazardBulletins, SignalsList } from '../features/situations'
+import { ZoneFieldReports } from './zone/ZoneFieldReports'
+import { ZoneMarketPrices } from './zone/ZoneMarketPrices'
 
-const REPORT_CATEGORIES = [
-  'water_dispute',
-  'pasture_dispute',
-  'livestock_raid',
-  'migration_influx',
-  'market_disruption',
-  'road_blockage',
-  'armed_presence',
-  'peace_meeting',
+const SECTIONS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'climate', label: 'Climate' },
+  { id: 'conflict', label: 'Conflict' },
+  { id: 'markets', label: 'Markets & health' },
+  { id: 'reports', label: 'Reports' },
 ]
-const REPORTER_ROLES = ['field_monitor', 'peace_committee', 'drm_officer', 'chief']
 
 export function ZoneDossierScreen() {
   const { id = '' } = useParams()
@@ -60,7 +49,6 @@ export function ZoneDossierScreen() {
   })
 
   const profile = profileQuery.data
-
   const latestIpc = profile?.food_security.at(-1) ?? null
   const latestDisplacement = profile?.displacement.at(-1) ?? null
 
@@ -84,23 +72,14 @@ export function ZoneDossierScreen() {
     [profile?.displacement],
   )
 
-  const { latestPrices, termsOfTrade } = useMemo(
-    () => summarizePrices(profile?.market_prices ?? []),
-    [profile?.market_prices],
-  )
-
   if (profileQuery.isLoading) {
-    return (
-      <div className="screen">
-        <LoadingNote>Loading zone dossier…</LoadingNote>
-      </div>
-    )
+    return <ScreenSkeleton />
   }
   if (profileQuery.isError || !profile) {
     return (
-      <div className="screen">
+      <Screen>
         <ErrorNote error={profileQuery.error ?? new Error('Zone not found')} />
-      </div>
+      </Screen>
     )
   }
 
@@ -110,194 +89,191 @@ export function ZoneDossierScreen() {
       : null
 
   return (
-    <div className="screen">
+    <Screen>
       <PageHeader
         eyebrow={`Zone dossier · ${profile.zone.cluster_name}`}
         title={profile.zone.name}
-        description={`${COUNTRY_NAMES[profile.zone.country_iso2] ?? profile.zone.country_iso2} · everything CEWARN knows about this zone, with each observation stamped by when it became available (bitemporal).`}
+        description={`${
+          COUNTRY_NAMES[profile.zone.country_iso2] ?? profile.zone.country_iso2
+        } · everything Dira knows about this zone, each observation stamped with when it became available.`}
         actions={
           situationId ? (
-            <button
-              type="button"
-              className="button button-primary"
+            <Button
+              variant="primary"
+              iconRight={ArrowRight}
               onClick={() => void navigate(`/situations/${situationId}`)}
             >
-              View open situation
-            </button>
+              Open situation
+            </Button>
           ) : undefined
         }
       />
 
-      <div className="stat-row">
-        <StatTile
-          label="Population"
-          value={fmtCompact(profile.exposure?.population ?? null)}
-          detail={
-            profile.exposure?.pastoralist_share != null
-              ? `${Math.round(profile.exposure.pastoralist_share * 100)}% pastoralist`
-              : undefined
-          }
-        />
-        <StatTile
-          label="Food security"
-          value={<IpcChip phase={latestIpc?.ipc_phase ?? null} />}
-          detail={
-            latestIpc?.pop_phase3_plus != null
-              ? `${fmtCompact(latestIpc.pop_phase3_plus)} in Phase 3+`
-              : undefined
-          }
-        />
-        <StatTile
-          label="IDPs"
-          value={fmtCompact(latestDisplacement?.idps ?? null)}
-          detail={
-            latestDisplacement
-              ? `as of ${fmtDate(latestDisplacement.snapshot_date)}`
-              : undefined
-          }
-        />
-        <StatTile
-          label="Water points"
-          value={fmtNumber(profile.exposure?.water_points ?? null)}
-        />
-        <StatTile
-          label="Markets"
-          value={fmtNumber(profile.exposure?.markets ?? null)}
-        />
-        <StatTile label="Recipients" value={profile.recipients.length} />
-      </div>
-
-      <div className="grid-2">
-        <Card title="Rainfall" subtitle="mm per dekad (CHIRPS-shaped seeded series)">
-          {climateData.length > 0 ? (
-            <TimeSeriesChart
-              data={climateData}
-              xKey="dekad"
-              xFormatter={fmtMonth}
-              series={[
-                { key: 'rain_mm', label: 'Rain (mm)', kind: 'bar', color: CHART.cat1 },
-              ]}
-            />
-          ) : (
-            <EmptyState>No climate series.</EmptyState>
-          )}
-        </Card>
-
-        <Card title="Vegetation (NDVI)" subtitle="Dekadal mean — shown separately, never on a second axis">
-          {climateData.length > 0 ? (
-            <TimeSeriesChart
-              data={climateData}
-              xKey="dekad"
-              xFormatter={fmtMonth}
-              series={[
-                { key: 'ndvi', label: 'NDVI', kind: 'line', color: CHART.cat3 },
-              ]}
-              yFormatter={(v) => v.toFixed(2)}
-            />
-          ) : (
-            <EmptyState>No NDVI series.</EmptyState>
-          )}
-        </Card>
-
-        <Card title="Conflict incidents" subtitle="ACLED-shaped monthly events and fatalities">
-          {profile.incidents_monthly.length > 0 ? (
-            <TimeSeriesChart
-              data={profile.incidents_monthly as unknown as Record<string, unknown>[]}
-              xKey="month"
-              xFormatter={fmtMonth}
-              series={[
-                { key: 'events', label: 'Events', kind: 'bar', color: CHART.cat1 },
-                { key: 'fatalities', label: 'Fatalities', kind: 'line', color: CHART.cat2 },
-              ]}
-            />
-          ) : (
-            <EmptyState>No incident history.</EmptyState>
-          )}
-        </Card>
-
-        <Card title="Displacement" subtitle="IOM DTM-shaped snapshots">
-          {displacementData.length > 0 ? (
-            <TimeSeriesChart
-              data={displacementData}
-              xKey="date"
-              xFormatter={fmtMonth}
-              series={[
-                { key: 'idps', label: 'IDPs', kind: 'line', color: CHART.cat1 },
-                { key: 'refugees', label: 'Refugees', kind: 'line', color: CHART.cat4 },
-              ]}
-            />
-          ) : (
-            <EmptyState>No displacement snapshots.</EmptyState>
-          )}
-        </Card>
-      </div>
-
-      <Card
-        title="Market prices"
-        subtitle="WFP-shaped monthly observations; Δ compares against the trailing 3-month average"
-        actions={
-          termsOfTrade ? (
-            <StatusChip tone={termsOfTrade.kg < 40 ? 'error' : 'info'}>
-              Terms of trade: 1 goat ≈ {termsOfTrade.kg.toFixed(0)} kg maize
-            </StatusChip>
-          ) : undefined
-        }
+      {/* Twelve stacked cards is a scroll marathon without a way to jump. */}
+      <nav
+        aria-label="Sections"
+        className="sticky top-0 z-10 -mx-6 mb-5 flex gap-1 overflow-x-auto border-b border-line bg-canvas/90 px-6 py-2 backdrop-blur-sm"
       >
-        {latestPrices.length > 0 ? (
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Market</th>
-                  <th>Commodity</th>
-                  <th>Month</th>
-                  <th className="num">Price</th>
-                  <th className="num">Δ vs 3-month avg</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latestPrices.map((row) => (
-                  <tr key={`${row.market_name}-${row.commodity}`}>
-                    <td>{row.market_name}</td>
-                    <td>{titleCase(row.commodity)}</td>
-                    <td>{fmtMonth(row.month)}</td>
-                    <td className="num">
-                      {fmtNumber(row.price)} {row.currency}/{row.unit}
-                    </td>
-                    <td className="num">
-                      <span
-                        style={{
-                          color:
-                            (row.pct_vs_3m_avg ?? 0) > 10
-                              ? 'var(--err-fg)'
-                              : undefined,
-                        }}
-                      >
-                        {fmtPct(row.pct_vs_3m_avg)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState>No market price observations.</EmptyState>
-        )}
-      </Card>
+        {SECTIONS.map((section) => (
+          <a
+            key={section.id}
+            href={`#${section.id}`}
+            className="rounded-sm px-2.5 py-1 text-xs font-medium whitespace-nowrap text-muted transition-colors duration-[120ms] hover:bg-surface-3 hover:text-ink"
+          >
+            {section.label}
+          </a>
+        ))}
+      </nav>
 
-      <div className="grid-2">
-        <Card title="Health surveillance" subtitle="Weekly disease reporting">
-          {profile.health.length > 0 ? (
-            <div className="table-scroll">
-              <table className="data-table">
+      <section id="overview" className="scroll-mt-16">
+        <StatRow className="mb-5">
+          <Stat
+            label="Population"
+            value={fmtCompact(profile.exposure?.population ?? null)}
+            detail={
+              profile.exposure?.pastoralist_share != null
+                ? `${Math.round(profile.exposure.pastoralist_share * 100)}% pastoralist`
+                : undefined
+            }
+          />
+          <Stat
+            label="Food security"
+            value={<IpcChip phase={latestIpc?.ipc_phase ?? null} />}
+            detail={
+              latestIpc?.pop_phase3_plus != null
+                ? `${fmtCompact(latestIpc.pop_phase3_plus)} in crisis or worse`
+                : undefined
+            }
+          />
+          <Stat
+            label="Displaced"
+            value={fmtCompact(latestDisplacement?.idps ?? null)}
+            detail={
+              latestDisplacement ? `as of ${fmtDate(latestDisplacement.snapshot_date)}` : undefined
+            }
+          />
+          <Stat
+            label="Water points"
+            value={fmtNumber(profile.exposure?.water_points ?? null)}
+            detail={`${fmtNumber(profile.exposure?.markets ?? null)} markets`}
+          />
+          <Stat
+            label="Alert recipients"
+            value={profile.recipients.length}
+            detail="Community focal points"
+          />
+        </StatRow>
+      </section>
+
+      <section id="climate" className="mb-5 scroll-mt-16">
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card title="Rainfall" subtitle="Millimetres per 10-day period">
+            {climateData.length > 0 ? (
+              <TimeSeriesChart
+                data={climateData}
+                xKey="dekad"
+                xFormatter={fmtMonth}
+                series={[{ key: 'rain_mm', label: 'Rain (mm)', kind: 'bar', color: CHART.cat1 }]}
+              />
+            ) : (
+              <EmptyState>No climate series.</EmptyState>
+            )}
+          </Card>
+
+          <Card
+            title="Vegetation"
+            subtitle="NDVI mean — plotted separately, never on a second axis"
+          >
+            {climateData.length > 0 ? (
+              <TimeSeriesChart
+                data={climateData}
+                xKey="dekad"
+                xFormatter={fmtMonth}
+                series={[{ key: 'ndvi', label: 'NDVI', kind: 'line', color: CHART.cat3 }]}
+                yFormatter={(value) => value.toFixed(2)}
+              />
+            ) : (
+              <EmptyState>No vegetation series.</EmptyState>
+            )}
+          </Card>
+        </div>
+      </section>
+
+      <section id="conflict" className="mb-5 scroll-mt-16">
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card title="Conflict incidents" subtitle="Monthly events and fatalities">
+            {profile.incidents_monthly.length > 0 ? (
+              <TimeSeriesChart
+                data={profile.incidents_monthly as unknown as Record<string, unknown>[]}
+                xKey="month"
+                xFormatter={fmtMonth}
+                series={[
+                  { key: 'events', label: 'Events', kind: 'bar', color: CHART.cat1 },
+                  { key: 'fatalities', label: 'Fatalities', kind: 'line', color: CHART.cat2 },
+                ]}
+              />
+            ) : (
+              <EmptyState>No incident history.</EmptyState>
+            )}
+          </Card>
+
+          <Card title="Displacement" subtitle="Snapshot counts over time">
+            {displacementData.length > 0 ? (
+              <TimeSeriesChart
+                data={displacementData}
+                xKey="date"
+                xFormatter={fmtMonth}
+                series={[
+                  { key: 'idps', label: 'Displaced', kind: 'line', color: CHART.cat1 },
+                  { key: 'refugees', label: 'Refugees', kind: 'line', color: CHART.cat4 },
+                ]}
+              />
+            ) : (
+              <EmptyState>No displacement snapshots.</EmptyState>
+            )}
+          </Card>
+
+          <Card
+            title="Recent conflict events"
+            subtitle="Select an event for actors, source and its contribution to zone risk"
+          >
+            <ConflictEvents
+              events={profile.recent_events.slice(0, 10)}
+              zoneName={profile.zone.name}
+            />
+          </Card>
+
+          <Card
+            title="News signals"
+            subtitle="Media monitoring feeding the corroboration channel"
+          >
+            <SignalsList zoneId={id} zoneName={profile.zone.name} />
+          </Card>
+        </div>
+      </section>
+
+      <section id="markets" className="mb-5 scroll-mt-16">
+        <div className="mb-5">
+          <ZoneMarketPrices rows={profile.market_prices} />
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card title="Health surveillance" subtitle="Weekly disease reporting">
+            {profile.health.length > 0 ? (
+              <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr>
-                    <th>Week</th>
-                    <th>Disease</th>
-                    <th className="num">Cases</th>
-                    <th className="num">Deaths</th>
-                    <th>Status</th>
+                  <tr className="border-b border-line">
+                    {['Week', 'Disease', 'Cases', 'Deaths', 'Status'].map((header, index) => (
+                      <th
+                        key={header}
+                        scope="col"
+                        className={`px-2 py-1.5 text-2xs font-medium tracking-[0.04em] text-muted uppercase ${
+                          index === 2 || index === 3 ? 'text-right' : 'text-left'
+                        }`}
+                      >
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -305,12 +281,15 @@ export function ZoneDossierScreen() {
                     .sort((a, b) => b.week_start.localeCompare(a.week_start))
                     .slice(0, 10)
                     .map((row) => (
-                      <tr key={`${row.week_start}-${row.disease}`}>
-                        <td>{fmtDate(row.week_start)}</td>
-                        <td>{titleCase(row.disease)}</td>
-                        <td className="num">{row.cases}</td>
-                        <td className="num">{row.deaths}</td>
-                        <td>
+                      <tr
+                        key={`${row.week_start}-${row.disease}`}
+                        className="border-b border-line last:border-b-0"
+                      >
+                        <td className="px-2 py-2 text-muted">{fmtDate(row.week_start)}</td>
+                        <td className="px-2 py-2 text-ink">{titleCase(row.disease)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums text-ink">{row.cases}</td>
+                        <td className="px-2 py-2 text-right tabular-nums text-ink">{row.deaths}</td>
+                        <td className="px-2 py-2">
                           <StatusChip
                             tone={
                               row.status === 'outbreak'
@@ -327,331 +306,61 @@ export function ZoneDossierScreen() {
                     ))}
                 </tbody>
               </table>
-            </div>
-          ) : (
-            <EmptyState>No surveillance data.</EmptyState>
-          )}
-        </Card>
+            ) : (
+              <EmptyState>No surveillance data.</EmptyState>
+            )}
+          </Card>
 
-        <Card
-          title="Hazard bulletins"
-          subtitle="Drought, flood, heat, locust and geological advisories — click for validity, source and preparedness actions"
-        >
-          <HazardBulletins
-            bulletins={profile.hazard_bulletins}
-            zoneName={profile.zone.name}
-          />
-        </Card>
+          <Card
+            title="Hazard bulletins"
+            subtitle="Drought, flood, heat, locust and geological advisories"
+          >
+            <HazardBulletins
+              bulletins={profile.hazard_bulletins}
+              zoneName={profile.zone.name}
+            />
+          </Card>
+        </div>
+      </section>
 
-        <Card
-          title="Recent conflict events"
-          subtitle="Observed ACLED-shaped events — click a row for actors, source and its contribution to zone risk"
-        >
-          <ConflictEvents
-            events={profile.recent_events.slice(0, 10)}
-            zoneName={profile.zone.name}
-          />
-        </Card>
+      <section id="reports" className="scroll-mt-16">
+        <div className="mb-5">
+          <ZoneFieldReports zoneId={id} reports={profile.field_reports} />
+        </div>
 
-        <Card
-          title="News signals"
-          subtitle="Media monitoring feeding the corroboration channel — click for source and full context"
-        >
-          <SignalsList zoneId={id} zoneName={profile.zone.name} />
-        </Card>
-
-        <Card
-          title="Alert recipients"
-          subtitle="Who receives approved voice alerts for this zone"
-        >
+        <Card title="Alert recipients" subtitle="Who receives approved voice alerts for this zone">
           {profile.recipients.length > 0 ? (
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Channel</th>
-                    <th>Language</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {profile.recipients.map((recipient) => (
-                    <tr key={recipient.id}>
-                      <td>{recipient.name}</td>
-                      <td className="mono">{recipient.phone_e164}</td>
-                      <td>{recipient.channel}</td>
-                      <td>{recipient.language.toUpperCase()}</td>
-                    </tr>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-line">
+                  {['Name', 'Phone', 'Language'].map((header) => (
+                    <th
+                      key={header}
+                      scope="col"
+                      className="px-2 py-1.5 text-left text-2xs font-medium tracking-[0.04em] text-muted uppercase"
+                    >
+                      {header}
+                    </th>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                {profile.recipients.map((recipient) => (
+                  <tr key={recipient.id} className="border-b border-line last:border-b-0">
+                    <td className="px-2 py-2 text-ink">{recipient.name}</td>
+                    <td className="px-2 py-2 font-mono text-2xs text-muted">
+                      {recipient.phone_e164}
+                    </td>
+                    <td className="px-2 py-2 text-muted">{recipient.language.toUpperCase()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <EmptyState>No recipients registered.</EmptyState>
           )}
         </Card>
-      </div>
-
-      <FieldReportsCard zoneId={id} reports={profile.field_reports} />
-    </div>
-  )
-}
-
-function summarizePrices(rows: MarketPriceRow[]): {
-  latestPrices: MarketPriceRow[]
-  termsOfTrade: { kg: number } | null
-} {
-  if (rows.length === 0) {
-    return { latestPrices: [], termsOfTrade: null }
-  }
-  const latestMonth = rows.reduce(
-    (max, row) => (row.month > max ? row.month : max),
-    rows[0].month,
-  )
-  const latestPrices = rows
-    .filter((row) => row.month === latestMonth)
-    .sort((a, b) =>
-      `${a.market_name}${a.commodity}`.localeCompare(`${b.market_name}${b.commodity}`),
-    )
-  const goat = latestPrices.find((row) => row.commodity.includes('goat'))
-  const maize = latestPrices.find(
-    (row) => row.commodity.includes('maize') && row.unit === 'kg',
-  )
-  const termsOfTrade =
-    goat && maize && maize.price > 0 && goat.currency === maize.currency
-      ? { kg: goat.price / maize.price }
-      : null
-  return { latestPrices, termsOfTrade }
-}
-
-function FieldReportsCard({
-  zoneId,
-  reports,
-}: {
-  zoneId: string
-  reports: FieldReport[]
-}) {
-  const queryClient = useQueryClient()
-  const [signer, setSigner] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [selectedReport, setSelectedReport] = useState<FieldReport | null>(null)
-  const [form, setForm] = useState({
-    reporter_role: REPORTER_ROLES[0],
-    category: REPORT_CATEGORIES[0],
-    severity: 2,
-    narrative: '',
-  })
-
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.zoneProfile(zoneId) })
-    void queryClient.invalidateQueries({ queryKey: ['field-reports'] })
-    void queryClient.invalidateQueries({ queryKey: queryKeys.zones })
-  }
-
-  const verifyMutation = useMutation({
-    mutationFn: (reportId: string) => verifyFieldReport(reportId, signer.trim()),
-    onSuccess: invalidate,
-  })
-  const dismissMutation = useMutation({
-    mutationFn: (reportId: string) => dismissFieldReport(reportId, signer.trim()),
-    onSuccess: invalidate,
-  })
-  const createMutation = useMutation({
-    mutationFn: () =>
-      createFieldReport({
-        zone_id: zoneId,
-        reporter_role: form.reporter_role,
-        category: form.category,
-        severity: form.severity,
-        narrative: form.narrative.trim(),
-      }),
-    onSuccess: () => {
-      setForm((f) => ({ ...f, narrative: '' }))
-      setShowForm(false)
-      invalidate()
-    },
-  })
-
-  const canGate = signer.trim().length > 0
-  const sorted = [...reports].sort((a, b) =>
-    b.reported_at.localeCompare(a.reported_at),
-  )
-
-  return (
-    <Card
-      title="Field reports"
-      subtitle="CEWARN-style monitor reports. Verification is a human decision — unverified or dismissed reports contribute exactly 0 to corroboration."
-      actions={
-        <>
-          <input
-            type="text"
-            placeholder="Your name (to verify/dismiss)"
-            value={signer}
-            onChange={(e) => setSigner(e.target.value)}
-          />
-          <button
-            type="button"
-            className="button button-secondary button-small"
-            onClick={() => setShowForm((v) => !v)}
-          >
-            {showForm ? 'Cancel' : 'New report'}
-          </button>
-        </>
-      }
-    >
-      {showForm ? (
-        <form
-          className="form-grid"
-          style={{ marginBottom: '1rem' }}
-          onSubmit={(event) => {
-            event.preventDefault()
-            if (form.narrative.trim()) createMutation.mutate()
-          }}
-        >
-          <label>
-            Reporter role
-            <select
-              value={form.reporter_role}
-              onChange={(e) => setForm({ ...form, reporter_role: e.target.value })}
-            >
-              {REPORTER_ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {titleCase(role)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Category
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-            >
-              {REPORT_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {titleCase(category)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Severity (1–3)
-            <select
-              value={form.severity}
-              onChange={(e) => setForm({ ...form, severity: Number(e.target.value) })}
-            >
-              <option value={1}>1 — Low</option>
-              <option value={2}>2 — Medium</option>
-              <option value={3}>3 — High</option>
-            </select>
-          </label>
-          <label className="span-2">
-            Narrative
-            <textarea
-              rows={3}
-              value={form.narrative}
-              onChange={(e) => setForm({ ...form, narrative: e.target.value })}
-              placeholder="What was observed, where, and by whom…"
-            />
-          </label>
-          <div className="span-2">
-            <button
-              type="submit"
-              className="button button-primary"
-              disabled={createMutation.isPending || form.narrative.trim().length === 0}
-            >
-              {createMutation.isPending ? 'Submitting…' : 'Submit (born unverified)'}
-            </button>
-          </div>
-          {createMutation.isError ? (
-            <div className="span-2">
-              <ErrorNote error={createMutation.error} />
-            </div>
-          ) : null}
-        </form>
-      ) : null}
-
-      {sorted.length > 0 ? (
-        <ul className="feed-list">
-          {sorted.map((report) => (
-            <li key={report.id} className="feed-item">
-              <div className="feed-item-head">
-                <StatusChip
-                  tone={
-                    report.status === 'verified'
-                      ? 'success'
-                      : report.status === 'dismissed'
-                        ? 'neutral'
-                        : 'warning'
-                  }
-                >
-                  {report.status}
-                </StatusChip>
-                <strong>{titleCase(report.category)}</strong>
-                <span
-                  className="severity-pips"
-                  aria-label={`Severity ${report.severity} of 3`}
-                >
-                  {[1, 2, 3].map((n) => (
-                    <span key={n} className={n <= report.severity ? 'on' : undefined} />
-                  ))}
-                </span>
-                <span className="spacer" />
-                <small>{fmtDate(report.reported_at)}</small>
-              </div>
-              <p>{report.narrative}</p>
-              <small>
-                {titleCase(report.reporter_role)}
-                {report.verified_by
-                  ? ` · ${report.status} by ${report.verified_by}`
-                  : ''}
-              </small>
-              <div className="feed-actions">
-                <button
-                  type="button"
-                  className="button button-secondary button-small"
-                  onClick={() => setSelectedReport(report)}
-                >
-                  Full context
-                </button>
-              </div>
-              {report.status === 'unverified' ? (
-                <div className="feed-actions">
-                  <button
-                    type="button"
-                    className="button button-primary button-small"
-                    disabled={!canGate || verifyMutation.isPending}
-                    title={canGate ? undefined : 'Enter your name above first'}
-                    onClick={() => verifyMutation.mutate(report.id)}
-                  >
-                    Verify
-                  </button>
-                  <button
-                    type="button"
-                    className="button button-danger button-small"
-                    disabled={!canGate || dismissMutation.isPending}
-                    title={canGate ? undefined : 'Enter your name above first'}
-                    onClick={() => dismissMutation.mutate(report.id)}
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <EmptyState>No field reports for this zone.</EmptyState>
-      )}
-      {verifyMutation.isError ? <ErrorNote error={verifyMutation.error} /> : null}
-      {dismissMutation.isError ? <ErrorNote error={dismissMutation.error} /> : null}
-      {selectedReport ? (
-        <FieldReportModal
-          report={selectedReport}
-          onClose={() => setSelectedReport(null)}
-        />
-      ) : null}
-    </Card>
+      </section>
+    </Screen>
   )
 }

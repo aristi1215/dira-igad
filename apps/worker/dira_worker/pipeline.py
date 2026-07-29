@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 import uuid
 from datetime import UTC, date, datetime, timedelta
@@ -62,7 +63,7 @@ logger = logging.getLogger("dira.pipeline")
 HAZARD = "conflict_pressure"
 ROOT = Path(__file__).resolve().parents[3]
 TILE_DIR = ROOT / "artifacts" / "tiles"
-SEEDED_DIR = ROOT / "data" / "seeded"
+SEEDED_DIR = Path(os.environ.get("SEEDED_DATA_DIR", ROOT / "data" / "seeded"))
 
 
 def _parse_cycle(raw: str) -> date:

@@ -1,2 +1,5 @@
 export { MapView } from './MapView'
-export { useMapLayers } from './useMapLayers'
+export { WatchlistRail } from './WatchlistRail'
+export { ZoneCard } from './ZoneCard'
+export { useMapLayers, overlayFillColor } from './useMapLayers'
+export { useSelectedZone } from './useSelectedZone'

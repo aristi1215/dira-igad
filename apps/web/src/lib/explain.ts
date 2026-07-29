@@ -290,6 +290,15 @@ export const BAND_THRESHOLDS: { min: number; band: OperationalBand }[] = [
   { min: 0, band: 'low' },
 ]
 
+/**
+ * The interior band boundaries, ascending — drawn as hairlines on a Meter so a
+ * score locates itself without a legend. Derived from BAND_THRESHOLDS rather
+ * than restated, so the two can never disagree.
+ */
+export const BAND_TICKS: number[] = BAND_THRESHOLDS.map(({ min }) => min)
+  .filter((min) => min > 0)
+  .sort((a, b) => a - b)
+
 export function bandFromScore(score: number): OperationalBand {
   const s = Math.max(0, Math.min(1, score))
   for (const { min, band } of BAND_THRESHOLDS) {

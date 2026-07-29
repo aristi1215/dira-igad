@@ -1,9 +1,40 @@
 import { useState } from 'react'
+import {
+  Bug,
+  Mountain,
+  MountainSnow,
+  Sun,
+  Thermometer,
+  TriangleAlert,
+  Waves,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
 import { Modal, DetailRow } from '../../components/Modal'
 import { EmptyState, StatusChip } from '../../components/ui'
 import { fmtDate, fmtDateTime } from '../../lib/format'
 import { hazardMeta, HAZARD_SEVERITY_META } from '../../lib/explain'
 import type { HazardBulletin } from '../../lib/types'
+
+/**
+ * Hazard glyphs were emoji and box-drawing characters (☀ ≋ 🌡 🦗 △ ⌁ ⛰), which
+ * render at wildly different weights and sizes per platform. Mapping to lucide
+ * keeps them a consistent stroke weight alongside every other icon.
+ */
+const HAZARD_ICONS: Record<string, LucideIcon> = {
+  drought: Sun,
+  flood: Waves,
+  heat: Thermometer,
+  locust: Bug,
+  volcanic: Mountain,
+  earthquake: Zap,
+  landslide: MountainSnow,
+}
+
+function HazardIcon({ hazardType }: { hazardType: string }) {
+  const Icon = HAZARD_ICONS[hazardType] ?? TriangleAlert
+  return <Icon size={17} strokeWidth={1.75} aria-hidden />
+}
 
 function isActive(bulletin: HazardBulletin, now = new Date()): boolean {
   const from = new Date(bulletin.valid_from)
@@ -46,7 +77,7 @@ export function HazardBulletins({
                 onClick={() => setSelected(bulletin)}
               >
                 <span className="hazard-icon" style={{ color: meta.color }}>
-                  {meta.icon}
+                  <HazardIcon hazardType={bulletin.hazard_type} />
                 </span>
                 <span className="hazard-main">
                   <span className="hazard-head">

@@ -10,6 +10,9 @@ COPY pyproject.toml README.md ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/worker ./apps/worker
+COPY data ./data
+COPY artifacts ./artifacts
+ENV SEEDED_DATA_DIR=/app/data/seeded
 
 RUN pip install --no-cache-dir \
     ./packages/dira_core \

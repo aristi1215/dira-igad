@@ -1,172 +1,107 @@
-import './App.css'
-import { useEffect, useMemo, useState } from 'react'
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AskAdvisor } from './features/advisor'
-import {
-  apiUrl,
-  fetchMapSituations,
-  fetchSources,
-  queryKeys,
-} from './lib/api'
-import { applySseEvent, parseDiraSseEvent } from './lib/ssePatch'
-import { useMapUiStore } from './stores/mapUi'
+import { Suspense, lazy } from 'react'
+import { Link, Route, Routes } from 'react-router-dom'
+import { AppLayout } from './layouts/AppLayout'
 import { MapScreen } from './screens/MapScreen'
 import { SituationsScreen } from './screens/SituationsScreen'
-import { SituationDetailScreen } from './screens/SituationDetailScreen'
 import { ZonesScreen } from './screens/ZonesScreen'
-import { ZoneDossierScreen } from './screens/ZoneDossierScreen'
 import { DispatchScreen } from './screens/DispatchScreen'
-import { AnalyticsScreen } from './screens/AnalyticsScreen'
-import { SourcesScreen } from './screens/SourcesScreen'
-import { ModelScreen } from './screens/ModelScreen'
-import { OnboardingTour, hasSeenOnboarding } from './components/OnboardingTour'
+import { ScreenSkeleton } from './components/ui'
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Map', end: true },
-  { to: '/situations', label: 'Situations', end: false },
-  { to: '/zones', label: 'Zones', end: false },
-  { to: '/dispatch', label: 'Dispatch', end: false },
-  { to: '/analytics', label: 'Analytics', end: false },
-  { to: '/model', label: 'Model', end: false },
-  { to: '/sources', label: 'Sources', end: false },
-]
+/*
+ * The landing route is the map, so it should not pay for recharts. These five
+ * chart-heavy screens are code-split; `routes/preload.ts` warms them for the
+ * guided tour.
+ */
+const SituationDetailScreen = lazy(async () => ({
+  default: (await import('./screens/SituationDetailScreen')).SituationDetailScreen,
+}))
+const ZoneDossierScreen = lazy(async () => ({
+  default: (await import('./screens/ZoneDossierScreen')).ZoneDossierScreen,
+}))
+const AnalyticsScreen = lazy(async () => ({
+  default: (await import('./screens/AnalyticsScreen')).AnalyticsScreen,
+}))
+const ModelScreen = lazy(async () => ({
+  default: (await import('./screens/ModelScreen')).ModelScreen,
+}))
+const SourcesScreen = lazy(async () => ({
+  default: (await import('./screens/SourcesScreen')).SourcesScreen,
+}))
 
 function App() {
-  const queryClient = useQueryClient()
-  const location = useLocation()
-  const [sseFailed, setSseFailed] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [tourOpen, setTourOpen] = useState(() => !hasSeenOnboarding())
-  const selectedSituationId = useMapUiStore((state) => state.selectedSituationId)
-
-  const mapQuery = useQuery({
-    queryKey: queryKeys.mapSituations,
-    queryFn: fetchMapSituations,
-    refetchInterval: sseFailed ? 5_000 : false,
-  })
-  const sourcesQuery = useQuery({
-    queryKey: queryKeys.sources,
-    queryFn: fetchSources,
-    staleTime: 10 * 60 * 1000,
-    retry: 1,
-  })
-
-  // One SSE subscription for the whole app: Postgres LISTEN/NOTIFY → /events
-  // → targeted TanStack Query invalidations (see lib/ssePatch.ts).
-  useEffect(() => {
-    const events = new EventSource(apiUrl('/events'))
-
-    const handleOpen = () => {
-      setSseFailed(false)
-    }
-    const handleDira = (event: Event) => {
-      const message = event as MessageEvent<string>
-      try {
-        const rawPayload: unknown = JSON.parse(message.data)
-        const payload = parseDiraSseEvent(rawPayload)
-        if (payload) {
-          applySseEvent(queryClient, payload)
-        }
-      } catch (error) {
-        console.warn('Unable to parse Dira SSE event', error)
-      }
-    }
-    const handleError = () => {
-      setSseFailed(true)
-    }
-
-    events.addEventListener('open', handleOpen)
-    events.addEventListener('dira', handleDira)
-    events.addEventListener('error', handleError)
-
-    return () => {
-      events.removeEventListener('open', handleOpen)
-      events.removeEventListener('dira', handleDira)
-      events.removeEventListener('error', handleError)
-      events.close()
-    }
-  }, [queryClient])
-
-  const latestCycle = useMemo(() => {
-    const cycles = (mapQuery.data?.features ?? [])
-      .map((f) => f.properties.cycle)
-      .filter((c): c is string => c != null)
-    return cycles.sort().at(-1) ?? null
-  }, [mapQuery.data?.features])
-
-  const dataMode = sourcesQuery.data?.data_mode ?? null
-  const isMapRoute = location.pathname === '/'
-
   return (
-    <div className="app-shell">
-      <header className="command-bar">
-        <div className="brand">
-          <span className="brand-word">DIRA</span>
-          <span className="brand-sub">Early-warning situation room · IGAD</span>
-        </div>
-        <nav className="app-nav" aria-label="Primary">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => (isActive ? 'active' : undefined)}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="command-bar-right">
-          {latestCycle ? <span className="cycle-chip">Cycle {latestCycle}</span> : null}
-          {dataMode ? (
-            <span className={dataMode === 'live' ? 'mode-chip live' : 'mode-chip'}>
-              {dataMode.toUpperCase()}
-            </span>
-          ) : null}
-          <span className="header-status">
-            <span className={sseFailed ? 'status-dot fallback' : 'status-dot'} />
-            {sseFailed ? 'Polling' : 'Live'}
-          </span>
-          <button
-            type="button"
-            className="drawer-toggle"
-            onClick={() => setTourOpen(true)}
-          >
-            Tour
-          </button>
-          <button
-            type="button"
-            className={drawerOpen ? 'drawer-toggle open' : 'drawer-toggle'}
-            aria-expanded={drawerOpen}
-            onClick={() => setDrawerOpen((value) => !value)}
-          >
-            Ask Dira
-          </button>
-        </div>
-      </header>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route index element={<MapScreen />} />
+        <Route path="/situations" element={<SituationsScreen />} />
+        <Route
+          path="/situations/:id"
+          element={
+            <Suspense fallback={<ScreenSkeleton />}>
+              <SituationDetailScreen />
+            </Suspense>
+          }
+        />
+        <Route path="/zones" element={<ZonesScreen />} />
+        <Route
+          path="/zones/:id"
+          element={
+            <Suspense fallback={<ScreenSkeleton />}>
+              <ZoneDossierScreen />
+            </Suspense>
+          }
+        />
+        <Route path="/dispatch" element={<DispatchScreen />} />
+        <Route
+          path="/analytics"
+          element={
+            <Suspense fallback={<ScreenSkeleton />}>
+              <AnalyticsScreen />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/model"
+          element={
+            <Suspense fallback={<ScreenSkeleton />}>
+              <ModelScreen />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/sources"
+          element={
+            <Suspense fallback={<ScreenSkeleton />}>
+              <SourcesScreen />
+            </Suspense>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
+  )
+}
 
-      <main className={isMapRoute ? 'app-main flush' : 'app-main'}>
-        <Routes>
-          <Route path="/" element={<MapScreen sseFailed={sseFailed} />} />
-          <Route path="/situations" element={<SituationsScreen />} />
-          <Route path="/situations/:id" element={<SituationDetailScreen />} />
-          <Route path="/zones" element={<ZonesScreen />} />
-          <Route path="/zones/:id" element={<ZoneDossierScreen />} />
-          <Route path="/dispatch" element={<DispatchScreen />} />
-          <Route path="/analytics" element={<AnalyticsScreen />} />
-          <Route path="/model" element={<ModelScreen />} />
-          <Route path="/sources" element={<SourcesScreen />} />
-        </Routes>
-
-        {drawerOpen ? (
-          <aside className="advisor-drawer" aria-label="Ask Dira advisor">
-            <AskAdvisor situationId={selectedSituationId} />
-          </aside>
-        ) : null}
-
-        {tourOpen ? <OnboardingTour onClose={() => setTourOpen(false)} /> : null}
-      </main>
+function NotFound() {
+  return (
+    <div className="mx-auto flex w-full max-w-[1240px] flex-col items-start gap-4 px-6 pt-16">
+      <div>
+        <p className="text-2xs font-semibold tracking-[0.08em] text-accent uppercase">
+          Page not found
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold text-ink">
+          There is nothing at this address.
+        </h1>
+        <p className="mt-1.5 text-base text-muted">
+          The link may be out of date, or the zone or situation it pointed to has since resolved.
+        </p>
+      </div>
+      <Link
+        to="/"
+        className="inline-flex h-8.5 items-center rounded-sm border border-accent bg-accent px-3.5 text-sm font-medium text-white transition-colors duration-[120ms] hover:border-accent-hover hover:bg-accent-hover hover:text-white"
+      >
+        Back to the map
+      </Link>
     </div>
   )
 }

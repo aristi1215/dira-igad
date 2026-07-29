@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { LayoutGrid, Megaphone, Sigma } from 'lucide-react'
 import {
   fetchAllAlerts,
   fetchFieldReports,
@@ -11,6 +12,8 @@ import {
   queryKeys,
 } from '../lib/api'
 import {
+  BAND_COLORS,
+  BAND_GUIDANCE,
   BAND_MAP_COLORS,
   CHART,
   fmtDate,
@@ -18,18 +21,24 @@ import {
   fmtForecastWindow,
   fmtProbability,
   fmtRisk,
+  fmtRiskScore,
   titleCase,
 } from '../lib/format'
+import { BAND_TICKS } from '../lib/explain'
 import {
   BandChip,
+  Button,
   Card,
   EmptyState,
   ErrorNote,
-  LoadingNote,
+  Meter,
   PageHeader,
-  ScoreMeter,
-  StatTile,
+  Screen,
+  ScreenSkeleton,
+  Stat,
+  StatRow,
   StatusChip,
+  Tabs,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
 import {
@@ -39,7 +48,10 @@ import {
   ShapDrivers,
   SignalsList,
 } from '../features/situations'
+import { TOUR_ANCHORS } from '../features/tour/tourAnchors'
 import type { FieldReport } from '../lib/types'
+
+type EvidenceTab = 'signals' | 'reports' | 'hazards'
 
 export function SituationDetailScreen() {
   const { id = '' } = useParams()
@@ -47,6 +59,7 @@ export function SituationDetailScreen() {
   const queryClient = useQueryClient()
   const [showScoreExplainer, setShowScoreExplainer] = useState(false)
   const [selectedReport, setSelectedReport] = useState<FieldReport | null>(null)
+  const [evidenceTab, setEvidenceTab] = useState<EvidenceTab>('signals')
 
   const detailQuery = useQuery({
     queryKey: queryKeys.situationDetail(id),
@@ -62,9 +75,7 @@ export function SituationDetailScreen() {
 
   const detail = detailQuery.data
   const zone = useMemo(
-    () =>
-      zonesQuery.data?.find((z) => z.zone_id === detail?.situation.zone_id) ??
-      null,
+    () => zonesQuery.data?.find((z) => z.zone_id === detail?.situation.zone_id) ?? null,
     [detail?.situation.zone_id, zonesQuery.data],
   )
 
@@ -89,110 +100,170 @@ export function SituationDetailScreen() {
   })
 
   if (detailQuery.isLoading) {
-    return (
-      <div className="screen">
-        <LoadingNote>Loading situation…</LoadingNote>
-      </div>
-    )
+    return <ScreenSkeleton />
   }
   if (detailQuery.isError || !detail) {
     return (
-      <div className="screen">
+      <Screen>
         <ErrorNote error={detailQuery.error ?? new Error('Situation not found')} />
-      </div>
+      </Screen>
     )
   }
 
-  const assessments = [...detail.assessments].sort((a, b) =>
-    a.cycle.localeCompare(b.cycle),
-  )
+  const assessments = [...detail.assessments].sort((a, b) => a.cycle.localeCompare(b.cycle))
   const latest = assessments.at(-1) ?? null
-  const trajectory = assessments.map((a) => ({
-    cycle: a.cycle,
-    model_risk: a.model_risk,
-    corroboration: a.corroboration,
+  const trajectory = assessments.map((assessment) => ({
+    cycle: assessment.cycle,
+    model_risk: assessment.model_risk,
+    corroboration: assessment.corroboration,
   }))
 
-  const situationAlerts = (alertsQuery.data ?? []).filter(
-    (alert) => alert.situation_id === id,
-  )
+  const situationAlerts = (alertsQuery.data ?? []).filter((alert) => alert.situation_id === id)
   const verifiedReports = (reportsQuery.data ?? []).filter(
-    (r) => r.status === 'verified',
+    (report) => report.status === 'verified',
   )
+  const hazards = profileQuery.data?.hazard_bulletins ?? []
+  const signalCount = profileQuery.data?.news_signals?.length ?? 0
+
+  const band = latest?.operational_band ?? 'none'
+  const quietCycles = detail.situation.cycles_below_threshold
 
   return (
-    <div className="screen">
+    <Screen>
       <PageHeader
         eyebrow={`Situation · ${titleCase(detail.situation.hazard)}`}
         title={zone ? zone.zone_name : detail.situation.zone_id}
-        description={`Opened cycle ${detail.situation.opened_cycle ?? '—'} · status ${detail.situation.status}${
+        description={`Opened ${detail.situation.opened_cycle ?? '—'} · ${detail.situation.status}${
           detail.situation.resolved_cycle
             ? ` · resolved ${detail.situation.resolved_cycle}`
             : ''
         }`}
         actions={
           <>
-            <button
-              type="button"
-              className="button button-secondary"
-              onClick={() =>
-                void navigate(`/zones/${detail.situation.zone_id}`)
-              }
+            <Button
+              icon={LayoutGrid}
+              onClick={() => void navigate(`/zones/${detail.situation.zone_id}`)}
             >
               Zone dossier
-            </button>
-            <button
-              type="button"
-              className="button button-primary"
-              disabled={prepareAlertMutation.isPending}
+            </Button>
+            <Button
+              variant="primary"
+              icon={Megaphone}
+              loading={prepareAlertMutation.isPending}
               onClick={() => prepareAlertMutation.mutate()}
             >
-              {prepareAlertMutation.isPending ? 'Drafting…' : 'Prepare alert'}
-            </button>
+              Prepare alert
+            </Button>
           </>
         }
       />
+
       {prepareAlertMutation.isError ? (
-        <ErrorNote error={prepareAlertMutation.error} />
+        <ErrorNote error={prepareAlertMutation.error} className="mb-4" />
       ) : null}
 
-      <div className="stat-row">
-        <StatTile
-          label="Operational band"
-          value={<BandChip band={latest?.operational_band ?? null} />}
-          accent={BAND_MAP_COLORS[latest?.operational_band ?? 'none']}
+      {/* The headline answer, before any numbers. */}
+      <div
+        className="mb-5 rounded-lg border border-line border-l-[3px] bg-surface px-5 py-4"
+        style={{
+          borderLeftColor: BAND_COLORS[band],
+          background: `color-mix(in srgb, ${BAND_COLORS[band]} 6%, white)`,
+        }}
+      >
+        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          <BandChip band={latest?.operational_band ?? null} />
+          <span className="text-2xs text-faint">
+            {fmtForecastWindow(
+              latest?.window_start,
+              latest?.window_end,
+              latest?.horizon_dekads,
+            )}
+          </span>
+          {quietCycles != null && quietCycles > 0 ? (
+            <StatusChip tone="info">
+              {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
+            </StatusChip>
+          ) : null}
+        </div>
+        <p className="max-w-[70ch] text-lg leading-snug font-medium text-ink">
+          {BAND_GUIDANCE[band]}
+        </p>
+        {latest?.explanation ? (
+          <p className="mt-1.5 max-w-[80ch] text-sm text-muted">{latest.explanation}</p>
+        ) : null}
+      </div>
+
+      <StatRow className="mb-5">
+        <Stat
+          label="Conflict pressure"
+          value={
+            <span className="flex items-baseline gap-1">
+              {fmtRiskScore(latest?.model_risk)}
+              <span className="text-xs text-faint">/100</span>
+            </span>
+          }
+          detail="Model forecast, out of 100"
+          accent={BAND_MAP_COLORS[band]}
         />
-        <StatTile label="Model risk" value={fmtRisk(latest?.model_risk)} />
-        <StatTile label="Corroboration" value={fmtRisk(latest?.corroboration)} />
-        <StatTile
-          label="P(conflict)"
+        <Stat
+          label="Chance of conflict"
           value={fmtProbability(latest?.prob_conflict)}
-          detail={fmtForecastWindow(
-            latest?.window_start,
-            latest?.window_end,
-            latest?.horizon_dekads,
-          )}
+          detail="At least one incident in the window"
         />
-        <StatTile
+        <Stat
           label="Expected incidents"
           value={latest ? latest.expected_incidents.toFixed(1) : '—'}
           detail="Over the forecast window"
         />
-        <StatTile
-          label="Forecast window"
-          value={fmtForecastWindow(
-            latest?.window_start,
-            latest?.window_end,
-            latest?.horizon_dekads,
-          )}
-          detail="The model predicts pressure over this window — not an exact date"
+        <Stat
+          label="Corroboration"
+          value={fmtRisk(latest?.corroboration)}
+          detail="News and verified field reports"
+          accent={CHART.cat2}
         />
-      </div>
+      </StatRow>
 
-      <div className="grid-2">
+      <div className="mb-5 grid gap-5 lg:grid-cols-2">
+        {/*
+          The two-score rule is the product's central claim, so it comes first —
+          it used to sit second, below the trajectory chart.
+        */}
         <Card
-          title="Risk trajectory"
-          subtitle="Model risk and corroboration per assessment cycle"
+          title="Two scores, never blended"
+          subtitle="The band is not a black box: the exact rule is stored on every assessment"
+          actions={
+            latest ? (
+              <Button size="sm" icon={Sigma} onClick={() => setShowScoreExplainer(true)}>
+                How is this calculated?
+              </Button>
+            ) : undefined
+          }
+        >
+          <div data-tour={TOUR_ANCHORS.twoScore} className="flex flex-col gap-3">
+            <ScoreLine
+              name="Model risk"
+              hint="Climate and conflict history only — never touched by news"
+              value={latest?.model_risk}
+              color={CHART.cat1}
+              track="var(--color-accent-ring)"
+              showTicks
+            />
+            <ScoreLine
+              name="Corroboration"
+              hint="What people and media are reporting right now"
+              value={latest?.corroboration}
+              color={CHART.cat2}
+              track="#ffd6e8"
+            />
+            <p className="rounded-sm border border-line bg-surface-2 px-2.5 py-2 font-mono text-2xs leading-relaxed break-words text-muted">
+              {latest?.combination_rule ?? '—'}
+            </p>
+          </div>
+        </Card>
+
+        <Card
+          title="How it got here"
+          subtitle="Both scores across every assessment cycle"
         >
           {trajectory.length > 0 ? (
             <TimeSeriesChart
@@ -207,189 +278,167 @@ export function SituationDetailScreen() {
                   color: CHART.cat2,
                 },
               ]}
-              yFormatter={(v) => v.toFixed(1)}
+              yFormatter={(value) => value.toFixed(1)}
             />
           ) : (
             <EmptyState>No assessments recorded yet.</EmptyState>
           )}
         </Card>
+      </div>
 
-        <Card
-          title="Two-score combination"
-          subtitle="The band is never a black box — the exact rule is stored on every assessment"
-          actions={
-            latest ? (
-              <button
-                type="button"
-                className="button button-secondary button-small"
-                onClick={() => setShowScoreExplainer(true)}
-              >
-                How is this calculated?
-              </button>
-            ) : undefined
-          }
-        >
-          <div className="score-panel">
-            <div className="score-line">
-              <span className="score-name">Model risk (pure)</span>
-              <ScoreMeter value={latest?.model_risk} color={CHART.cat1} />
-              <span className="score-value">{fmtRisk(latest?.model_risk)}</span>
-            </div>
-            <div className="score-line">
-              <span className="score-name">Corroboration</span>
-              <ScoreMeter
-                value={latest?.corroboration}
-                color={CHART.cat2}
-                track="#ffd6e8"
-              />
-              <span className="score-value">{fmtRisk(latest?.corroboration)}</span>
-            </div>
-            <p className="rule-text">{latest?.combination_rule ?? '—'}</p>
-            {latest?.explanation ? (
-              <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-                {latest.explanation}
-              </p>
-            ) : null}
-          </div>
-        </Card>
-
-        <Card
-          title="Model drivers (SHAP)"
-          subtitle="What the model relied on for this prediction — click a driver for its explanation"
-        >
+      <Card
+        title="What the model leaned on"
+        subtitle="Contribution of each input to this cycle's score — select one for what it means"
+        className="mb-5"
+      >
+        <div data-tour={TOUR_ANCHORS.shapDrivers}>
           <ShapDrivers shap={latest?.shap ?? {}} />
-        </Card>
+        </div>
+      </Card>
 
-        <Card
-          title="Frozen exposure snapshot"
-          subtitle="Context captured at assessment time — bitemporal, never retro-edited"
-        >
-          {latest?.exposure_snapshot &&
-          Object.keys(latest.exposure_snapshot).length > 0 ? (
-            <div className="table-scroll">
-              <table className="data-table">
-                <tbody>
-                  {Object.entries(latest.exposure_snapshot).map(([key, value]) => (
-                    <tr key={key}>
-                      <td className="muted">{titleCase(key)}</td>
-                      <td className="num">
-                        {value == null
-                          ? '—'
-                          : typeof value === 'number'
-                            ? Number.isInteger(value)
-                              ? value.toLocaleString('en-US')
-                              : value.toFixed(2)
-                            : String(value)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState>No snapshot stored.</EmptyState>
-          )}
-        </Card>
-
-        <Card
-          title="News signals"
-          subtitle="LLM-extracted signals feeding the news corroboration channel — click for source, place and full context"
-        >
-          <SignalsList
-            zoneId={detail.situation.zone_id}
-            zoneName={zone?.zone_name}
+      {/*
+        News signals, field reports and hazards used to be three separate cards
+        answering one question. Merged, they cost a third less scrolling.
+      */}
+      <Card
+        title="Evidence"
+        subtitle="Everything corroborating — or failing to corroborate — this forecast"
+        className="mb-5"
+        actions={
+          <Tabs
+            items={[
+              { id: 'signals', label: 'News', count: signalCount || undefined },
+              { id: 'reports', label: 'Field reports', count: verifiedReports.length || undefined },
+              { id: 'hazards', label: 'Hazards', count: hazards.length || undefined },
+            ]}
+            value={evidenceTab}
+            onChange={setEvidenceTab}
+            layoutId="evidence-tabs"
+            ariaLabel="Evidence type"
+            size="sm"
           />
-        </Card>
+        }
+      >
+        {evidenceTab === 'signals' ? (
+          <SignalsList zoneId={detail.situation.zone_id} zoneName={zone?.zone_name} />
+        ) : null}
 
-        <Card
-          title="Verified field reports"
-          subtitle="Only verified reports count toward corroboration — unverified contribute exactly 0"
-        >
-          {verifiedReports.length > 0 ? (
-            <ul className="feed-list">
-              {verifiedReports.slice(0, 6).map((report) => (
+        {evidenceTab === 'reports' ? (
+          verifiedReports.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {verifiedReports.slice(0, 8).map((report) => (
                 <li key={report.id}>
                   <button
                     type="button"
-                    className="feed-item feed-item-button"
                     onClick={() => setSelectedReport(report)}
+                    className="w-full rounded-md border border-line bg-surface px-3 py-2.5 text-left transition-colors duration-[120ms] hover:border-accent hover:bg-accent-soft"
                   >
-                    <span className="feed-item-head">
-                      <StatusChip tone="success">verified</StatusChip>
-                      <strong>{titleCase(report.category)}</strong>
-                      <span className="spacer" />
-                      <small>{fmtDate(report.reported_at)}</small>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <StatusChip tone="success">Verified</StatusChip>
+                      <span className="text-sm font-medium text-ink">
+                        {titleCase(report.category)}
+                      </span>
+                      <span className="ml-auto text-2xs text-faint">
+                        {fmtDate(report.reported_at)}
+                      </span>
                     </span>
-                    <p>{report.narrative}</p>
-                    <small>
+                    <p className="mt-1.5 text-sm text-muted">{report.narrative}</p>
+                    <p className="mt-1 text-2xs text-faint">
                       {titleCase(report.reporter_role)} · severity {report.severity}/3
                       {report.verified_by ? ` · verified by ${report.verified_by}` : ''}
-                      {' · click for full context'}
-                    </small>
+                    </p>
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <EmptyState>No verified field reports for this zone.</EmptyState>
+            <EmptyState title="No verified reports">
+              Unverified reports contribute exactly zero corroboration until someone verifies
+              them.
+            </EmptyState>
+          )
+        ) : null}
+
+        {evidenceTab === 'hazards' ? (
+          <HazardBulletins bulletins={hazards} zoneName={zone?.zone_name} />
+        ) : null}
+      </Card>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Card
+          title="Alert timeline"
+          subtitle="Every alert drafted for this situation and where it stands"
+        >
+          {situationAlerts.length > 0 ? (
+            <ul className="flex flex-col gap-3">
+              {situationAlerts.map((alert) => (
+                <li key={alert.id} className="border-l-2 border-line pl-3">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <StatusChip
+                      tone={
+                        alert.status === 'pending_approval'
+                          ? 'warning'
+                          : alert.status === 'failed'
+                            ? 'error'
+                            : alert.status === 'draft'
+                              ? 'neutral'
+                              : 'success'
+                      }
+                    >
+                      {alert.status.replace('_', ' ')}
+                    </StatusChip>
+                    <span className="text-2xs text-faint">
+                      {alert.language.toUpperCase()} · {fmtDateTime(alert.created_at)}
+                    </span>
+                  </span>
+                  <p className="mt-1 text-sm text-muted">
+                    {alert.body_text.slice(0, 140)}
+                    {alert.body_text.length > 140 ? '…' : ''}
+                  </p>
+                  {alert.approved_by ? (
+                    <p className="mt-0.5 text-2xs text-faint">
+                      Approved by {alert.approved_by} · {fmtDateTime(alert.approved_at)}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState title="No alerts yet">
+              Use “Prepare alert” to draft one for the approval gate.
+            </EmptyState>
           )}
         </Card>
 
         <Card
-          title="Hazard bulletins"
-          subtitle="Active and recent hazard advisories for this zone — click for validity, source and preparedness actions"
+          title="Exposure at assessment time"
+          subtitle="Frozen when the assessment ran — never edited afterwards"
         >
-          <HazardBulletins
-            bulletins={profileQuery.data?.hazard_bulletins ?? []}
-            zoneName={zone?.zone_name}
-          />
+          {latest?.exposure_snapshot && Object.keys(latest.exposure_snapshot).length > 0 ? (
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {Object.entries(latest.exposure_snapshot).map(([key, value]) => (
+                <div key={key} className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5">
+                  <dt className="text-xs text-muted">{titleCase(key)}</dt>
+                  <dd className="text-sm font-medium tabular-nums text-ink">
+                    {value == null
+                      ? '—'
+                      : typeof value === 'number'
+                        ? Number.isInteger(value)
+                          ? value.toLocaleString('en-US')
+                          : value.toFixed(2)
+                        : String(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <EmptyState>No snapshot stored.</EmptyState>
+          )}
         </Card>
       </div>
 
-      <Card
-        title="Alert timeline"
-        subtitle="Every alert drafted for this situation and its gate status"
-      >
-        {situationAlerts.length > 0 ? (
-          <ul className="timeline">
-            {situationAlerts.map((alert) => (
-              <li key={alert.id}>
-                <StatusChip
-                  tone={
-                    alert.status === 'pending_approval'
-                      ? 'warning'
-                      : alert.status === 'failed'
-                        ? 'error'
-                        : alert.status === 'draft'
-                          ? 'neutral'
-                          : 'success'
-                  }
-                >
-                  {alert.status.replace('_', ' ')}
-                </StatusChip>{' '}
-                {alert.language.toUpperCase()} alert · {alert.body_text.slice(0, 120)}
-                {alert.body_text.length > 120 ? '…' : ''}
-                <small>
-                  Created {fmtDateTime(alert.created_at)}
-                  {alert.approved_by
-                    ? ` · approved by ${alert.approved_by} ${fmtDateTime(alert.approved_at)}`
-                    : ''}
-                </small>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <EmptyState>
-            No alerts yet — use “Prepare alert” to draft one for the approval gate.
-          </EmptyState>
-        )}
-      </Card>
-
       {showScoreExplainer && latest ? (
-        <ScoreExplainer
-          assessment={latest}
-          onClose={() => setShowScoreExplainer(false)}
-        />
+        <ScoreExplainer assessment={latest} onClose={() => setShowScoreExplainer(false)} />
       ) : null}
       {selectedReport ? (
         <FieldReportModal
@@ -398,6 +447,40 @@ export function SituationDetailScreen() {
           onClose={() => setSelectedReport(null)}
         />
       ) : null}
+    </Screen>
+  )
+}
+
+function ScoreLine({
+  name,
+  hint,
+  value,
+  color,
+  track,
+  showTicks = false,
+}: {
+  name: string
+  hint: string
+  value: number | null | undefined
+  color: string
+  track: string
+  showTicks?: boolean
+}) {
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="text-sm font-medium text-ink">{name}</span>
+        <span className="text-sm font-semibold tabular-nums text-ink">{fmtRisk(value)}</span>
+      </div>
+      <Meter
+        value={value}
+        color={color}
+        track={track}
+        ticks={showTicks ? BAND_TICKS : undefined}
+        height="md"
+        label={name}
+      />
+      <p className="mt-1 text-2xs text-faint">{hint}</p>
     </div>
   )
 }

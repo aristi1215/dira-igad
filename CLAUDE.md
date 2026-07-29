@@ -124,16 +124,51 @@ against repeated provider callbacks.
 ### Frontend
 
 Multi-screen light-Carbon app (D-017, supersedes D-015): react-router routes **/** (map),
-**/situations(/:id)**, **/zones(/:id)**, **/dispatch**, **/analytics**, **/sources**, built from
-`src/screens/*` on shared primitives (`src/components/ui.tsx`, `charts.tsx`) and design tokens in
-`index.css` (IBM Plex, white surfaces, `#0f62fe` accent, band palette in `lib/format.ts`).
-The map (`src/features/map/`) uses the CARTO *light* basemap; `useMapLayers.ts` is the single
-declarative source for layers: a base choropleth of all 22 zones from `/indicators/regional`
-(overlays: pressure / IPC / displacement / incidents / hazards, switched via `stores/mapUi.ts`)
-under situation point markers sized by `model_risk`. SSE (`lib/ssePatch.ts`) patches the TanStack
-Query cache live from `/events` (Postgres LISTEN/NOTIFY relay) rather than polling; the single
-EventSource lives in `App.tsx`. Charts follow the dataviz mark spec (≤24px bars, 2px lines,
-hairline grids, official IPC colors, band colors reserved; never dual axes).
+**/situations(/:id)**, **/zones(/:id)**, **/dispatch**, **/analytics**, **/model**, **/sources**.
+`App.tsx` is routing only; the chrome (command bar, the single SSE EventSource, the advisor
+`Sheet`, the tour) lives in `src/layouts/AppLayout.tsx`, and the five chart-heavy screens are
+`React.lazy`-loaded so the map route does not pay for recharts.
+
+Styling is **Tailwind v4**, configured entirely in `src/index.css`. Two things there are load-bearing:
+
+- **Layer order is `theme, base, vendor, components, utilities`.** `maplibre-gl.css` and the legacy
+  `App.css` are imported *into* layers. Unlayered CSS beats every layered rule regardless of
+  specificity, so an unlayered `.maplibregl-map { position: relative }` silently overrides Tailwind's
+  `absolute` and collapses the map container to zero height.
+- **Preflight is disabled** so it cannot trample `App.css` mid-migration; `@layer base` in
+  `index.css` supplies a minimal stand-in. Consequence: always write `border border-line`, never a
+  bare `border`.
+
+> **Variable class names must come from an explicit `Record<K, string>` of full literal class
+> names** (see `components/ui/Chips.tsx`). Tailwind's scanner cannot see `` `bg-band-${band}` `` and
+> the class simply never gets generated — it fails silently, with no build error.
+
+Primitives live in `src/components/ui/` (Button, Field/Select, Tabs, DataTable, Skeleton, Tooltip,
+Sheet, Meter, Stat, Card, Chips, Callout). Band/IPC palettes are duplicated by necessity in
+`@theme` (for Tailwind) and `lib/format.ts` (for MapLibre paint expressions and recharts);
+`src/lib/tokens.test.ts` asserts the two agree. `App.css` is the shrinking remainder, still used by
+the situation/economy feature components.
+
+The map (`src/features/map/`) loads CARTO's key-less **vector** Positron style, tuned in place by
+`basemap.ts` (hide competing detail, mute water, insert data layers `beforeId` the first symbol
+layer so place labels stay above the choropleth), with the raster style kept as an offline fallback.
+`useMapLayers.ts` is the single declarative source for layers: a choropleth of all 22 zones from
+`/indicators/regional` under near-constant-size situation markers, with hover, selection and band
+filtering expressed as **`feature-state`** (the source uses `promoteId: 'zone_id'`) rather than extra
+filtered layers. Zone selection and the active overlay live in the **URL** (`useSelectedZone.ts`), so
+a view is shareable; `stores/mapUi.ts` keeps only viewport, hover and band filter.
+
+Charts follow the dataviz mark spec (≤24px bars, 2px lines, hairline grids, official IPC colors,
+band colors reserved; never dual axes). SSE (`lib/ssePatch.ts`) patches the TanStack Query cache
+live from `/events` rather than polling.
+
+The onboarding tour (`src/features/tour/`) is an anchored spotlight that navigates between routes.
+It finds targets via `data-tour="…"` attributes declared in `tourAnchors.ts`; a deleted attribute
+would silently skip a step, so `tourSteps.test.ts` asserts every anchor is actually rendered.
+
+**The React Compiler is enabled.** Do not write refs during render, and be careful with `useMemo`
+whose body does not reference all its declared deps — the compiler may treat it as depending only on
+what it actually reads and cache the first result forever. Imperative cache reads belong in effects.
 
 ### Database
 

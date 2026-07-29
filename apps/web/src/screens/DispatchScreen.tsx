@@ -1,5 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  CircleCheck,
+  CircleX,
+  Clock,
+  Inbox,
+  Lock,
+  PhoneOutgoing,
+  Send,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react'
 import {
   approveAlert,
   fetchDeliveries,
@@ -10,23 +21,58 @@ import {
 } from '../lib/api'
 import { BAND_MAP_COLORS, fmtDateTime, fmtForecastWindow, titleCase } from '../lib/format'
 import {
+  Button,
+  Callout,
   Card,
   EmptyState,
   ErrorNote,
-  LoadingNote,
+  Field,
+  Kbd,
   PageHeader,
-  StatTile,
+  Screen,
+  SkeletonText,
+  Stat,
+  StatRow,
   StatusChip,
+  TextInput,
 } from '../components/ui'
+import { TOUR_ANCHORS } from '../features/tour/tourAnchors'
+import { useJustUpdated } from '../stores/live'
+import { cx } from '../lib/cx'
 import type { Alert, Delivery, DeliveryStatus } from '../lib/types'
 
-const BOARD_COLUMNS: DeliveryStatus[] = [
-  'queued',
-  'sending',
-  'sent',
-  'delivered',
-  'failed',
-  'needs_review',
+/**
+ * A delivery row that flashes once when SSE reports it changed — so a call
+ * moving from queued to delivered while you are looking at the board is
+ * visible, without anything blinking permanently.
+ */
+function DeliveryCard({
+  delivery,
+  children,
+}: {
+  delivery: Delivery
+  children: ReactNode
+}) {
+  const justUpdated = useJustUpdated(delivery.id)
+  return (
+    <li
+      className={cx(
+        'rounded-sm border border-line bg-surface-2 px-2 py-1.5',
+        justUpdated && 'animate-flash-ring',
+      )}
+    >
+      {children}
+    </li>
+  )
+}
+
+const BOARD_COLUMNS: { status: DeliveryStatus; label: string; icon: LucideIcon; tint: string }[] = [
+  { status: 'queued', label: 'Queued', icon: Clock, tint: 'text-faint' },
+  { status: 'sending', label: 'Calling', icon: PhoneOutgoing, tint: 'text-info-fg' },
+  { status: 'sent', label: 'Sent', icon: Send, tint: 'text-info-fg' },
+  { status: 'delivered', label: 'Delivered', icon: CircleCheck, tint: 'text-ok-fg' },
+  { status: 'failed', label: 'Failed', icon: CircleX, tint: 'text-err-fg' },
+  { status: 'needs_review', label: 'Needs review', icon: TriangleAlert, tint: 'text-warn-fg' },
 ]
 
 export function DispatchScreen() {
@@ -50,9 +96,8 @@ export function DispatchScreen() {
   const approveMutation = useMutation({
     mutationFn: (alertId: string) => approveAlert(alertId, signer.trim()),
     onSuccess: (response) => {
-      queryClient.setQueryData<Alert[]>(
-        queryKeys.pendingAlerts,
-        (current = []) => current.filter((alert) => alert.id !== response.id),
+      queryClient.setQueryData<Alert[]>(queryKeys.pendingAlerts, (current = []) =>
+        current.filter((alert) => alert.id !== response.id),
       )
       void queryClient.invalidateQueries({ queryKey: queryKeys.deliveries })
       void queryClient.invalidateQueries({ queryKey: queryKeys.allAlerts })
@@ -65,14 +110,11 @@ export function DispatchScreen() {
     },
   })
 
-  const deliveries = useMemo(
-    () => deliveriesQuery.data ?? [],
-    [deliveriesQuery.data],
-  )
+  const deliveries = useMemo(() => deliveriesQuery.data ?? [], [deliveriesQuery.data])
   const byStatus = useMemo(() => {
     const groups = new Map<DeliveryStatus, Delivery[]>()
-    for (const status of BOARD_COLUMNS) {
-      groups.set(status, [])
+    for (const column of BOARD_COLUMNS) {
+      groups.set(column.status, [])
     }
     for (const delivery of deliveries) {
       groups.get(delivery.status)?.push(delivery)
@@ -80,225 +122,280 @@ export function DispatchScreen() {
     return groups
   }, [deliveries])
 
-  const acked = deliveries.filter((d) => d.ack_status !== 'none').length
+  const acked = deliveries.filter((delivery) => delivery.ack_status !== 'none').length
   const needsReview = byStatus.get('needs_review')?.length ?? 0
   const pendingAlerts = alertsQuery.data ?? []
   const canApprove = signer.trim().length > 1
 
+  // One alert at a time: approving a voice call that will ring real phones
+  // deserves undivided attention, not a scrollable stack.
+  const [current, ...queued] = pendingAlerts
+  const recipients = recipientsQuery.data ?? []
+  const recipientsForCurrent = current?.zone_id
+    ? recipients.filter((recipient) => recipient.zone_id === current.zone_id && recipient.active)
+    : recipients.filter((recipient) => recipient.active)
+
   return (
-    <div className="screen">
+    <Screen>
       <PageHeader
-        eyebrow="Onya console"
-        title="Dispatch"
-        description="Alerts leave this room only through the human gate: the database refuses any dispatch without a named approver, and approval atomically queues one delivery per recipient."
+        eyebrow="Dispatch console"
+        title="Approve and send"
+        description="Alerts leave this room only through a named human. The database itself refuses any delivery without an approver, and approval queues every recipient in the same transaction."
       />
 
-      <div className="stat-row">
-        <StatTile
-          label="Pending approval"
+      <StatRow className="mb-5">
+        <Stat
+          label="Waiting on you"
           value={pendingAlerts.length}
+          detail="Drafted, not yet approved"
           accent={BAND_MAP_COLORS.watch}
         />
-        <StatTile label="Deliveries" value={deliveries.length} />
-        <StatTile
+        <Stat
           label="Delivered"
           value={byStatus.get('delivered')?.length ?? 0}
+          detail={`of ${deliveries.length} calls`}
           accent={BAND_MAP_COLORS.ack}
         />
-        <StatTile label="Acknowledged" value={acked} accent={BAND_MAP_COLORS.ack} />
-        <StatTile
+        <Stat
+          label="Acknowledged"
+          value={acked}
+          detail="Recipient pressed a key"
+          accent={BAND_MAP_COLORS.ack}
+        />
+        <Stat
           label="Needs review"
           value={needsReview}
-          detail="No auto-retry — human decision"
+          detail="Never retried automatically"
           accent={BAND_MAP_COLORS.high}
         />
-      </div>
+      </StatRow>
 
       <Card
-        title="Approval gate"
-        subtitle="Read the full alert text before approving — approval is recorded with your name and timestamp"
+        title="The human gate"
+        subtitle="Read the message as the recipient will hear it, then approve in your own name."
+        className="mb-5"
         actions={
-          <input
-            type="text"
-            placeholder="Approver name (required)"
-            value={signer}
-            onChange={(e) => setSigner(e.target.value)}
-          />
+          queued.length > 0 ? (
+            <span className="text-2xs text-faint">{queued.length} more waiting</span>
+          ) : null
         }
       >
-        <p className="gate-note">
-          The gate is enforced in the database, not the UI: the{' '}
-          <span className="mono">alerts</span> table has a CHECK constraint requiring{' '}
-          <span className="mono">approved_by</span> and{' '}
-          <span className="mono">approved_at</span> before any delivery exists.
-        </p>
-        {alertsQuery.isLoading ? <LoadingNote /> : null}
-        {alertsQuery.isError ? <ErrorNote error={alertsQuery.error} /> : null}
-        {approveMutation.isError ? <ErrorNote error={approveMutation.error} /> : null}
+        <div data-tour={TOUR_ANCHORS.approvalGate}>
+          {alertsQuery.isLoading ? <SkeletonText lines={4} /> : null}
+          {alertsQuery.isError ? <ErrorNote error={alertsQuery.error} /> : null}
+          {approveMutation.isError ? (
+            <ErrorNote error={approveMutation.error} className="mb-3" />
+          ) : null}
 
-        {pendingAlerts.length > 0 ? (
-          <div className="stack">
-            {pendingAlerts.map((alert) => (
-              <article key={alert.id} className="alert-draft">
-                <div className="feed-item-head">
-                  <StatusChip tone="warning">pending approval</StatusChip>
-                  <strong>{alert.language.toUpperCase()} voice alert</strong>
-                  <span className="spacer" />
-                  <small className="muted">
-                    Situation <span className="mono">{alert.situation_id.slice(0, 8)}</span>{' '}
-                    · drafted {fmtDateTime(alert.created_at)}
-                  </small>
-                </div>
-                <p className="alert-body-text">{alert.body_text}</p>
-                {alert.window_start && alert.window_end ? (
-                  <small className="muted">
-                    Forecast window:{' '}
-                    {fmtForecastWindow(alert.window_start, alert.window_end)}
-                  </small>
-                ) : null}
-                <div className="approve-row">
-                  <button
-                    type="button"
-                    className="button button-primary"
-                    disabled={!canApprove || approveMutation.isPending}
-                    title={canApprove ? undefined : 'Enter your name first'}
-                    onClick={() => approveMutation.mutate(alert.id)}
-                  >
-                    {approveMutation.isPending
-                      ? 'Approving…'
-                      : `Approve & dispatch${canApprove ? ` as ${signer.trim()}` : ''}`}
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : !alertsQuery.isLoading ? (
-          <EmptyState>
-            Nothing waiting at the gate. Draft alerts from a situation page or the map.
-          </EmptyState>
-        ) : null}
+          {current ? (
+            <>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <StatusChip tone="warning">Pending approval</StatusChip>
+                <span className="text-sm font-semibold text-ink">
+                  {current.zone_name ?? 'Voice alert'}
+                </span>
+                <span className="text-2xs text-faint">
+                  {current.language.toUpperCase()} voice call · drafted{' '}
+                  {fmtDateTime(current.created_at)}
+                </span>
+              </div>
+
+              {/* The alert body is the product. It gets to be the biggest thing here. */}
+              <blockquote className="rounded-md border border-line border-l-[3px] border-l-accent bg-surface-2 px-4 py-3 text-md leading-relaxed text-ink">
+                {current.body_text}
+              </blockquote>
+
+              {current.window_start && current.window_end ? (
+                <p className="mt-2 text-xs text-faint">
+                  Forecast window: {fmtForecastWindow(current.window_start, current.window_end)}
+                </p>
+              ) : null}
+
+              <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-line pt-4">
+                <Field label="Approved by" htmlFor="approver" className="w-60">
+                  <TextInput
+                    id="approver"
+                    value={signer}
+                    placeholder="Your full name"
+                    autoComplete="name"
+                    onChange={(event) => setSigner(event.target.value)}
+                  />
+                </Field>
+                <Button
+                  variant="primary"
+                  icon={PhoneOutgoing}
+                  disabled={!canApprove}
+                  loading={approveMutation.isPending}
+                  title={canApprove ? undefined : 'Enter your name first'}
+                  onClick={() => approveMutation.mutate(current.id)}
+                  className="mb-0.5"
+                >
+                  {approveMutation.isPending
+                    ? 'Approving…'
+                    : `Approve & queue ${recipientsForCurrent.length} call${
+                        recipientsForCurrent.length === 1 ? '' : 's'
+                      }`}
+                </Button>
+                <p className="mb-2 flex items-center gap-1.5 text-2xs text-faint">
+                  <Lock size={11} strokeWidth={1.75} aria-hidden />
+                  Recorded with your name and a timestamp
+                </p>
+              </div>
+            </>
+          ) : !alertsQuery.isLoading ? (
+            <EmptyState icon={Inbox} title="Nothing waiting at the gate">
+              Draft an alert from the map or a situation page and it will appear here.
+            </EmptyState>
+          ) : null}
+        </div>
       </Card>
 
       <Card
         title="Delivery board"
-        subtitle="Two-phase dispatch: claim, call the provider outside any transaction, then record. Stuck sends become needs-review — never silent retries."
+        subtitle="Claim, place the call outside any transaction, then record the result. Stuck calls become needs-review — never a silent retry."
+        className="mb-5"
+        padded={false}
       >
-        {deliveriesQuery.isLoading ? <LoadingNote /> : null}
-        {deliveriesQuery.isError ? <ErrorNote error={deliveriesQuery.error} /> : null}
-        {retryMutation.isError ? <ErrorNote error={retryMutation.error} /> : null}
-        <div className="delivery-board">
-          {BOARD_COLUMNS.map((status) => {
-            const items = byStatus.get(status) ?? []
+        {deliveriesQuery.isError ? (
+          <ErrorNote error={deliveriesQuery.error} className="m-4" />
+        ) : null}
+        {retryMutation.isError ? <ErrorNote error={retryMutation.error} className="m-4" /> : null}
+
+        <div className="grid grid-cols-2 gap-px overflow-x-auto bg-line md:grid-cols-3 xl:grid-cols-6">
+          {BOARD_COLUMNS.map((column) => {
+            const items = byStatus.get(column.status) ?? []
+            const Icon = column.icon
             return (
-              <div key={status} className="delivery-column">
-                <div className="delivery-column-head">
-                  <span>{status.replace('_', ' ')}</span>
-                  <span>{items.length}</span>
-                </div>
-                {items.slice(0, 12).map((delivery) => (
-                  <div key={delivery.id} className="delivery-card">
-                    <div className="feed-item-head">
-                      <strong>{delivery.channel}</strong>
-                      <span className="spacer" />
-                      {delivery.ack_status !== 'none' ? (
-                        <StatusChip tone="success">
-                          {titleCase(delivery.ack_status)}
-                        </StatusChip>
+              <section key={column.status} className="min-w-0 bg-surface p-3">
+                <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
+                  <Icon size={13} strokeWidth={1.75} aria-hidden className={column.tint} />
+                  {column.label}
+                  <span className="ml-auto text-sm font-semibold tabular-nums text-ink">
+                    {items.length}
+                  </span>
+                </h3>
+
+                <ul className="flex flex-col gap-1.5">
+                  {items.slice(0, 12).map((delivery) => (
+                    <DeliveryCard key={delivery.id} delivery={delivery}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-2xs font-medium text-ink">{delivery.channel}</span>
+                        {delivery.ack_status !== 'none' ? (
+                          <StatusChip tone="success" className="ml-auto">
+                            {titleCase(delivery.ack_status)}
+                          </StatusChip>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 text-2xs text-faint">
+                        {delivery.attempt_count} attempt
+                        {delivery.attempt_count === 1 ? '' : 's'} ·{' '}
+                        {fmtDateTime(delivery.updated_at)}
+                      </p>
+                      {delivery.last_error ? (
+                        <p className="mt-1 text-2xs break-words text-err-fg">
+                          {delivery.last_error}
+                        </p>
                       ) : null}
-                    </div>
-                    <small>
-                      Attempts {delivery.attempt_count} · updated{' '}
-                      {fmtDateTime(delivery.updated_at)}
-                    </small>
-                    {delivery.last_error ? (
-                      <span className="error-text">{delivery.last_error}</span>
-                    ) : null}
-                    {delivery.status === 'needs_review' ? (
-                      <div>
-                        <button
-                          type="button"
-                          className="button button-secondary button-small"
-                          disabled={retryMutation.isPending}
+                      {delivery.status === 'needs_review' ? (
+                        <Button
+                          size="sm"
+                          className="mt-1.5"
+                          loading={retryMutation.isPending}
                           onClick={() => retryMutation.mutate(delivery.id)}
                         >
                           Retry
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-                {items.length === 0 ? (
-                  <small className="muted" style={{ padding: '0 0.2rem' }}>
-                    —
-                  </small>
-                ) : null}
-              </div>
+                        </Button>
+                      ) : null}
+                    </DeliveryCard>
+                  ))}
+                  {items.length === 0 ? (
+                    <li className="py-1 text-2xs text-faint">None</li>
+                  ) : null}
+                  {items.length > 12 ? (
+                    <li className="py-1 text-2xs text-faint">
+                      +{items.length - 12} more
+                    </li>
+                  ) : null}
+                </ul>
+              </section>
             )
           })}
         </div>
       </Card>
 
-      <div className="grid-2">
-        <Card
-          title="Keypad acknowledgements"
-          subtitle="Recipients answer the voice call and press a key; acks arrive via provider webhooks, idempotently"
-        >
-          <div className="ack-key">
-            <div>
-              <kbd>1</kbd>
-              <span>
-                <strong>Acknowledged</strong> — message heard and understood
-              </span>
-            </div>
-            <div>
-              <kbd>2</kbd>
-              <span>
-                <strong>Conflict reported</strong> — the situation is active where they
-                are
-              </span>
-            </div>
-            <div>
-              <kbd>3</kbd>
-              <span>
-                <strong>Resolved</strong> — the local situation has calmed
-              </span>
-            </div>
+      <Card title="Reference" subtitle="How recipients answer, and who is on the list">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <div>
+            <h3 className="mb-2 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
+              Keypad acknowledgements
+            </h3>
+            <ul className="flex flex-col gap-2">
+              {[
+                { key: '1', title: 'Acknowledged', body: 'Message heard and understood' },
+                { key: '2', title: 'Conflict reported', body: 'It is already active where they are' },
+                { key: '3', title: 'Resolved', body: 'The local situation has calmed' },
+              ].map((entry) => (
+                <li key={entry.key} className="flex items-start gap-2.5">
+                  <Kbd className="mt-0.5">{entry.key}</Kbd>
+                  <span className="text-xs">
+                    <span className="font-medium text-ink">{entry.title}</span>
+                    <span className="block text-faint">{entry.body}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <Callout tone="info" className="mt-3">
+              Acknowledgements arrive by provider webhook and are idempotent — a repeated
+              callback never double-counts.
+            </Callout>
           </div>
-        </Card>
 
-        <Card title="Recipient roster" subtitle="Community focal points by zone">
-          {recipientsQuery.isLoading ? <LoadingNote /> : null}
-          {recipientsQuery.isError ? <ErrorNote error={recipientsQuery.error} /> : null}
-          {(recipientsQuery.data ?? []).length > 0 ? (
-            <div className="table-scroll" style={{ maxHeight: '20rem', overflowY: 'auto' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Zone</th>
-                    <th>Phone</th>
-                    <th>Lang</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(recipientsQuery.data ?? []).map((recipient) => (
-                    <tr key={recipient.id}>
-                      <td>{recipient.name}</td>
-                      <td className="muted">
-                        {recipient.zone_name ?? recipient.zone_id}
-                      </td>
-                      <td className="mono">{recipient.phone_e164}</td>
-                      <td>{recipient.language.toUpperCase()}</td>
+          <div className="min-w-0">
+            <h3 className="mb-2 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
+              Recipient roster
+            </h3>
+            {recipientsQuery.isLoading ? <SkeletonText lines={4} /> : null}
+            {recipientsQuery.isError ? <ErrorNote error={recipientsQuery.error} /> : null}
+            {recipients.length > 0 ? (
+              <div className="max-h-80 overflow-y-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead className="sticky top-0 bg-surface">
+                    <tr className="border-b border-line">
+                      {['Name', 'Zone', 'Phone', 'Lang'].map((header) => (
+                        <th
+                          key={header}
+                          scope="col"
+                          className="px-2 py-1.5 text-left text-2xs font-medium tracking-[0.04em] text-muted uppercase"
+                        >
+                          {header}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : !recipientsQuery.isLoading ? (
-            <EmptyState>No recipients registered.</EmptyState>
-          ) : null}
-        </Card>
-      </div>
-    </div>
+                  </thead>
+                  <tbody>
+                    {recipients.map((recipient) => (
+                      <tr key={recipient.id} className="border-b border-line last:border-b-0">
+                        <td className="px-2 py-1.5 text-ink">{recipient.name}</td>
+                        <td className="px-2 py-1.5 text-faint">
+                          {recipient.zone_name ?? recipient.zone_id}
+                        </td>
+                        <td className="px-2 py-1.5 font-mono text-2xs text-muted">
+                          {recipient.phone_e164}
+                        </td>
+                        <td className="px-2 py-1.5 text-muted">
+                          {recipient.language.toUpperCase()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : !recipientsQuery.isLoading ? (
+              <EmptyState>No recipients registered.</EmptyState>
+            ) : null}
+          </div>
+        </div>
+      </Card>
+    </Screen>
   )
 }

@@ -1,5 +1,6 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import { queryKeys } from './api'
+import { useLiveStore } from '../stores/live'
 import type { AckBySituation, AckStatus, DiraSseEvent } from './types'
 
 export type SsePatchResult = {
@@ -14,6 +15,14 @@ export function applySseEvent(
   const invalidated = invalidationKeys(payload)
   for (const queryKey of invalidated) {
     void queryClient.invalidateQueries({ queryKey })
+  }
+
+  // Record what moved so the affected row can flash once. Purely presentational
+  // — nothing downstream depends on it.
+  for (const id of [payload.id, payload.situation_id, payload.alert_id]) {
+    if (typeof id === 'string' && id.length > 0) {
+      useLiveStore.getState().markTouched(id)
+    }
   }
 
   const situationId = payload.situation_id

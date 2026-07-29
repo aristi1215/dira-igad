@@ -1,5 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 export function Modal({
   title,
@@ -15,20 +17,17 @@ export function Modal({
   wide?: boolean
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
+  // Keeps Tab inside the dialog, moves focus in, and restores it on close.
+  // Escape is handled by the trap too.
+  useFocusTrap(panelRef, true, onClose)
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    panelRef.current?.focus()
     return () => {
-      document.removeEventListener('keydown', onKey)
       document.body.style.overflow = previous
     }
-  }, [onClose])
+  }, [])
 
   return createPortal(
     <div
@@ -56,7 +55,7 @@ export function Modal({
             aria-label="Close dialog"
             onClick={onClose}
           >
-            ×
+            <X size={16} strokeWidth={1.75} aria-hidden />
           </button>
         </div>
         <div className="modal-body">{children}</div>

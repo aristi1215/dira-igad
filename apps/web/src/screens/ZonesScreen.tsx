@@ -1,224 +1,226 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { SearchX } from 'lucide-react'
 import { fetchZones, queryKeys } from '../lib/api'
 import {
-  BAND_LABELS,
   BAND_MAP_COLORS,
-  BAND_ORDER,
   COUNTRY_NAMES,
   fmtCompact,
   fmtPct,
-  fmtRisk,
+  fmtRiskScore,
 } from '../lib/format'
 import {
   BandChip,
+  Card,
+  DataTable,
   EmptyState,
   ErrorNote,
+  Field,
   IpcChip,
-  LoadingNote,
+  Meter,
   PageHeader,
-  StatTile,
+  Screen,
+  SearchInput,
+  Select,
   StatusChip,
+  type Column,
 } from '../components/ui'
+import { BandDistributionBar, type BandCounts } from '../components/BandDistributionBar'
+import type { OperationalBand, ZoneSummary } from '../lib/types'
 
 export function ZonesScreen() {
   const navigate = useNavigate()
   const [countryFilter, setCountryFilter] = useState('all')
+  const [bandFilter, setBandFilter] = useState<OperationalBand | 'none' | null>(null)
   const [search, setSearch] = useState('')
 
   const zonesQuery = useQuery({ queryKey: queryKeys.zones, queryFn: fetchZones })
 
   const zones = useMemo(
     () =>
-      [...(zonesQuery.data ?? [])].sort(
-        (a, b) => (b.model_risk ?? -1) - (a.model_risk ?? -1),
-      ),
+      [...(zonesQuery.data ?? [])].sort((a, b) => (b.model_risk ?? -1) - (a.model_risk ?? -1)),
     [zonesQuery.data],
   )
   const countries = useMemo(
-    () => [...new Set(zones.map((z) => z.country_iso2))].sort(),
+    () => [...new Set(zones.map((zone) => zone.country_iso2))].sort(),
     [zones],
   )
 
-  const bandCounts = useMemo(() => {
-    const counts = new Map<string, number>()
+  const bandCounts = useMemo<BandCounts>(() => {
+    const counts: BandCounts = new Map()
     for (const zone of zones) {
       const band = zone.operational_band ?? 'none'
       counts.set(band, (counts.get(band) ?? 0) + 1)
     }
     return counts
   }, [zones])
-  const highOrWorse =
-    (bandCounts.get('high') ?? 0) + (bandCounts.get('very_high') ?? 0)
-  const totalHazards = zones.reduce((sum, z) => sum + (z.active_hazards ?? 0), 0)
-  const totalUnverified = zones.reduce(
-    (sum, z) => sum + (z.unverified_field_reports_recent ?? 0),
-    0,
-  )
 
+  const needle = search.trim().toLowerCase()
   const filtered = zones.filter(
     (zone) =>
       (countryFilter === 'all' || zone.country_iso2 === countryFilter) &&
-      (search.trim() === '' ||
-        zone.zone_name.toLowerCase().includes(search.trim().toLowerCase()) ||
-        zone.cluster_name.toLowerCase().includes(search.trim().toLowerCase())),
+      (bandFilter == null || (zone.operational_band ?? 'none') === bandFilter) &&
+      (needle === '' ||
+        zone.zone_name.toLowerCase().includes(needle) ||
+        zone.cluster_name.toLowerCase().includes(needle)),
   )
 
+  const totalUnverified = zones.reduce(
+    (sum, zone) => sum + (zone.unverified_field_reports_recent ?? 0),
+    0,
+  )
+
+  const columns: Column<ZoneSummary>[] = [
+    {
+      key: 'zone',
+      header: 'Zone',
+      render: (zone) => (
+        <span className="flex flex-col">
+          <span className="font-medium text-ink">{zone.zone_name}</span>
+          <span className="text-2xs text-faint">
+            {COUNTRY_NAMES[zone.country_iso2] ?? zone.country_iso2} · {zone.cluster_name}
+          </span>
+        </span>
+      ),
+      sortBy: (zone) => zone.zone_name,
+    },
+    {
+      key: 'band',
+      header: 'Band',
+      render: (zone) => <BandChip band={zone.operational_band} />,
+      sortBy: (zone) => zone.model_risk ?? -1,
+    },
+    {
+      key: 'model_risk',
+      header: 'Model risk',
+      align: 'right',
+      width: '9rem',
+      render: (zone) => (
+        <span className="flex items-center justify-end gap-2">
+          <Meter
+            value={zone.model_risk}
+            color={BAND_MAP_COLORS[zone.operational_band ?? 'none']}
+            track="var(--color-line)"
+            height="sm"
+            animate={false}
+            className="w-14"
+          />
+          <span className="w-6 text-right font-medium tabular-nums">
+            {fmtRiskScore(zone.model_risk)}
+          </span>
+        </span>
+      ),
+      sortBy: (zone) => zone.model_risk ?? -1,
+    },
+    {
+      key: 'ipc',
+      header: 'Food security',
+      render: (zone) => <IpcChip phase={zone.ipc_phase} />,
+      sortBy: (zone) => zone.ipc_phase ?? -1,
+    },
+    {
+      key: 'idps',
+      header: 'Displaced',
+      align: 'right',
+      render: (zone) => fmtCompact(zone.idps),
+      sortBy: (zone) => zone.idps ?? -1,
+    },
+    {
+      key: 'staple',
+      header: 'Staple vs 3m',
+      align: 'right',
+      render: (zone) => fmtPct(zone.staple_pct_vs_3m_avg),
+      sortBy: (zone) => zone.staple_pct_vs_3m_avg ?? -Infinity,
+      secondary: true,
+    },
+    {
+      key: 'reports',
+      header: 'Field reports',
+      align: 'right',
+      render: (zone) => (
+        <span className="inline-flex items-center justify-end gap-1.5">
+          {zone.verified_field_reports_recent ?? 0}
+          {zone.unverified_field_reports_recent ? (
+            <StatusChip tone="warning">
+              {zone.unverified_field_reports_recent} unverified
+            </StatusChip>
+          ) : null}
+        </span>
+      ),
+      sortBy: (zone) => zone.verified_field_reports_recent ?? -1,
+      secondary: true,
+    },
+  ]
+
   return (
-    <div className="screen">
+    <Screen>
       <PageHeader
         eyebrow="Zone registry"
         title="Zones"
-        description="All 22 monitored zones across 9 clusters and 7 IGAD countries, ranked by model risk. Open a dossier for the full CEWARN picture: climate, incidents, food security, displacement, markets, health, hazards and field reports."
+        description="All 22 monitored zones across 9 clusters and 7 IGAD countries. Open a dossier for the full picture: climate, incidents, food security, displacement, markets, health and field reports."
       />
 
-      <div className="filter-bar">
-        <input
-          type="search"
-          placeholder="Search zone or cluster…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+      {zonesQuery.isError ? <ErrorNote error={zonesQuery.error} className="mb-4" /> : null}
+
+      {/* The distribution is both the summary and the filter. */}
+      <Card
+        title="Where the region stands"
+        subtitle="Select a band to filter the table below"
+        className="mb-5"
+      >
+        <BandDistributionBar
+          counts={bandCounts}
+          selected={bandFilter}
+          onSelect={setBandFilter}
         />
-        <label>
-          Country
-          <select
-            value={countryFilter}
-            onChange={(e) => setCountryFilter(e.target.value)}
-          >
-            <option value="all">All</option>
+        {totalUnverified > 0 ? (
+          <p className="mt-3 border-t border-line pt-2.5 text-xs text-muted">
+            {totalUnverified} recent field report{totalUnverified === 1 ? '' : 's'} awaiting
+            verification. Until verified they contribute exactly zero corroboration.
+          </p>
+        ) : null}
+      </Card>
+
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <SearchInput
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search zone or cluster…"
+          label="Search zones"
+          className="w-64"
+        />
+        <Field label="Country" className="w-44">
+          <Select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)}>
+            <option value="all">All countries</option>
             {countries.map((iso2) => (
               <option key={iso2} value={iso2}>
                 {COUNTRY_NAMES[iso2] ?? iso2}
               </option>
             ))}
-          </select>
-        </label>
-        <span className="muted" style={{ marginLeft: 'auto', fontSize: '0.8rem' }}>
-          {filtered.length} of {zones.length} zones
+          </Select>
+        </Field>
+        <span className="ml-auto pb-2 text-xs text-faint tabular-nums">
+          {filtered.length} of {zones.length}
         </span>
       </div>
 
-      {zonesQuery.isLoading ? <LoadingNote /> : null}
-      {zonesQuery.isError ? <ErrorNote error={zonesQuery.error} /> : null}
-
-      <div className="stat-row">
-        <StatTile
-          label="High / very high"
-          value={highOrWorse}
-          detail="Zones needing attention now"
-          accent={BAND_MAP_COLORS.high}
+      <Card padded={false}>
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          getRowId={(zone) => zone.zone_id}
+          onRowClick={(zone) => void navigate(`/zones/${zone.zone_id}`)}
+          rowAccent={(zone) => BAND_MAP_COLORS[zone.operational_band ?? 'none']}
+          loading={zonesQuery.isLoading}
+          caption="Monitored zones"
+          empty={
+            <EmptyState icon={SearchX} title="No zones match">
+              Try clearing the search or the band filter.
+            </EmptyState>
+          }
         />
-        <StatTile
-          label="Elevated"
-          value={bandCounts.get('elevated') ?? 0}
-          accent={BAND_MAP_COLORS.elevated}
-        />
-        <StatTile
-          label="Watch / low"
-          value={(bandCounts.get('watch') ?? 0) + (bandCounts.get('low') ?? 0)}
-          accent={BAND_MAP_COLORS.watch}
-        />
-        <StatTile label="Active hazards" value={totalHazards} />
-        <StatTile
-          label="Unverified reports"
-          value={totalUnverified}
-          detail="Contribute exactly 0 until verified"
-        />
-      </div>
-
-      {zones.length > 0 ? (
-        <div className="band-distribution" aria-label="Risk band distribution">
-          {BAND_ORDER.filter((band) => (bandCounts.get(band) ?? 0) > 0).map(
-            (band) => (
-              <span
-                key={band}
-                className="band-distribution-segment"
-                style={{
-                  flexGrow: bandCounts.get(band) ?? 0,
-                  background: BAND_MAP_COLORS[band],
-                }}
-                title={`${BAND_LABELS[band]}: ${bandCounts.get(band)} zones`}
-              >
-                {bandCounts.get(band)}
-              </span>
-            ),
-          )}
-        </div>
-      ) : null}
-
-      <div className="card">
-        <div className="card-body flush table-scroll">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Zone</th>
-                <th>Cluster</th>
-                <th>Country</th>
-                <th>Band</th>
-                <th className="num">Model risk</th>
-                <th>IPC</th>
-                <th className="num">IDPs</th>
-                <th className="num">Staple Δ vs 3m</th>
-                <th className="num">Hazards</th>
-                <th className="num">Field reports</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((zone) => (
-                <tr
-                  key={zone.zone_id}
-                  className="clickable"
-                  onClick={() => void navigate(`/zones/${zone.zone_id}`)}
-                >
-                  <td>
-                    <strong>{zone.zone_name}</strong>
-                  </td>
-                  <td className="muted">{zone.cluster_name}</td>
-                  <td>{COUNTRY_NAMES[zone.country_iso2] ?? zone.country_iso2}</td>
-                  <td>
-                    <BandChip band={zone.operational_band} />
-                  </td>
-                  <td className="num">
-                    <span className="risk-cell">
-                      <span className="risk-cell-bar">
-                        <span
-                          style={{
-                            width: `${Math.min(100, (zone.model_risk ?? 0))}%`,
-                            background:
-                              BAND_MAP_COLORS[zone.operational_band ?? 'none'],
-                          }}
-                        />
-                      </span>
-                      {fmtRisk(zone.model_risk)}
-                    </span>
-                  </td>
-                  <td>
-                    <IpcChip phase={zone.ipc_phase} />
-                  </td>
-                  <td className="num">{fmtCompact(zone.idps)}</td>
-                  <td className="num">{fmtPct(zone.staple_pct_vs_3m_avg)}</td>
-                  <td className="num">{zone.active_hazards ?? 0}</td>
-                  <td className="num">
-                    {zone.verified_field_reports_recent ?? 0}
-                    {zone.unverified_field_reports_recent ? (
-                      <>
-                        {' '}
-                        <StatusChip tone="warning">
-                          {zone.unverified_field_reports_recent} unverified
-                        </StatusChip>
-                      </>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!zonesQuery.isLoading && filtered.length === 0 ? (
-            <EmptyState>No zones match the current filters.</EmptyState>
-          ) : null}
-        </div>
-      </div>
-    </div>
+      </Card>
+    </Screen>
   )
 }

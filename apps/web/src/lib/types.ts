@@ -87,6 +87,9 @@ export type Alert = {
   updated_at?: string | null
   window_start?: string | null
   window_end?: string | null
+  /** GET /alerts joins these in; absent on a freshly drafted alert. */
+  zone_id?: string | null
+  zone_name?: string | null
 }
 
 export type AlertDraftResponse = {
@@ -418,6 +421,9 @@ export type SituationDetail = {
     opened_cycle: string | null
     resolved_cycle: string | null
     created_at: string
+    /** Hysteresis countdown: consecutive quiet cycles before this auto-resolves. */
+    cycles_below_threshold?: number | null
+    updated_at?: string | null
   }
   assessments: {
     id: string

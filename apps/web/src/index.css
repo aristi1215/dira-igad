@@ -1,101 +1,354 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap');
+/*
+ * Dira design system.
+ *
+ * Tailwind v4 is imported WITHOUT Preflight on purpose: Preflight resets
+ * headings, buttons, lists and table borders, which would break App.css
+ * mid-migration. The consequence is that there is no default border color,
+ * so always write `border border-line` — never a bare `border`.
+ *
+ * Variable classes must come from an explicit Record<K, string> of full
+ * literal class names. `bg-band-${band}` produces no CSS, silently.
+ */
+@layer theme, base, vendor, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+/*
+ * MapLibre's stylesheet must be imported INTO a layer. Unlayered CSS wins over
+ * every layered rule regardless of specificity, so an unlayered
+ * `.maplibregl-map { position: relative }` silently beats Tailwind's
+ * `absolute` and collapses the map container to zero height.
+ */
+@import 'maplibre-gl/dist/maplibre-gl.css' layer(vendor);
+/*
+ * Screens still on the old stylesheet. Imported here rather than from App.tsx
+ * so it lands in `@layer components` — below Tailwind utilities, which lets a
+ * migrated component's utility classes override leftover legacy rules instead
+ * of losing to them. Retired section by section; deleted when empty.
+ */
+@import './App.css' layer(components);
+@import 'tailwindcss/utilities.css' layer(utilities);
 
-:root {
-  color-scheme: light;
+@theme {
+  /* --- Surfaces and ink (IBM Carbon gray ramp) --- */
+  --color-canvas: #f4f4f4;
+  --color-surface: #ffffff;
+  --color-surface-2: #fafafa;
+  --color-surface-3: #f1f3f5;
+  --color-line: #e8e8e8;
+  --color-line-strong: #c6c6c6;
+  --color-ink: #161616;
+  --color-muted: #525252;
+  /* Raised from #8d8d8d — that was ~3.0:1 on white and failed AA wherever
+     it carried body text (stat labels, map rail sublabels, captions). */
+  --color-faint: #6f6f6f;
 
-  --bg: #f4f4f4;
-  --surface: #ffffff;
-  --surface-2: #fafafa;
-  --border: #e8e8e8;
-  --border-strong: #c6c6c6;
-  --ink: #161616;
-  --muted: #525252;
-  --faint: #8d8d8d;
-  --accent: #0f62fe;
-  --accent-hover: #0043ce;
-  --accent-soft: #edf5ff;
+  --color-accent: #0f62fe;
+  --color-accent-hover: #0043ce;
+  --color-accent-soft: #edf5ff;
+  --color-accent-ring: #d0e2ff;
 
-  --band-low: #0f62fe;
-  --band-watch: #f1c21b;
-  --band-elevated: #ff832b;
-  --band-high: #da1e28;
-  --band-very-high: #740937;
-  --band-none: #c6c6c6;
-  --band-ack: #24a148;
+  /* --- Operational bands. Mirrored in lib/format.ts (BAND_COLORS);
+         guarded by src/lib/tokens.test.ts. --- */
+  --color-band-low: #0f62fe;
+  --color-band-watch: #f1c21b;
+  --color-band-elevated: #ff832b;
+  --color-band-high: #da1e28;
+  --color-band-very-high: #740937;
+  --color-band-none: #c6c6c6;
+  --color-band-ack: #24a148;
+  /* Lighter very-high for map fills so labels stay readable on the polygon. */
+  --color-band-very-high-map: #9f1853;
 
-  --ok-bg: #defbe6;
-  --ok-fg: #0e6027;
-  --err-bg: #fff1f1;
-  --err-fg: #a2191f;
-  --warn-bg: #fcf4d6;
-  --warn-fg: #684e00;
-  --info-bg: #edf5ff;
-  --info-fg: #0043ce;
+  /* --- Official IPC acute food insecurity phase colors --- */
+  --color-ipc-1: #cdfacd;
+  --color-ipc-2: #fae61e;
+  --color-ipc-3: #e67800;
+  --color-ipc-4: #c80000;
+  --color-ipc-5: #640000;
 
+  /* --- Status pairs --- */
+  --color-ok-bg: #defbe6;
+  --color-ok-fg: #0e6027;
+  --color-err-bg: #fff1f1;
+  --color-err-fg: #a2191f;
+  --color-warn-bg: #fcf4d6;
+  --color-warn-fg: #684e00;
+  --color-info-bg: #edf5ff;
+  --color-info-fg: #0043ce;
+
+  /* --- Type --- */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   --font-display: 'Source Serif 4', Georgia, serif;
 
+  /* Replaces the 17 ad-hoc font sizes that were scattered through App.css. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.0625rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.1875rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-md: 0.9375rem;
+  --text-md--line-height: 1.4375rem;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.625rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.875rem;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.375rem;
+  --text-4xl: 2.75rem;
+  --text-4xl--line-height: 3rem;
+
+  /* --- Radii --- */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  /* --- Elevation --- */
   --shadow-sm: 0 1px 2px rgba(22, 22, 22, 0.06);
   --shadow-md: 0 2px 8px rgba(22, 22, 22, 0.08);
   --shadow-lg: 0 8px 32px rgba(22, 22, 22, 0.14);
+  --shadow-panel: 0 1px 2px rgba(22, 22, 22, 0.05), 0 8px 24px rgba(22, 22, 22, 0.1);
+
+  /* --- Motion. Mirrored in lib/motion.ts for `motion` props. --- */
+  --ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --ease-entrance: cubic-bezier(0, 0, 0.38, 0.9);
+  --ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-indeterminate: indeterminate 1.15s var(--ease-standard) infinite;
+  --animate-flash-ring: flash-ring 900ms var(--ease-exit) 1;
+
+  /* --- Z-index scale (was 19/20/21/40/45/90 hardcoded) --- */
+  --z-map-base: 10;
+  --z-map-ui: 20;
+  --z-map-panel: 21;
+  --z-header: 40;
+  --z-drawer: 45;
+  --z-modal: 70;
+  --z-tour: 90;
+  --z-tooltip: 95;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -180% 0;
+  }
+  100% {
+    background-position: 180% 0;
+  }
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.35);
+  }
+  50% {
+    transform: translateX(0%) scaleX(0.6);
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.35);
+  }
+}
+
+@keyframes flash-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--color-accent-ring);
+  }
+  30% {
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(208, 226, 255, 0);
+  }
+}
+
+/*
+ * Legacy bridge — re-points every pre-Tailwind token at its @theme
+ * counterpart so App.css keeps working while screens migrate one at a time.
+ * Deleted in Phase 7 together with App.css.
+ */
+:root {
+  color-scheme: light;
+
+  --bg: var(--color-canvas);
+  --surface: var(--color-surface);
+  --surface-2: var(--color-surface-2);
+  --border: var(--color-line);
+  --border-strong: var(--color-line-strong);
+  --ink: var(--color-ink);
+  --muted: var(--color-muted);
+  --faint: var(--color-faint);
+  /* Was undefined — .tour-card p referenced it and fell through to full black. */
+  --ink-secondary: var(--color-muted);
+  --accent: var(--color-accent);
+  --accent-hover: var(--color-accent-hover);
+  --accent-soft: var(--color-accent-soft);
+
+  --band-low: var(--color-band-low);
+  --band-watch: var(--color-band-watch);
+  --band-elevated: var(--color-band-elevated);
+  --band-high: var(--color-band-high);
+  --band-very-high: var(--color-band-very-high);
+  --band-none: var(--color-band-none);
+  --band-ack: var(--color-band-ack);
+
+  --ok-bg: var(--color-ok-bg);
+  --ok-fg: var(--color-ok-fg);
+  --err-bg: var(--color-err-bg);
+  --err-fg: var(--color-err-fg);
+  --warn-bg: var(--color-warn-bg);
+  --warn-fg: var(--color-warn-fg);
+  --info-bg: var(--color-info-bg);
+  --info-fg: var(--color-info-fg);
 
   font-family: var(--font-sans);
   line-height: 1.5;
-  color: var(--ink);
-  background: var(--bg);
+  color: var(--color-ink);
+  background: var(--color-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-* {
-  box-sizing: border-box;
+/*
+ * Minimal reset, standing in for Preflight (which is disabled so it cannot
+ * trample App.css mid-migration). It lives in `@layer base` so App.css
+ * (`@layer components`) and Tailwind utilities both still win over it.
+ *
+ * These are the specific UA defaults that show through on Tailwind-styled
+ * markup: button chrome and list markers.
+ */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  button {
+    border: 0;
+    padding: 0;
+    background: none;
+    text-align: inherit;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  /* Lists are semantic grouping throughout; markers are opt-in. */
+  ul,
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  img,
+  svg,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-accent-hover);
+  }
+
+  ::selection {
+    background: var(--color-accent-ring);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  /* Consistent, visible keyboard affordance across the whole app. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  font-size: 14px;
+@layer components {
+  /* App.css predates the list reset above and expects UA markers here. */
+  .feed-list,
+  .drivers-list,
+  .red-lines,
+  .timeline {
+    list-style: revert;
+    padding-left: revert;
+  }
+
+  /* Bring MapLibre's default controls in line with the rest of the chrome. */
+  .maplibregl-ctrl-group {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-panel);
+    background: color-mix(in srgb, var(--color-surface) 95%, transparent);
+    backdrop-filter: blur(4px);
+  }
+
+  .maplibregl-ctrl-group button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .maplibregl-ctrl-group button + button {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .maplibregl-ctrl-attrib {
+    border-radius: var(--radius-sm) 0 0 0;
+    font-size: var(--text-2xs);
+  }
 }
 
-h1,
-h2,
-h3 {
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-a:hover {
-  color: var(--accent-hover);
-}
-
-::selection {
-  background: #d0e2ff;
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-#root {
-  min-height: 100vh;
+/*
+ * Global reduced-motion guard. `motion` components are handled separately by
+ * <MotionConfig reducedMotion="user"> in main.tsx.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

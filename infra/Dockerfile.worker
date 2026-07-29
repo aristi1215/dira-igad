@@ -11,6 +11,7 @@ COPY packages ./packages
 COPY apps/worker ./apps/worker
 COPY artifacts ./artifacts
 COPY data ./data
+ENV SEEDED_DATA_DIR=/app/data/seeded
 
 RUN pip install --no-cache-dir \
     ./packages/dira_core \
