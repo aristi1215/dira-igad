@@ -24,6 +24,7 @@ import {
   Button,
   Callout,
   Card,
+  DataTable,
   EmptyState,
   ErrorNote,
   Field,
@@ -35,11 +36,12 @@ import {
   StatRow,
   StatusChip,
   TextInput,
+  type Column,
 } from '../components/ui'
 import { TOUR_ANCHORS } from '../features/tour/tourAnchors'
 import { useJustUpdated } from '../stores/live'
 import { cx } from '../lib/cx'
-import type { Alert, Delivery, DeliveryStatus } from '../lib/types'
+import type { Alert, Delivery, DeliveryStatus, Recipient } from '../lib/types'
 
 /**
  * A delivery row that flashes once when SSE reports it changed — so a call
@@ -66,14 +68,112 @@ function DeliveryCard({
   )
 }
 
-const BOARD_COLUMNS: { status: DeliveryStatus; label: string; icon: LucideIcon; tint: string }[] = [
-  { status: 'queued', label: 'Queued', icon: Clock, tint: 'text-faint' },
-  { status: 'sending', label: 'Calling', icon: PhoneOutgoing, tint: 'text-info-fg' },
-  { status: 'sent', label: 'Sent', icon: Send, tint: 'text-info-fg' },
-  { status: 'delivered', label: 'Delivered', icon: CircleCheck, tint: 'text-ok-fg' },
-  { status: 'failed', label: 'Failed', icon: CircleX, tint: 'text-err-fg' },
-  { status: 'needs_review', label: 'Needs review', icon: TriangleAlert, tint: 'text-warn-fg' },
+/**
+ * `bar` is a full literal class name, not an interpolation: Tailwind's scanner
+ * cannot see `bg-${x}` and would emit no CSS at all, silently.
+ */
+const BOARD_COLUMNS: {
+  status: DeliveryStatus
+  label: string
+  icon: LucideIcon
+  tint: string
+  bar: string
+}[] = [
+  { status: 'queued', label: 'Queued', icon: Clock, tint: 'text-faint', bar: 'bg-line-strong' },
+  {
+    status: 'sending',
+    label: 'Calling',
+    icon: PhoneOutgoing,
+    tint: 'text-info-fg',
+    bar: 'bg-band-low',
+  },
+  { status: 'sent', label: 'Sent', icon: Send, tint: 'text-info-fg', bar: 'bg-accent-hover' },
+  {
+    status: 'delivered',
+    label: 'Delivered',
+    icon: CircleCheck,
+    tint: 'text-ok-fg',
+    bar: 'bg-band-ack',
+  },
+  { status: 'failed', label: 'Failed', icon: CircleX, tint: 'text-err-fg', bar: 'bg-band-high' },
+  {
+    status: 'needs_review',
+    label: 'Needs review',
+    icon: TriangleAlert,
+    tint: 'text-warn-fg',
+    bar: 'bg-band-elevated',
+  },
 ]
+
+/**
+ * The pipeline as a single proportional bar.
+ *
+ * A board of columns answers "which calls are where"; it does not answer "is
+ * dispatch working". This does, in one line: what share of calls landed, what
+ * share was acknowledged, and what is stuck — which is the question anyone
+ * opening this screen mid-incident is actually asking.
+ */
+function DeliveryFunnel({
+  byStatus,
+  total,
+  acked,
+}: {
+  byStatus: Map<DeliveryStatus, Delivery[]>
+  total: number
+  acked: number
+}) {
+  if (total === 0) return null
+
+  const segments = BOARD_COLUMNS.map((column) => ({
+    ...column,
+    count: byStatus.get(column.status)?.length ?? 0,
+  })).filter((segment) => segment.count > 0)
+
+  const delivered = byStatus.get('delivered')?.length ?? 0
+  const rate = (value: number) => `${Math.round((value / total) * 100)}%`
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
+      <span className="flex items-baseline gap-1.5">
+        <span className="font-mono text-lg font-semibold tabular-nums text-ink">
+          {rate(delivered)}
+        </span>
+        <span className="font-condensed text-2xs tracking-[0.09em] text-faint uppercase">
+          delivered
+        </span>
+      </span>
+      <span className="flex items-baseline gap-1.5">
+        <span className="font-mono text-lg font-semibold tabular-nums text-ink">
+          {rate(acked)}
+        </span>
+        <span className="font-condensed text-2xs tracking-[0.09em] text-faint uppercase">
+          acknowledged
+        </span>
+      </span>
+
+      <span className="flex min-w-[14rem] flex-1 flex-col gap-1">
+        <span className="flex h-2.5 overflow-hidden rounded-full">
+          {segments.map((segment) => (
+            <span
+              key={segment.status}
+              title={`${segment.count} ${segment.label.toLowerCase()}`}
+              className={cx('h-full transition-[flex-grow] duration-[300ms] ease-standard', segment.bar)}
+              style={{ flexGrow: segment.count }}
+            />
+          ))}
+        </span>
+        <span className="flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-2xs tabular-nums text-faint">
+          {segments.map((segment) => (
+            <span key={segment.status} className="flex items-center gap-1">
+              <span aria-hidden className={cx('size-1.5 rounded-full', segment.bar)} />
+              {segment.count} {segment.label.toLowerCase()}
+            </span>
+          ))}
+        </span>
+      </span>
+    </div>
+  )
+}
 
 export function DispatchScreen() {
   const queryClient = useQueryClient()
@@ -124,6 +224,12 @@ export function DispatchScreen() {
 
   const acked = deliveries.filter((delivery) => delivery.ack_status !== 'none').length
   const needsReview = byStatus.get('needs_review')?.length ?? 0
+  const activeColumns = BOARD_COLUMNS.filter(
+    (column) => (byStatus.get(column.status)?.length ?? 0) > 0,
+  )
+  const emptyColumns = BOARD_COLUMNS.filter(
+    (column) => (byStatus.get(column.status)?.length ?? 0) === 0,
+  )
   const pendingAlerts = alertsQuery.data ?? []
   const canApprove = signer.trim().length > 1
 
@@ -135,8 +241,44 @@ export function DispatchScreen() {
     ? recipients.filter((recipient) => recipient.zone_id === current.zone_id && recipient.active)
     : recipients.filter((recipient) => recipient.active)
 
+  const recipientColumns: Column<Recipient>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (recipient) => <span className="font-medium text-ink">{recipient.name}</span>,
+      sortBy: (recipient) => recipient.name,
+    },
+    {
+      key: 'zone',
+      header: 'Zone',
+      render: (recipient) => (
+        <span className="text-faint">{recipient.zone_name ?? recipient.zone_id}</span>
+      ),
+      sortBy: (recipient) => recipient.zone_name ?? recipient.zone_id,
+    },
+    {
+      key: 'phone',
+      header: 'Phone',
+      width: '9rem',
+      render: (recipient) => (
+        <span className="font-mono text-2xs text-muted">{recipient.phone_e164}</span>
+      ),
+    },
+    {
+      key: 'language',
+      header: 'Lang',
+      width: '4rem',
+      render: (recipient) => (
+        <span className="font-mono text-2xs text-muted">
+          {recipient.language.toUpperCase()}
+        </span>
+      ),
+      sortBy: (recipient) => recipient.language,
+    },
+  ]
+
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow="Dispatch console"
         title="Approve and send"
@@ -261,16 +403,26 @@ export function DispatchScreen() {
         ) : null}
         {retryMutation.isError ? <ErrorNote error={retryMutation.error} className="m-4" /> : null}
 
-        <div className="grid grid-cols-2 gap-px overflow-x-auto bg-line md:grid-cols-3 xl:grid-cols-6">
-          {BOARD_COLUMNS.map((column) => {
+        <DeliveryFunnel byStatus={byStatus} total={deliveries.length} acked={acked} />
+
+        {/*
+          Only statuses that actually hold something get a column.
+
+          Six fixed columns meant that at any realistic volume four or five of
+          them were a heading over the word "None" — a board that looked like
+          the system had failed rather than like most calls had landed. The
+          empty ones are summarised in one line underneath instead.
+        */}
+        <div className="grid gap-px border-t border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
+          {activeColumns.map((column) => {
             const items = byStatus.get(column.status) ?? []
             const Icon = column.icon
             return (
               <section key={column.status} className="min-w-0 bg-surface p-3">
-                <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
+                <h3 className="font-condensed mb-2 flex items-center gap-1.5 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
                   <Icon size={13} strokeWidth={1.75} aria-hidden className={column.tint} />
                   {column.label}
-                  <span className="ml-auto text-sm font-semibold tabular-nums text-ink">
+                  <span className="ml-auto font-mono text-sm font-semibold tabular-nums text-ink">
                     {items.length}
                   </span>
                 </h3>
@@ -308,11 +460,8 @@ export function DispatchScreen() {
                       ) : null}
                     </DeliveryCard>
                   ))}
-                  {items.length === 0 ? (
-                    <li className="py-1 text-2xs text-faint">None</li>
-                  ) : null}
                   {items.length > 12 ? (
-                    <li className="py-1 text-2xs text-faint">
+                    <li className="py-1 font-mono text-2xs text-faint">
                       +{items.length - 12} more
                     </li>
                   ) : null}
@@ -321,6 +470,26 @@ export function DispatchScreen() {
             )
           })}
         </div>
+
+        {emptyColumns.length > 0 ? (
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line bg-surface-2 px-3 py-2 text-2xs text-faint">
+            <span className="font-condensed font-semibold tracking-[0.09em] uppercase">
+              Empty
+            </span>
+            {emptyColumns.map((column) => (
+              <span key={column.status} className="flex items-center gap-1">
+                <column.icon size={11} strokeWidth={1.75} aria-hidden />
+                {column.label}
+              </span>
+            ))}
+          </p>
+        ) : null}
+
+        {deliveries.length === 0 && !deliveriesQuery.isLoading ? (
+          <EmptyState icon={PhoneOutgoing} title="No calls yet">
+            Approve an alert above and every recipient is queued in the same transaction.
+          </EmptyState>
+        ) : null}
       </Card>
 
       <Card title="Reference" subtitle="How recipients answer, and who is on the list">
@@ -351,48 +520,22 @@ export function DispatchScreen() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-2 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
+            <h3 className="font-condensed mb-2 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
               Recipient roster
             </h3>
-            {recipientsQuery.isLoading ? <SkeletonText lines={4} /> : null}
             {recipientsQuery.isError ? <ErrorNote error={recipientsQuery.error} /> : null}
-            {recipients.length > 0 ? (
-              <div className="max-h-80 overflow-y-auto">
-                <table className="w-full border-collapse text-sm">
-                  <thead className="sticky top-0 bg-surface">
-                    <tr className="border-b border-line">
-                      {['Name', 'Zone', 'Phone', 'Lang'].map((header) => (
-                        <th
-                          key={header}
-                          scope="col"
-                          className="px-2 py-1.5 text-left text-2xs font-medium tracking-[0.04em] text-muted uppercase"
-                        >
-                          {header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recipients.map((recipient) => (
-                      <tr key={recipient.id} className="border-b border-line last:border-b-0">
-                        <td className="px-2 py-1.5 text-ink">{recipient.name}</td>
-                        <td className="px-2 py-1.5 text-faint">
-                          {recipient.zone_name ?? recipient.zone_id}
-                        </td>
-                        <td className="px-2 py-1.5 font-mono text-2xs text-muted">
-                          {recipient.phone_e164}
-                        </td>
-                        <td className="px-2 py-1.5 text-muted">
-                          {recipient.language.toUpperCase()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : !recipientsQuery.isLoading ? (
-              <EmptyState>No recipients registered.</EmptyState>
-            ) : null}
+            {/* Was a hand-rolled table with four unsized columns stretched
+                across the card. DataTable gives it widths and sorting. */}
+            <div className="max-h-80 overflow-y-auto">
+              <DataTable
+                columns={recipientColumns}
+                rows={recipients}
+                getRowId={(recipient) => recipient.id}
+                loading={recipientsQuery.isLoading}
+                caption="Alert recipients"
+                empty={<EmptyState>No recipients registered.</EmptyState>}
+              />
+            </div>
           </div>
         </div>
       </Card>

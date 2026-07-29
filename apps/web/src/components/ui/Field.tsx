@@ -35,7 +35,7 @@ export function Field({
     <div className={cx('flex flex-col gap-1.5', className)}>
       <label
         htmlFor={htmlFor}
-        className="text-2xs font-medium tracking-[0.04em] text-muted uppercase"
+        className="font-condensed text-2xs font-semibold tracking-[0.09em] text-muted uppercase"
       >
         {label}
       </label>

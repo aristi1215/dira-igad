@@ -7,10 +7,12 @@ import { useMapUiStore } from '../../stores/mapUi'
 import { Callout } from '../../components/ui'
 import type {
   AckBySituation,
+  MapEvents,
   MapOverlay,
   OperationalBand,
   RegionalIndicators,
   SituationFeatureCollection,
+  ZoneTrends,
 } from '../../lib/types'
 import { featureCenter } from './geometry'
 import { useMapLayers } from './useMapLayers'
@@ -18,6 +20,7 @@ import { useMapHover } from './useMapHover'
 import { MapToolbar } from './MapToolbar'
 import { MapLegend } from './MapLegend'
 import { MapHoverCard } from './MapHoverCard'
+import { SituationBadges } from './SituationBadges'
 import { collectionBounds, rasterFallbackStyle, tuneBasemap, VECTOR_STYLE_URL } from './basemap'
 import { MAP_FLY_MS } from '../../lib/motion'
 import { TOUR_ANCHORS } from '../tour/tourAnchors'
@@ -41,6 +44,8 @@ const MAX_BOUNDS: [[number, number], [number, number]] = [
 type MapViewProps = {
   indicators: RegionalIndicators | undefined
   situations: SituationFeatureCollection | undefined
+  events: MapEvents | undefined
+  trends: ZoneTrends | undefined
   ackBySituation: AckBySituation
   isLoading: boolean
   overlay: MapOverlay
@@ -52,6 +57,8 @@ type MapViewProps = {
 export function MapView({
   indicators,
   situations,
+  events,
+  trends,
   ackBySituation,
   isLoading,
   overlay,
@@ -66,7 +73,19 @@ export function MapView({
   const [map, setMap] = useState<Map | null>(null)
   /** Bumped on a style swap so the layer hook re-installs everything. */
   const [styleEpoch, setStyleEpoch] = useState(0)
-  const [webglFailed, setWebglFailed] = useState(false)
+  /*
+   * Two separate ways the map can fail to exist, and they are knowable at
+   * different times.
+   *
+   * Whether the browser can make a WebGL context at all is knowable before
+   * the first render, so it is probed in a lazy initializer — discovering it
+   * in an effect only bought a guaranteed second render pass. Whether
+   * MapLibre's constructor then succeeds is only knowable once there is a
+   * container to hand it, so that one genuinely belongs in the effect.
+   */
+  const [webglSupported] = useState(webglAvailable)
+  const [constructorFailed, setConstructorFailed] = useState(false)
+  const webglFailed = !webglSupported || constructorFailed
 
   const hoveredZoneId = useMapUiStore((state) => state.hoveredZoneId)
   const setHoveredZoneId = useMapUiStore((state) => state.setHoveredZoneId)
@@ -78,12 +97,7 @@ export function MapView({
   // dependency: moveend writes the store, which would tear down and rebuild
   // the map on every pan.
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) {
-      return
-    }
-
-    if (!webglAvailable()) {
-      setWebglFailed(true)
+    if (!containerRef.current || mapRef.current || !webglSupported) {
       return
     }
 
@@ -102,7 +116,13 @@ export function MapView({
       })
     } catch (error) {
       console.warn('MapLibre failed to initialize WebGL.', error)
-      setWebglFailed(true)
+      // The rule wants setState out of effect bodies, but this *is* the
+      // integration point: MapLibre's constructor either produces a map or
+      // throws, synchronously, and the fallback UI is the only sensible
+      // response. Deferring it to a microtask would satisfy the linter and
+      // buy nothing.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConstructorFailed(true)
       return
     }
 
@@ -156,14 +176,15 @@ export function MapView({
       mapRef.current = null
       setMap(null)
     }
-  }, [])
+    // Viewport must NOT be a dependency (see above); `webglSupported` never
+    // changes after its lazy probe, so this still runs exactly once.
+  }, [webglSupported])
 
   useMapLayers({
     map,
     styleEpoch,
     indicators,
-    situations,
-    ackBySituation,
+    events,
     overlay,
     selectedZoneId,
     hoveredZoneId,
@@ -187,7 +208,8 @@ export function MapView({
         left: window.innerWidth >= 1280 ? 348 : 288,
         right: 240,
         top: 104,
-        bottom: 72,
+        // Clears the status strip and the legend that sits just above it.
+        bottom: 128,
       },
       duration: 0,
       maxZoom: 7,
@@ -240,6 +262,14 @@ export function MapView({
         ?.properties
     : undefined
 
+  // SHAP already travels with every open situation; surfacing the top two on
+  // hover means the question "why is this zone rated like this" is answered
+  // before anyone has to click into a dossier to ask it.
+  const hoveredShap = hover
+    ? situations?.features.find((feature) => feature.properties.zone_id === hover.zoneId)
+        ?.properties.shap
+    : undefined
+
   return (
     <div className="absolute inset-0" aria-label="Horn of Africa map">
       {/* The canvas itself is not keyboard navigable; the watchlist rail is
@@ -279,10 +309,24 @@ export function MapView({
 
       {!webglFailed ? (
         <>
+          <SituationBadges
+            map={map}
+            indicators={indicators}
+            situations={situations}
+            events={events}
+            trends={trends}
+            ackBySituation={ackBySituation}
+            selectedZoneId={selectedZoneId}
+            bandFilter={bandFilter}
+            onSelect={onSelect}
+          />
+
           <MapToolbar overlay={overlay} onChange={onOverlayChange} />
 
           <MapLegend
             overlay={overlay}
+            indicators={indicators}
+            eventWindow={events?.window}
             bandFilter={bandFilter}
             onToggleBand={handleToggleBand}
             onResetBands={resetBands}
@@ -295,6 +339,8 @@ export function MapView({
                 zone={hoveredZone}
                 point={hover.point}
                 overlay={overlay}
+                trend={trends?.[hover.zoneId]}
+                shap={hoveredShap}
               />
             ) : null}
           </AnimatePresence>

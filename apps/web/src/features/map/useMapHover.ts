@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Map, MapLayerMouseEvent } from 'maplibre-gl'
-import { CIRCLE_LAYER_ID, ZONE_FILL_LAYER_ID } from './useMapLayers'
+import { ZONE_FILL_LAYER_ID } from './useMapLayers'
 
 export type HoverState = {
   zoneId: string
@@ -40,7 +40,9 @@ export function useMapHover(map: Map | null): HoverState {
       map.getCanvas().style.cursor = ''
     }
 
-    const layers = [CIRCLE_LAYER_ID, ZONE_FILL_LAYER_ID]
+    // The situation markers are HTML overlays now, not a MapLibre layer, so
+    // the zone fill is the only thing left to hit-test here.
+    const layers = [ZONE_FILL_LAYER_ID]
     for (const layer of layers) {
       map.on('mousemove', layer, handleMove)
       map.on('mouseleave', layer, handleLeave)

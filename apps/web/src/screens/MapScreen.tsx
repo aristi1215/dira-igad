@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { MapView, WatchlistRail, ZoneCard } from '../features/map'
+import { MapStatusStrip, MapView, WatchlistRail, ZoneCard } from '../features/map'
 import {
+  fetchMapEvents,
   fetchMapSituations,
+  fetchMapTrends,
+  fetchPendingAlerts,
   fetchRegionalIndicators,
   fetchZones,
   prepareAlert,
@@ -23,6 +26,7 @@ export function MapScreen() {
   const hoveredZoneId = useMapUiStore((state) => state.hoveredZoneId)
   const setHoveredZoneId = useMapUiStore((state) => state.setHoveredZoneId)
   const bandFilter = useMapUiStore((state) => state.bandFilter)
+  const toggleBand = useMapUiStore((state) => state.toggleBand)
 
   const fallbackInterval = sseFailed ? 5_000 : false
 
@@ -39,6 +43,26 @@ export function MapScreen() {
   const zonesQuery = useQuery({
     queryKey: queryKeys.zones,
     queryFn: fetchZones,
+    refetchInterval: fallbackInterval,
+  })
+  /*
+   * Individual conflict events, for the heat field and the badge anchors.
+   * These only change when a cycle ingests new ACLED data, so they sit out of
+   * the SSE-driven refetch loop entirely and cache for ten minutes.
+   */
+  const eventsQuery = useQuery({
+    queryKey: queryKeys.mapEvents,
+    queryFn: () => fetchMapEvents(180),
+    staleTime: 10 * 60 * 1000,
+  })
+  const trendsQuery = useQuery({
+    queryKey: queryKeys.mapTrends,
+    queryFn: () => fetchMapTrends(6),
+    staleTime: 5 * 60 * 1000,
+  })
+  const pendingAlertsQuery = useQuery({
+    queryKey: queryKeys.pendingAlerts,
+    queryFn: fetchPendingAlerts,
     refetchInterval: fallbackInterval,
   })
   // Ack cache is written exclusively by the SSE patcher (DTMF "1" callbacks).
@@ -59,6 +83,13 @@ export function MapScreen() {
     () => watchlist.find((zone) => zone.zone_id === selectedZoneId) ?? null,
     [selectedZoneId, watchlist],
   )
+
+  const latestCycle = useMemo(() => {
+    const cycles = (situationsQuery.data?.features ?? [])
+      .map((feature) => feature.properties.cycle)
+      .filter((cycle): cycle is string => cycle != null)
+    return cycles.sort().at(-1) ?? null
+  }, [situationsQuery.data])
 
   const selectedSituation = useMemo(() => {
     if (!selectedZoneId) return null
@@ -103,6 +134,8 @@ export function MapScreen() {
       <MapView
         indicators={indicatorsQuery.data}
         situations={situationsQuery.data}
+        events={eventsQuery.data}
+        trends={trendsQuery.data}
         ackBySituation={ackQuery.data}
         isLoading={indicatorsQuery.isLoading || situationsQuery.isLoading}
         overlay={overlay}
@@ -126,17 +159,26 @@ export function MapScreen() {
           key={selectedZone.zone_id}
           zone={selectedZone}
           situation={selectedSituation}
+          trend={trendsQuery.data?.[selectedZone.zone_id]}
           onClose={() => selectZone(null)}
           onPrepareAlert={(situationId) => prepareAlertMutation.mutate(situationId)}
           preparingAlert={prepareAlertMutation.isPending}
         />
       ) : null}
 
+      <MapStatusStrip
+        zones={watchlist}
+        cycle={latestCycle}
+        pendingAlerts={pendingAlertsQuery.data?.length ?? 0}
+        bandFilter={bandFilter}
+        onToggleBand={toggleBand}
+      />
+
       {indicatorsQuery.isError ? (
         <Callout
           tone="danger"
           title="Regional indicators are unavailable"
-          className="pointer-events-auto absolute bottom-9 left-1/2 z-map-panel w-[26rem] max-w-[90vw] -translate-x-1/2 shadow-panel"
+          className="pointer-events-auto absolute bottom-16 left-1/2 z-map-panel w-[26rem] max-w-[90vw] -translate-x-1/2 shadow-panel"
           actions={
             <Button size="sm" onClick={() => void indicatorsQuery.refetch()}>
               Retry
@@ -151,7 +193,7 @@ export function MapScreen() {
         <Callout
           tone="danger"
           title="Could not draft the alert"
-          className="pointer-events-auto absolute bottom-9 left-1/2 z-map-panel w-[26rem] max-w-[90vw] -translate-x-1/2 shadow-panel"
+          className="pointer-events-auto absolute bottom-16 left-1/2 z-map-panel w-[26rem] max-w-[90vw] -translate-x-1/2 shadow-panel"
         >
           {prepareAlertMutation.error instanceof Error
             ? prepareAlertMutation.error.message

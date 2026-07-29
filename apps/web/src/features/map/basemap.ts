@@ -135,7 +135,21 @@ export function tuneBasemap(map: Map): void {
     // Water reads as a neutral tone rather than blue, so the blue sequential
     // ramps used by the displacement/incidents overlays stay unambiguous.
     if (id.startsWith('water') && layer.type === 'fill') {
-      setPaintIfPresent(map, id, 'fill-color', '#e9edf0')
+      setPaintIfPresent(map, id, 'fill-color', '#eef1f3')
+      continue
+    }
+
+    // Roads are context, not content. With a heat field on top of them they
+    // were the busiest thing on the canvas at continental zoom, so they fade
+    // in only once someone has zoomed to where a road is a real landmark.
+    if ((id.startsWith('road') || id.startsWith('highway') || id.startsWith('motorway'))
+        && layer.type === 'line') {
+      setPaintIfPresent(map, id, 'line-opacity', [
+        'interpolate', ['linear'], ['zoom'],
+        4, 0,
+        6.5, 0.25,
+        9, 0.6,
+      ])
       continue
     }
 

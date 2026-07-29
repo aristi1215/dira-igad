@@ -53,18 +53,32 @@ export function StatusCluster({
           'hover:border-line-strong hover:text-ink',
         )}
       >
-        <span
-          aria-hidden
-          className={cx(
-            'size-1.5 rounded-full',
-            degraded ? 'bg-band-watch' : 'bg-band-ack',
-          )}
-        />
+        {/*
+          A core plus an expanding ring, so "live" is legible at a glance
+          without reading the word next to it. The ring is the only moving
+          element in the chrome, and it is slow on purpose.
+        */}
+        <span aria-hidden className="relative flex size-1.5 shrink-0">
+          <span
+            className={cx(
+              'absolute inset-0 rounded-full',
+              degraded ? 'bg-band-watch' : 'animate-signal-pulse bg-band-ack',
+            )}
+          />
+          <span
+            className={cx(
+              'relative size-1.5 rounded-full',
+              degraded ? 'bg-band-watch' : 'bg-band-ack',
+            )}
+          />
+        </span>
         <span className="font-medium">{degraded ? 'Polling' : 'Live'}</span>
         {cycle ? (
           <>
             <span aria-hidden className="h-3 w-px bg-line" />
-            <span className="font-mono tabular-nums">{cycle}</span>
+            <span className="font-mono font-medium tracking-[0.02em] tabular-nums text-ink">
+              {cycle}
+            </span>
           </>
         ) : null}
         {dataMode ? (

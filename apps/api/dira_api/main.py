@@ -490,53 +490,105 @@ def _advisor_gather(
     return context, citations, tools
 
 
+def _advisor_open_turn(conn: Any, body: AdvisorBody) -> tuple[Any, list[dict[str, Any]]]:
+    """Resolve (or create) the conversation, read its history, record the question.
+
+    Returns (conversation_id, prior history oldest-first).
+    """
+    with conn.transaction():
+        with conn.cursor() as cur:
+            conversation_id = None
+            if body.conversation_id:
+                cur.execute(
+                    "SELECT id FROM advisor_conversations WHERE id = %s",
+                    (body.conversation_id,),
+                )
+                if cur.fetchone():
+                    conversation_id = body.conversation_id
+            if conversation_id is None:
+                cur.execute(
+                    "INSERT INTO advisor_conversations DEFAULT VALUES RETURNING id"
+                )
+                conversation_id = cur.fetchone()["id"]
+            cur.execute(
+                """
+                SELECT role, content FROM advisor_messages
+                WHERE conversation_id = %s ORDER BY created_at DESC LIMIT 10
+                """,
+                (conversation_id,),
+            )
+            history = [dict(r) for r in cur.fetchall()][::-1]
+            cur.execute(
+                """
+                INSERT INTO advisor_messages (conversation_id, role, content)
+                VALUES (%s, 'user', %s)
+                """,
+                (conversation_id, body.question),
+            )
+    return conversation_id, history
+
+
+def _advisor_prompt(
+    history: list[dict[str, Any]],
+    context: dict[str, Any],
+    tools: list[str],
+    question: str,
+) -> str:
+    history_text = "\n".join(f"{m['role']}: {m['content']}" for m in history)
+    return (
+        f"Conversation so far:\n{history_text}\n\n"
+        f"Retrieved context (tools: {', '.join(tools)}): {context}\n\n"
+        f"Question: {question}"
+    )
+
+
+def _advisor_fallback(context: dict[str, Any]) -> str:
+    """Deterministic answer for when no language model is reachable.
+
+    The advisor degrades to something still operationally useful rather than an
+    error, matching how the pipeline degrades elsewhere.
+    """
+    band = (
+        context.get("situation", {}).get("operational_band")
+        if isinstance(context.get("situation"), dict)
+        else None
+    ) or "elevated"
+    return (
+        f"Advisor offline fallback: current operational band is {band}. "
+        "Recommended: verify water-point functionality, brief peace committees, "
+        "pre-position mediation teams along grazing corridors, and confirm alert "
+        "recipients are reachable. Re-ask when the language model is available."
+    )
+
+
+def _advisor_persist(
+    conn: Any, conversation_id: Any, answer: str, citations: list[dict[str, Any]]
+) -> None:
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO advisor_messages (
+                  conversation_id, role, content, citations
+                ) VALUES (%s, 'assistant', %s, %s::jsonb)
+                """,
+                (conversation_id, answer, json.dumps(citations, default=str)),
+            )
+            cur.execute(
+                "UPDATE advisor_conversations SET updated_at = now() WHERE id = %s",
+                (conversation_id,),
+            )
+
+
 @app.post("/advisor")
 def advisor(body: AdvisorBody) -> dict[str, Any]:
     """Grounded advisor: retrieval tools + multi-turn history + citations.
     Read-only — it can never approve alerts or dispatch anything."""
     with connect(_settings().database_url) as conn:
         context, citations, tools = _advisor_gather(conn, body)
+        conversation_id, history = _advisor_open_turn(conn, body)
 
-        with conn.transaction():
-            with conn.cursor() as cur:
-                if body.conversation_id:
-                    cur.execute(
-                        "SELECT id FROM advisor_conversations WHERE id = %s",
-                        (body.conversation_id,),
-                    )
-                    convo = cur.fetchone()
-                    conversation_id = (
-                        body.conversation_id if convo else None
-                    )
-                else:
-                    conversation_id = None
-                if conversation_id is None:
-                    cur.execute(
-                        "INSERT INTO advisor_conversations DEFAULT VALUES RETURNING id"
-                    )
-                    conversation_id = cur.fetchone()["id"]
-                cur.execute(
-                    """
-                    SELECT role, content FROM advisor_messages
-                    WHERE conversation_id = %s ORDER BY created_at DESC LIMIT 10
-                    """,
-                    (conversation_id,),
-                )
-                history = [dict(r) for r in cur.fetchall()][::-1]
-                cur.execute(
-                    """
-                    INSERT INTO advisor_messages (conversation_id, role, content)
-                    VALUES (%s, 'user', %s)
-                    """,
-                    (conversation_id, body.question),
-                )
-
-        history_text = "\n".join(f"{m['role']}: {m['content']}" for m in history)
-        prompt = (
-            f"Conversation so far:\n{history_text}\n\n"
-            f"Retrieved context (tools: {', '.join(tools)}): {context}\n\n"
-            f"Question: {body.question}"
-        )
+        prompt = _advisor_prompt(history, context, tools, body.question)
         llm = _language_model()
         answer: str | None = None
         if not isinstance(llm, CannedResponseAdapter):
@@ -545,32 +597,9 @@ def advisor(body: AdvisorBody) -> dict[str, Any]:
             except Exception:
                 logger.exception("Advisor LLM failed; deterministic fallback")
         if not answer:
-            band = (
-                context.get("situation", {}).get("operational_band")
-                if isinstance(context.get("situation"), dict)
-                else None
-            ) or "elevated"
-            answer = (
-                f"Advisor offline fallback: current operational band is {band}. "
-                "Recommended: verify water-point functionality, brief peace committees, "
-                "pre-position mediation teams along grazing corridors, and confirm alert "
-                "recipients are reachable. Re-ask when the language model is available."
-            )
+            answer = _advisor_fallback(context)
 
-        with conn.transaction():
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO advisor_messages (
-                      conversation_id, role, content, citations
-                    ) VALUES (%s, 'assistant', %s, %s::jsonb)
-                    """,
-                    (conversation_id, answer, json.dumps(citations, default=str)),
-                )
-                cur.execute(
-                    "UPDATE advisor_conversations SET updated_at = now() WHERE id = %s",
-                    (conversation_id,),
-                )
+        _advisor_persist(conn, conversation_id, answer, citations)
 
     return {
         "answer": answer,
@@ -579,6 +608,81 @@ def advisor(body: AdvisorBody) -> dict[str, Any]:
         "tools_used": tools,
         "conversation_id": str(conversation_id),
     }
+
+
+@app.post("/advisor/stream")
+def advisor_stream(body: AdvisorBody) -> StreamingResponse:
+    """The advisor, as server-sent events.
+
+    Two things stream here, and only one of them is the model.
+
+    The `tool` events are real: each fires when that retrieval query has
+    actually run, so the drawer shows the system reading the situation, the
+    zone context, the signals, the hazards and the field reports in the order
+    it really reads them. That is the part that makes a grounded answer look
+    grounded instead of conjured.
+
+    The `delta` events are genuine token deltas when the provider supports
+    streaming (see `OpenAIAdapter.stream`). When it does not — the canned
+    adapter the seeded demo uses, or any provider without a stream method —
+    the answer arrives as a single delta. It is never chunked artificially to
+    fake a typing effect.
+
+    Read-only, exactly like `/advisor`: it can never approve or dispatch.
+    """
+
+    def event_stream() -> Any:
+        def emit(event: str, payload: dict[str, Any]) -> str:
+            return f"event: {event}\ndata: {json.dumps(payload, default=str)}\n\n"
+
+        try:
+            with connect(_settings().database_url) as conn:
+                context, citations, tools = _advisor_gather(conn, body)
+                # Retrieval has already happened by this point; replaying the
+                # tool list here keeps the client's trace in the true order
+                # without holding the connection open across the LLM call.
+                for tool in tools:
+                    yield emit("tool", {"name": tool})
+
+                conversation_id, history = _advisor_open_turn(conn, body)
+                yield emit("conversation", {"conversation_id": str(conversation_id)})
+
+                prompt = _advisor_prompt(history, context, tools, body.question)
+                llm = _language_model()
+
+                chunks: list[str] = []
+                if not isinstance(llm, CannedResponseAdapter):
+                    try:
+                        if hasattr(llm, "stream"):
+                            for delta in llm.stream(prompt, system=ADVISOR_SYSTEM):
+                                chunks.append(delta)
+                                yield emit("delta", {"text": delta})
+                        else:
+                            whole = llm.complete(prompt, system=ADVISOR_SYSTEM)
+                            if whole:
+                                chunks.append(whole)
+                                yield emit("delta", {"text": whole})
+                    except Exception:
+                        logger.exception("Advisor stream failed; deterministic fallback")
+
+                answer = "".join(chunks)
+                if not answer:
+                    answer = _advisor_fallback(context)
+                    yield emit("delta", {"text": answer})
+
+                _advisor_persist(conn, conversation_id, answer, citations)
+                yield emit("done", {"citations": citations, "tools_used": tools})
+        except Exception:
+            logger.exception("Advisor stream aborted")
+            yield emit("error", {"message": "The advisor could not answer."})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        # Without this an intermediary can buffer the whole stream and deliver
+        # it as one blob, which defeats the point.
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/model/card")

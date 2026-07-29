@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, ClipboardCheck, Megaphone, Newspaper } from 'lucide-react'
-import { fetchMapSituations, fetchPendingAlerts, queryKeys } from '../lib/api'
+import { fetchMapSituations, fetchMapTrends, fetchPendingAlerts, queryKeys } from '../lib/api'
 import {
   BAND_LABELS,
   BAND_MAP_COLORS,
+  CHART,
   COUNTRY_NAMES,
   fmtProbability,
   fmtRisk,
@@ -18,9 +19,11 @@ import {
   EmptyState,
   ErrorNote,
   Field,
+  Meter,
   PageHeader,
   Screen,
   Select,
+  Sparkline,
   Stat,
   StatRow,
   StatusChip,
@@ -54,6 +57,12 @@ export function SituationsScreen() {
     queryFn: fetchPendingAlerts,
     retry: 1,
   })
+  const trendsQuery = useQuery({
+    queryKey: queryKeys.mapTrends,
+    queryFn: () => fetchMapTrends(6),
+    staleTime: 5 * 60 * 1000,
+  })
+  const trends = trendsQuery.data
 
   const all = useMemo(
     () =>
@@ -114,15 +123,57 @@ export function SituationsScreen() {
     {
       key: 'model_risk',
       header: 'Model risk',
+      render: (situation) => (
+        <span className="flex items-center justify-end gap-2">
+          <Meter
+            value={situation.model_risk}
+            color={BAND_MAP_COLORS[situation.operational_band ?? 'none']}
+            track="var(--color-line)"
+            height="sm"
+            className="w-14"
+          />
+          <span className="w-9 text-right font-mono tabular-nums">
+            {fmtRisk(situation.model_risk)}
+          </span>
+        </span>
+      ),
       align: 'right',
-      render: (situation) => fmtRisk(situation.model_risk),
       sortBy: (situation) => situation.model_risk ?? -1,
+    },
+    {
+      /*
+       * Direction, not just level. A zone at 62 and falling and a zone at 62
+       * and climbing want different decisions this cycle, and the table could
+       * not tell them apart.
+       */
+      key: 'trend',
+      header: 'Trend',
+      render: (situation) => {
+        const history = (trends?.[situation.zone_id] ?? []).map((point) => point.model_risk)
+        return history.length >= 2 ? (
+          <Sparkline
+            values={history}
+            width={54}
+            height={18}
+            color={BAND_MAP_COLORS[situation.operational_band ?? 'none']}
+          />
+        ) : (
+          <span className="text-2xs text-faint">—</span>
+        )
+      },
+      sortBy: (situation) => {
+        const history = trends?.[situation.zone_id] ?? []
+        if (history.length < 2) return 0
+        return history[history.length - 1].model_risk - history[history.length - 2].model_risk
+      },
     },
     {
       key: 'corroboration',
       header: 'Corroboration',
       align: 'right',
-      render: (situation) => fmtRisk(situation.corroboration),
+      render: (situation) => (
+        <span className="font-mono tabular-nums">{fmtRisk(situation.corroboration)}</span>
+      ),
       sortBy: (situation) => situation.corroboration ?? -1,
     },
     {
@@ -170,35 +221,52 @@ export function SituationsScreen() {
   ]
 
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow="Situation registry"
         title="Situations"
-        description="One row per zone and hazard. Model risk is the pure forecast; the band is that score combined with corroboration under the written rule."
+        description="Model risk is the pure forecast; the band is that score combined with corroboration under the written rule."
       />
 
       <StatRow className="mb-5">
         <Stat
+          label="Open"
+          value={open.length}
+          detail={`of ${all.length} on record`}
+          accent={BAND_MAP_COLORS.low}
+        />
+        <Stat
           label="Needs an alert"
           value={needsAlert.length}
-          detail="High or very high, nothing drafted yet"
+          detail="High or very high, nothing drafted"
           accent={BAND_MAP_COLORS.high}
         />
         <Stat
           label="Waiting for approval"
           value={pendingAlerts.length}
-          detail="Drafted, held at the human gate"
+          detail="Held at the human gate"
           accent={BAND_MAP_COLORS.watch}
         />
         <Stat
           label="Acknowledged"
           value={acknowledged.length}
-          detail="Recipients confirmed by keypad"
+          detail="Confirmed by keypad"
           accent={BAND_MAP_COLORS.ack}
+        />
+        <Stat
+          label="Corroborated"
+          value={open.filter((situation) => (situation.corroboration ?? 0) > 0).length}
+          detail="Open, with independent evidence"
+          accent={CHART.cat2}
         />
       </StatRow>
 
-      <div className="mb-4 flex flex-wrap items-end gap-3">
+      {/*
+        One bounded control bar. The filters used to float on the page with
+        `ml-auto` pushing the row counter to the far edge, which left a wide
+        gap in the middle of nothing.
+      */}
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-line bg-surface px-3 py-2.5">
         <Tabs
           items={BAND_TABS}
           value={bandFilter}
@@ -207,14 +275,15 @@ export function SituationsScreen() {
           ariaLabel="Filter by band"
           size="sm"
         />
-        <Field label="Status" className="w-36">
+        <span aria-hidden className="mb-1.5 h-5 w-px bg-line" />
+        <Field label="Status" className="w-32">
           <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="open">Open</option>
             <option value="resolved">Resolved</option>
             <option value="all">All</option>
           </Select>
         </Field>
-        <Field label="Country" className="w-44">
+        <Field label="Country" className="w-40">
           <Select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)}>
             <option value="all">All countries</option>
             {countries.map((iso2) => (
@@ -224,8 +293,8 @@ export function SituationsScreen() {
             ))}
           </Select>
         </Field>
-        <span className="ml-auto pb-2 text-xs text-faint tabular-nums">
-          {filtered.length} of {all.length}
+        <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">
+          {filtered.length} / {all.length}
         </span>
       </div>
 

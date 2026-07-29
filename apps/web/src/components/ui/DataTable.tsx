@@ -99,7 +99,7 @@ export function DataTable<T>({
                   style={column.width ? { width: column.width } : undefined}
                   aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   className={cx(
-                    'px-3 py-2 text-2xs font-medium tracking-[0.04em] text-muted uppercase',
+                    'font-condensed px-3 py-2 text-2xs font-semibold tracking-[0.09em] text-muted uppercase',
                     column.align === 'right' ? 'text-right' : 'text-left',
                     column.secondary && 'hidden lg:table-cell',
                   )}

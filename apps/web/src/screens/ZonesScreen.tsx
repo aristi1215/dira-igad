@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { SearchX } from 'lucide-react'
-import { fetchZones, queryKeys } from '../lib/api'
+import { fetchMapTrends, fetchZones, queryKeys } from '../lib/api'
 import {
   BAND_MAP_COLORS,
   COUNTRY_NAMES,
@@ -12,6 +12,7 @@ import {
 } from '../lib/format'
 import {
   BandChip,
+  Callout,
   Card,
   DataTable,
   EmptyState,
@@ -23,6 +24,7 @@ import {
   Screen,
   SearchInput,
   Select,
+  Sparkline,
   StatusChip,
   type Column,
 } from '../components/ui'
@@ -36,6 +38,12 @@ export function ZonesScreen() {
   const [search, setSearch] = useState('')
 
   const zonesQuery = useQuery({ queryKey: queryKeys.zones, queryFn: fetchZones })
+  const trendsQuery = useQuery({
+    queryKey: queryKeys.mapTrends,
+    queryFn: () => fetchMapTrends(6),
+    staleTime: 5 * 60 * 1000,
+  })
+  const trends = trendsQuery.data
 
   const zones = useMemo(
     () =>
@@ -106,12 +114,35 @@ export function ZonesScreen() {
             animate={false}
             className="w-14"
           />
-          <span className="w-6 text-right font-medium tabular-nums">
+          <span className="w-6 text-right font-mono font-medium tabular-nums">
             {fmtRiskScore(zone.model_risk)}
           </span>
         </span>
       ),
       sortBy: (zone) => zone.model_risk ?? -1,
+    },
+    {
+      key: 'trend',
+      header: 'Trend',
+      width: '5rem',
+      render: (zone) => {
+        const history = (trends?.[zone.zone_id] ?? []).map((point) => point.model_risk)
+        return history.length >= 2 ? (
+          <Sparkline
+            values={history}
+            width={54}
+            height={18}
+            color={BAND_MAP_COLORS[zone.operational_band ?? 'none']}
+          />
+        ) : (
+          <span className="text-2xs text-faint">—</span>
+        )
+      },
+      sortBy: (zone) => {
+        const history = trends?.[zone.zone_id] ?? []
+        if (history.length < 2) return 0
+        return history[history.length - 1].model_risk - history[history.length - 2].model_risk
+      },
     },
     {
       key: 'ipc',
@@ -154,43 +185,42 @@ export function ZonesScreen() {
   ]
 
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow="Zone registry"
         title="Zones"
-        description="All 22 monitored zones across 9 clusters and 7 IGAD countries. Open a dossier for the full picture: climate, incidents, food security, displacement, markets, health and field reports."
+        description="All 22 monitored zones across 9 clusters and 7 IGAD countries."
       />
 
       {zonesQuery.isError ? <ErrorNote error={zonesQuery.error} className="mb-4" /> : null}
 
-      {/* The distribution is both the summary and the filter. */}
-      <Card
-        title="Where the region stands"
-        subtitle="Select a band to filter the table below"
-        className="mb-5"
-      >
-        <BandDistributionBar
-          counts={bandCounts}
-          selected={bandFilter}
-          onSelect={setBandFilter}
-        />
-        {totalUnverified > 0 ? (
-          <p className="mt-3 border-t border-line pt-2.5 text-xs text-muted">
-            {totalUnverified} recent field report{totalUnverified === 1 ? '' : 's'} awaiting
-            verification. Until verified they contribute exactly zero corroboration.
-          </p>
-        ) : null}
-      </Card>
+      {/*
+        Distribution, search and filters in one bar.
 
-      <div className="mb-4 flex flex-wrap items-end gap-3">
+        The distribution used to be a full-width card wrapping a single 24px
+        bar — the thinnest card in the app, and a whole band of chrome around
+        one element. It is the same control, folded into the filter row it was
+        already acting as.
+      */}
+      <div className="mb-4 flex flex-wrap items-end gap-x-4 gap-y-3 rounded-lg border border-line bg-surface px-3 py-2.5">
+        <div className="min-w-[18rem] flex-1">
+          <span className="font-condensed mb-1.5 block text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+            Where the region stands
+          </span>
+          <BandDistributionBar
+            counts={bandCounts}
+            selected={bandFilter}
+            onSelect={setBandFilter}
+          />
+        </div>
         <SearchInput
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search zone or cluster…"
           label="Search zones"
-          className="w-64"
+          className="w-56"
         />
-        <Field label="Country" className="w-44">
+        <Field label="Country" className="w-40">
           <Select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)}>
             <option value="all">All countries</option>
             {countries.map((iso2) => (
@@ -200,10 +230,17 @@ export function ZonesScreen() {
             ))}
           </Select>
         </Field>
-        <span className="ml-auto pb-2 text-xs text-faint tabular-nums">
-          {filtered.length} of {zones.length}
+        <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">
+          {filtered.length} / {zones.length}
         </span>
       </div>
+
+      {totalUnverified > 0 ? (
+        <Callout tone="warning" className="mb-4">
+          {totalUnverified} recent field report{totalUnverified === 1 ? '' : 's'} awaiting
+          verification. Until verified they contribute exactly zero corroboration.
+        </Callout>
+      ) : null}
 
       <Card padded={false}>
         <DataTable

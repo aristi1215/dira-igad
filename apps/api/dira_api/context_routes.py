@@ -293,6 +293,129 @@ def regional_indicators() -> dict[str, Any]:
     return {"type": "FeatureCollection", "features": features}
 
 
+"""Payload ceiling for /map/events.
+
+A kernel-density field saturates well before this — past a few thousand points
+the picture stops changing and only the download grows.
+"""
+MAP_EVENT_LIMIT = 4000
+
+
+@router.get("/map/events")
+def map_events(days: int = Query(730, ge=1, le=5475)) -> dict[str, Any]:
+    """GeoJSON FeatureCollection of individual conflict events.
+
+    The map's heat field is kernel density over *these* coordinates rather than
+    a smoothed zone aggregate. That matters beyond looks: zone geometries here
+    are coarse boxes, and shading one implies the pressure is uniform inside
+    it, which it is not. Real points carry their own shape.
+
+    Two things are deliberate about the window.
+
+    First, `days` defaults to two years rather than the 180 used elsewhere.
+    Ingest density is very uneven — the newest rows thin out to a handful per
+    month while the preceding years hold tens of thousands — so a 180-day
+    window from `max(event_date)` returns almost nothing and would render as an
+    empty map rather than a quiet region.
+
+    Second, the response reports the window it actually covered. `LIMIT` can
+    truncate the request, and a map that says "last 180 days" while drawing
+    something else is worse than one that says what it has.
+
+    `available_at` is honoured for the same reason every other read in this
+    codebase honours it: nothing may surface before it was knowable.
+    """
+    with _db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                -- Only what the map reads: the kernel needs a position and a
+                -- weight, the badge anchors need a zone. Carrying event_id,
+                -- actors and notes for 4000 rows tripled the payload for
+                -- fields nothing on the canvas could display.
+                SELECT e.event_date, e.fatalities, e.zone_id,
+                       json_build_array(
+                         round(ST_X(e.geom)::numeric, 4),
+                         round(ST_Y(e.geom)::numeric, 4)
+                       ) AS coordinates
+                FROM acled_events e
+                WHERE e.geom IS NOT NULL
+                  AND e.available_at <= now()
+                  AND e.event_date >= (
+                    SELECT max(event_date) - make_interval(days => %s) FROM acled_events
+                  )
+                ORDER BY e.event_date DESC
+                LIMIT %s
+                """,
+                (days, MAP_EVENT_LIMIT),
+            )
+            features = []
+            earliest: Any = None
+            latest: Any = None
+            for r in cur.fetchall():
+                row = dict(r)
+                coordinates = row.pop("coordinates")
+                # Dates bound the reported window but never ship per feature —
+                # nothing on the map is drawn by date.
+                event_date = row.pop("event_date")
+                if earliest is None or event_date < earliest:
+                    earliest = event_date
+                if latest is None or event_date > latest:
+                    latest = event_date
+                features.append(
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": coordinates},
+                        "properties": row,
+                    }
+                )
+
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        # Foreign members are legal GeoJSON, and this is what lets the legend
+        # state the real window instead of the one that was asked for.
+        "window": {
+            "start": earliest.isoformat() if earliest else None,
+            "end": latest.isoformat() if latest else None,
+            "count": len(features),
+            "truncated": len(features) >= MAP_EVENT_LIMIT,
+        },
+    }
+
+
+@router.get("/map/trends")
+def map_trends(cycles: int = Query(6, ge=2, le=24)) -> dict[str, list[dict[str, Any]]]:
+    """Recent risk history per zone, oldest first.
+
+    Feeds the sparkline on each map badge, so a zone reads as "high, and
+    climbing" rather than just "high" — the direction is usually what decides
+    whether anyone acts this cycle. Six points across 22 zones is a few KB.
+    """
+    with _db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT zone_id, cycle, model_risk, operational_band
+                FROM (
+                  SELECT a.zone_id, a.cycle, a.model_risk, a.operational_band,
+                         row_number() OVER (
+                           PARTITION BY a.zone_id ORDER BY a.cycle DESC
+                         ) AS recency
+                  FROM assessments a
+                ) ranked
+                WHERE recency <= %s
+                ORDER BY zone_id, cycle
+                """,
+                (cycles,),
+            )
+            trends: dict[str, list[dict[str, Any]]] = {}
+            for row in cur.fetchall():
+                record = _jsonable(dict(row))
+                trends.setdefault(record.pop("zone_id"), []).append(record)
+    return trends
+
+
 @router.get("/recipients")
 def list_recipients() -> list[dict[str, Any]]:
     with _db() as conn:

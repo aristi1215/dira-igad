@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Radio, ShieldCheck } from 'lucide-react'
 import { fetchSources, queryKeys } from '../lib/api'
@@ -6,14 +6,18 @@ import { fmtNumber, titleCase } from '../lib/format'
 import {
   Callout,
   Card,
+  DataTable,
   ErrorNote,
+  Field,
   InfoHint,
   PageHeader,
   Screen,
+  Select,
   SkeletonCard,
   Stat,
   StatRow,
   StatusChip,
+  type Column,
 } from '../components/ui'
 import type { DataSource } from '../lib/types'
 
@@ -32,6 +36,7 @@ function freshness(iso: string | null): string {
 export function SourcesScreen() {
   const sourcesQuery = useQuery({ queryKey: queryKeys.sources, queryFn: fetchSources })
   const data = sourcesQuery.data
+  const [categoryFilter, setCategoryFilter] = useState('all')
 
   const byCategory = useMemo(() => {
     const groups = new Map<string, DataSource[]>()
@@ -52,12 +57,93 @@ export function SourcesScreen() {
     .sort()
     .at(-1)
 
+  const visibleSources =
+    categoryFilter === 'all'
+      ? sources
+      : sources.filter((source) => source.category === categoryFilter)
+
+  const sourceColumns: Column<DataSource>[] = [
+    {
+      key: 'name',
+      header: 'Source',
+      render: (source) => (
+        <span className="flex flex-col">
+          <span className="font-medium text-ink">{source.name}</span>
+          {source.live_endpoint ? (
+            <span className="font-mono text-2xs break-all text-faint">
+              {source.live_endpoint}
+            </span>
+          ) : null}
+        </span>
+      ),
+      sortBy: (source) => source.name,
+    },
+    {
+      key: 'category',
+      header: 'Category',
+      width: '9rem',
+      render: (source) => <span className="text-muted">{titleCase(source.category)}</span>,
+      sortBy: (source) => source.category,
+    },
+    {
+      key: 'mode',
+      header: 'Mode',
+      width: '11rem',
+      render: (source) =>
+        source.mode === 'live' ? (
+          <StatusChip tone="success">Live</StatusChip>
+        ) : source.live_capable ? (
+          <StatusChip tone="info">Demo · can go live</StatusChip>
+        ) : (
+          <StatusChip tone="neutral">Demo</StatusChip>
+        ),
+      sortBy: (source) => source.mode,
+    },
+    {
+      key: 'updated',
+      header: 'Updated',
+      width: '8rem',
+      render: (source) => (
+        <span className="font-mono text-2xs text-muted">
+          {freshness(source.freshest_available_at)}
+        </span>
+      ),
+      // Sort by the real timestamp, not by the humanised string — otherwise
+      // "under an hour ago" sorts after "3d ago", alphabetically.
+      sortBy: (source) => source.freshest_available_at ?? '',
+    },
+    {
+      key: 'cadence',
+      header: 'Cadence',
+      width: '8rem',
+      render: (source) => <span className="text-muted">{source.cadence}</span>,
+      sortBy: (source) => source.cadence,
+      secondary: true,
+    },
+    {
+      key: 'rows',
+      header: 'Rows',
+      align: 'right',
+      width: '6rem',
+      render: (source) => <span className="font-mono">{fmtNumber(source.rows)}</span>,
+      sortBy: (source) => source.rows ?? -1,
+    },
+    {
+      key: 'licence',
+      header: 'Licence',
+      width: '10rem',
+      render: (source) => <span className="text-xs text-faint">{source.licence}</span>,
+      sortBy: (source) => source.licence,
+      secondary: true,
+    },
+  ]
+
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow="Transparency"
         title="Where the numbers come from"
-        description="Every input to the situation room, with its mode, freshness and licence. If a figure appears anywhere else in Dira, its source appears here."
+        description="Every input to the situation room, with its mode, freshness and licence."
       />
 
       {/*
@@ -69,7 +155,12 @@ export function SourcesScreen() {
         subtitle="Enforced in code and database schema — not in prose"
         className="mb-5"
       >
-        <ul className="grid gap-3 md:grid-cols-2">
+        {/*
+          Three columns, not two. Five rules across two columns left a literal
+          empty half-cell in the bottom right — on the one card whose whole job
+          is to look like the system means what it says.
+        */}
+        <ul className="grid gap-x-6 gap-y-3 md:grid-cols-2 xl:grid-cols-3">
           {[
             {
               title: 'A human always approves',
@@ -90,6 +181,10 @@ export function SourcesScreen() {
             {
               title: 'Do no harm',
               body: 'Alert wording avoids blame, names no groups, and directs recipients only toward safety actions.',
+            },
+            {
+              title: 'Hindsight is impossible',
+              body: 'Every record carries the date it became available, and an assessment reads only what was knowable at its cycle — so re-running an old cycle cannot cheat.',
             },
           ].map((rule) => (
             <li key={rule.title} className="flex gap-2.5">
@@ -144,64 +239,41 @@ export function SourcesScreen() {
             </span>
           </Callout>
 
-          <div className="flex flex-col gap-5">
-            {byCategory.map(([category, categorySources]) => (
-              <Card key={category} title={titleCase(category)} padded={false}>
-                <div className="w-full overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="border-b border-line">
-                        {['Source', 'Mode', 'Updated', 'Cadence', 'Rows', 'Licence'].map(
-                          (header, index) => (
-                            <th
-                              key={header}
-                              scope="col"
-                              className={`px-3 py-2 text-2xs font-medium tracking-[0.04em] text-muted uppercase ${
-                                index === 4 ? 'text-right' : 'text-left'
-                              }`}
-                            >
-                              {header}
-                            </th>
-                          ),
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categorySources.map((source) => (
-                        <tr key={source.key} className="border-b border-line last:border-b-0">
-                          <td className="px-3 py-2.5">
-                            <span className="font-medium text-ink">{source.name}</span>
-                            {source.live_endpoint ? (
-                              <span className="block font-mono text-2xs break-all text-faint">
-                                {source.live_endpoint}
-                              </span>
-                            ) : null}
-                          </td>
-                          <td className="px-3 py-2.5">
-                            {source.mode === 'live' ? (
-                              <StatusChip tone="success">Live</StatusChip>
-                            ) : source.live_capable ? (
-                              <StatusChip tone="info">Demo · can go live</StatusChip>
-                            ) : (
-                              <StatusChip tone="neutral">Demo</StatusChip>
-                            )}
-                          </td>
-                          <td className="px-3 py-2.5 text-muted">
-                            {freshness(source.freshest_available_at)}
-                          </td>
-                          <td className="px-3 py-2.5 text-muted">{source.cadence}</td>
-                          <td className="px-3 py-2.5 text-right tabular-nums text-muted">
-                            {fmtNumber(source.rows)}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-faint">{source.licence}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            ))}
+          {/*
+            One table, with category as a filterable column.
+
+            This was one card per category, each with its own header chrome
+            wrapped around two to four rows — so the page was mostly headings.
+            Sorting also only worked within a category, which made the obvious
+            question ("what is stalest across everything?") impossible to ask.
+          */}
+          <div className="mb-3 flex flex-wrap items-end gap-3">
+            <Field label="Category" className="w-52">
+              <Select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+              >
+                <option value="all">All categories</option>
+                {byCategory.map(([category, rows]) => (
+                  <option key={category} value={category}>
+                    {titleCase(category)} ({rows.length})
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">
+              {visibleSources.length} / {sources.length}
+            </span>
           </div>
+
+          <Card padded={false}>
+            <DataTable
+              columns={sourceColumns}
+              rows={visibleSources}
+              getRowId={(source) => source.key}
+              caption="Data sources"
+            />
+          </Card>
 
           <p className="mt-4 text-xs text-faint">
             Freshness is the newest <span className="font-mono">available_at</span> in each feed —

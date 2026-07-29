@@ -20,6 +20,7 @@ import {
 } from '../components/ui'
 import { BandDistributionBar, type BandCounts } from '../components/BandDistributionBar'
 import { HBarList, HeatStrip, TimeSeriesChart } from '../components/charts'
+import { AskAboutButton } from '../features/advisor'
 import { EconomyPanel } from '../features/economy'
 import type { OperationalBand } from '../lib/types'
 
@@ -74,11 +75,11 @@ export function AnalyticsScreen() {
       : null
 
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow="Regional analytics"
         title="The region over time"
-        description="Cross-zone trends for the whole monitoring area: conflict, climate, food security, displacement, field reporting and how dispatch is performing."
+        description="Cross-zone trends: conflict, climate, food security, displacement, field reporting and dispatch performance."
       />
 
       {analyticsQuery.isError ? <ErrorNote error={analyticsQuery.error} className="mb-4" /> : null}
@@ -124,13 +125,16 @@ export function AnalyticsScreen() {
           <Card
             title="Conflict incidents and fatalities"
             subtitle="Region-wide monthly totals across all monitored zones"
-            className="mb-5"
+            className="group mb-5"
+            actions={
+              <AskAboutButton question="What is driving the regional trend in conflict incidents over the last year?" />
+            }
           >
             <TimeSeriesChart
               data={data.incidents_monthly as unknown as Record<string, unknown>[]}
               xKey="month"
               xFormatter={fmtMonth}
-              height={260}
+              height={300}
               series={[
                 { key: 'events', label: 'Incidents', kind: 'bar', color: CHART.cat1 },
                 { key: 'fatalities', label: 'Fatalities', kind: 'line', color: CHART.cat2 },
@@ -138,18 +142,24 @@ export function AnalyticsScreen() {
             />
           </Card>
 
-          <div className="mb-5 grid gap-5 lg:grid-cols-2">
-            <Card
-              title="Zones by risk band"
-              subtitle="How the 22 monitored zones sit in the latest cycle"
-            >
-              <BandDistributionBar counts={bandCounts} />
-            </Card>
-
+          {/*
+            Explicit spans, and the band bar folded into the card beside it.
+            `lg:grid-cols-2` stretched a 24px distribution bar to match a
+            seven-row list next to it, which produced most of the whitespace
+            on this screen.
+          */}
+          <div className="mb-5 grid items-start gap-5 lg:grid-cols-12">
             <Card
               title="People in food crisis"
               subtitle="Population in IPC Phase 3 or worse, by country"
+              className="lg:col-span-7"
             >
+              <div className="mb-4 border-b border-line pb-3">
+                <span className="font-condensed mb-1.5 block text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                  Zones by risk band, this cycle
+                </span>
+                <BandDistributionBar counts={bandCounts} />
+              </div>
               <HBarList
                 items={data.food_security_by_country.map((row) => ({
                   key: row.country_iso2,
@@ -163,6 +173,7 @@ export function AnalyticsScreen() {
             <Card
               title="Internally displaced people"
               subtitle="Latest snapshots summed by country"
+              className="lg:col-span-5"
             >
               <HBarList
                 items={data.displacement_by_country.map((row) => ({
@@ -178,6 +189,7 @@ export function AnalyticsScreen() {
             <Card
               title="Rainfall by cluster"
               subtitle="Millimetres per 10-day period — darker is wetter, pale strips are dry spells"
+              className="lg:col-span-12"
             >
               {rainfall.clusters.length > 0 ? (
                 <HeatStrip

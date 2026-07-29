@@ -25,9 +25,12 @@ import type {
   SituationDetail,
   SituationFeatureProperties,
   ZoneSummary,
+  ZoneTrendPoint,
 } from '../../lib/types'
-import { BandChip, Button, IconButton, IpcChip, Meter } from '../../components/ui'
+import { BandChip, Button, IconButton, IpcChip, Meter, Sparkline } from '../../components/ui'
+import { cx } from '../../lib/cx'
 import { ScoreExplainer } from '../situations'
+import { AskAboutButton } from '../advisor'
 import { T } from '../../lib/motion'
 import { TOUR_ANCHORS } from '../tour/tourAnchors'
 
@@ -71,12 +74,15 @@ function toAssessment(situation: SituationFeatureProperties): Assessment | null 
 export function ZoneCard({
   zone,
   situation,
+  trend = [],
   onClose,
   onPrepareAlert,
   preparingAlert,
 }: {
   zone: ZoneSummary
   situation: SituationFeatureProperties | null
+  /** Recent cycles for this zone, oldest first. Empty when unavailable. */
+  trend?: ZoneTrendPoint[]
   onClose: () => void
   onPrepareAlert: (situationId: string) => void
   preparingAlert: boolean
@@ -105,7 +111,7 @@ export function ZoneCard({
       >
         <header className="flex shrink-0 items-start justify-between gap-2 border-b border-line px-4 py-3">
           <div className="min-w-0">
-            <h2 className="truncate text-lg leading-tight font-semibold text-ink">
+            <h2 className="font-condensed truncate text-lg leading-tight font-bold tracking-[0.02em] text-ink uppercase">
               {zone.zone_name}
             </h2>
             <p className="mt-0.5 truncate text-2xs text-faint">
@@ -132,12 +138,30 @@ export function ZoneCard({
               {BAND_GUIDANCE[band]}
             </p>
 
-            {/* 2. How much. */}
-            <div className="mt-3 flex items-end gap-2.5">
-              <span className="text-3xl leading-none font-semibold tabular-nums text-ink">
-                {fmtRiskScore(zone.model_risk)}
+            {/* 2. How much — and, just as importantly, which way. */}
+            <div className="mt-3 flex items-end justify-between gap-3">
+              <span className="flex items-end gap-2.5">
+                <span
+                  className="font-mono text-3xl leading-none font-semibold tabular-nums"
+                  style={{ color: BAND_COLORS[band] }}
+                >
+                  {fmtRiskScore(zone.model_risk)}
+                </span>
+                <span className="pb-0.5 text-xs text-faint">/100</span>
               </span>
-              <span className="pb-0.5 text-xs text-faint">/100</span>
+              {trend.length >= 2 ? (
+                <span className="flex flex-col items-end gap-0.5 pb-0.5">
+                  <Sparkline
+                    values={trend.map((point) => point.model_risk)}
+                    width={72}
+                    height={22}
+                    color={BAND_COLORS[band]}
+                  />
+                  <span className="font-condensed text-2xs tracking-[0.07em] text-faint uppercase">
+                    Last {trend.length} cycles
+                  </span>
+                </span>
+              ) : null}
             </div>
             <Meter
               value={zone.model_risk}
@@ -160,10 +184,16 @@ export function ZoneCard({
 
           {/* 3. Why — evidence the map already had but never showed. */}
           {situation ? (
-            <div className="border-b border-line px-4 py-3">
-              <p className="mb-2 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
-                Why
-              </p>
+            <div className="group border-b border-line px-4 py-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="font-condensed text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                  Why
+                </p>
+                <AskAboutButton
+                  question={`Why is ${zone.zone_name} rated ${zone.operational_band ?? 'as it is'} this cycle? Walk me through the evidence.`}
+                  className="-my-1"
+                />
+              </div>
               <ul className="flex flex-col gap-1.5">
                 <EvidenceRow
                   icon={Brain}
@@ -205,16 +235,63 @@ export function ZoneCard({
             </div>
           ) : null}
 
-          {/* 4. Who is exposed. */}
-          <div className="grid grid-cols-2 gap-px bg-line">
+          {/*
+            4. Who is exposed.
+            Nine readings rather than four. The card had room for them all
+            along — the lower third was simply empty — and every one of these
+            was already travelling in the /zones payload.
+          */}
+          <div className="grid grid-cols-3 gap-px bg-line">
             <ExposureCell label="People" value={fmtCompact(zone.population)} />
             <ExposureCell label="Displaced" value={fmtCompact(zone.idps)} />
+            <ExposureCell label="Refugees" value={fmtCompact(zone.refugees)} />
+            <ExposureCell
+              label="Pastoralist"
+              value={
+                zone.pastoralist_share == null
+                  ? '—'
+                  : `${Math.round(zone.pastoralist_share * 100)}%`
+              }
+            />
+            <ExposureCell label="Water points" value={fmtCompact(zone.water_points)} />
+            <ExposureCell label="Markets" value={fmtCompact(zone.markets)} />
+            <ExposureCell
+              label="Health alerts"
+              value={String(zone.active_health_alerts ?? 0)}
+            />
             <ExposureCell
               label="Verified reports"
               value={String(zone.verified_field_reports_recent ?? 0)}
             />
-            <ExposureCell label="Active hazards" value={String(zone.active_hazards ?? 0)} />
+            <ExposureCell label="Hazards" value={String(zone.active_hazards ?? 0)} />
           </div>
+
+          {/*
+            Staple prices, when there are any. This is the one indicator here
+            that is signed — a market 30% above its own average is a different
+            situation from one 30% below — so it gets its own line rather than
+            a cell that could only show the magnitude.
+          */}
+          {zone.staple_pct_vs_3m_avg != null ? (
+            <p className="flex items-baseline justify-between gap-2 border-t border-line px-4 py-2.5 text-xs">
+              <span className="text-muted">
+                {zone.staple_commodity ?? 'Staple'} vs 3-month average
+              </span>
+              <span
+                className={cx(
+                  'font-mono font-medium tabular-nums',
+                  zone.staple_pct_vs_3m_avg > 5
+                    ? 'text-err-fg'
+                    : zone.staple_pct_vs_3m_avg < -5
+                      ? 'text-ok-fg'
+                      : 'text-muted',
+                )}
+              >
+                {zone.staple_pct_vs_3m_avg > 0 ? '+' : ''}
+                {Math.round(zone.staple_pct_vs_3m_avg)}%
+              </span>
+            </p>
+          ) : null}
         </div>
 
         {/* 5. Act. The primary action follows the band. */}

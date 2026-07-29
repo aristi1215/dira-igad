@@ -281,6 +281,45 @@ export type RegionalIndicators = FeatureCollection<
   RegionalIndicatorProperties
 >
 
+/**
+ * One conflict event, at its own coordinates — the map's heat is built from
+ * these. `zone_id` is null for the majority: most recorded violence in the
+ * region falls outside the 22 assessed zones, and including it is the point.
+ * A field clipped to the zone boxes would just redraw the boxes.
+ */
+export type MapEventProperties = {
+  fatalities: number
+  zone_id: string | null
+}
+
+/**
+ * The window the response actually covered.
+ *
+ * Not the one that was requested: the row limit can truncate it, and ingest
+ * density is uneven enough that the two routinely differ. The legend states
+ * this rather than a hardcoded "last 180 days".
+ */
+export type MapEventWindow = {
+  start: string | null
+  end: string | null
+  count: number
+  truncated: boolean
+}
+
+export type MapEvents = FeatureCollection<Geometry, MapEventProperties> & {
+  window?: MapEventWindow
+}
+
+/** One point of a zone's recent risk history. */
+export type ZoneTrendPoint = {
+  cycle: string
+  model_risk: number
+  operational_band: OperationalBand
+}
+
+/** zone_id → recent cycles, oldest first. */
+export type ZoneTrends = Record<string, ZoneTrendPoint[]>
+
 export type ClimateRow = {
   dekad_start: string
   rain_mm: number | null
@@ -493,3 +532,4 @@ export type MapOverlay =
   | 'displacement'
   | 'incidents'
   | 'hazards'
+  | 'markets'

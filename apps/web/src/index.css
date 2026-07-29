@@ -45,6 +45,9 @@
   --color-accent-hover: #0043ce;
   --color-accent-soft: #edf5ff;
   --color-accent-ring: #d0e2ff;
+  /* Carbon blue 80. Reserved for chrome that must read as structural rather
+     than interactive — the active nav label, the brand mark, section rules. */
+  --color-accent-deep: #002d9c;
 
   /* --- Operational bands. Mirrored in lib/format.ts (BAND_COLORS);
          guarded by src/lib/tokens.test.ts. --- */
@@ -75,8 +78,22 @@
   --color-info-bg: #edf5ff;
   --color-info-fg: #0043ce;
 
-  /* --- Type --- */
+  /*
+   * --- Type ---
+   *
+   * Four roles, deliberately kept inside the IBM Plex family:
+   *   condensed  structure — titles, section heads, column heads, eyebrows.
+   *              Tracked caps read as instrument labelling, not prose.
+   *   sans       interface — body copy, controls, everything unremarkable.
+   *   mono       quantity  — every number, id, cycle, coordinate, timestamp.
+   *   display    editorial — the one sentence per view that carries judgement.
+   *
+   * The app runs at a 14px base and stays there; density is the point. The
+   * hierarchy comes from range (11px tracked caps against a 28px mono metric
+   * against a 17px serif sentence), never from inflating body copy.
+   */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-condensed: 'IBM Plex Sans Condensed', 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   --font-display: 'Source Serif 4', Georgia, serif;
 
@@ -102,6 +119,21 @@
   --text-4xl: 2.75rem;
   --text-4xl--line-height: 3rem;
 
+  /*
+   * Three semantic steps that carry their own tracking and weight, so a call
+   * site is one class rather than four. Tailwind v4 reads the `--text-*--*`
+   * companions off the same token.
+   */
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1rem;
+  --text-eyebrow--letter-spacing: 0.12em;
+  --text-eyebrow--font-weight: 600;
+
+  /* Numbers only. Paired with font-mono + tabular-nums at the call site. */
+  --text-metric: 1.75rem;
+  --text-metric--line-height: 1;
+  --text-metric--letter-spacing: -0.015em;
+
   /* --- Radii --- */
   --radius-xs: 2px;
   --radius-sm: 4px;
@@ -124,6 +156,8 @@
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-indeterminate: indeterminate 1.15s var(--ease-standard) infinite;
   --animate-flash-ring: flash-ring 900ms var(--ease-exit) 1;
+  /* Slow on purpose: this marks "unresolved", not "urgent, look here now". */
+  --animate-signal-pulse: signal-pulse 2.6s var(--ease-standard) infinite;
 
   /* --- Z-index scale (was 19/20/21/40/45/90 hardcoded) --- */
   --z-map-base: 10;
@@ -166,6 +200,26 @@
   }
   100% {
     box-shadow: 0 0 0 0 rgba(208, 226, 255, 0);
+  }
+}
+
+/*
+ * Expanding ring for "live" and for unacknowledged situations. Scale + fade
+ * only, so it composites on the GPU and never reflows the 22 badges it runs
+ * behind. `currentColor` lets one keyframe serve every band.
+ */
+@keyframes signal-pulse {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
   }
 }
 
@@ -335,6 +389,12 @@
   .maplibregl-ctrl-attrib {
     border-radius: var(--radius-sm) 0 0 0;
     font-size: var(--text-2xs);
+  }
+
+  /* Lift the zoom controls and attribution clear of the map status strip. */
+  .maplibregl-ctrl-bottom-right,
+  .maplibregl-ctrl-bottom-left {
+    bottom: 2.75rem;
   }
 }
 

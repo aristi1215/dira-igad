@@ -118,7 +118,7 @@ export function HazardBulletins({
   )
 }
 
-function HazardDetailModal({
+export function HazardDetailModal({
   bulletin,
   zoneName,
   onClose,

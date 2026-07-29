@@ -1,5 +1,6 @@
 export { MapView } from './MapView'
 export { WatchlistRail } from './WatchlistRail'
 export { ZoneCard } from './ZoneCard'
+export { MapStatusStrip } from './MapStatusStrip'
 export { useMapLayers, overlayFillColor } from './useMapLayers'
 export { useSelectedZone } from './useSelectedZone'

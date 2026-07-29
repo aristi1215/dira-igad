@@ -1,20 +1,49 @@
+import { useMemo } from 'react'
 import { RotateCcw } from 'lucide-react'
 import {
   BAND_LABELS,
   BAND_MAP_COLORS,
   CHART,
+  fmtCompact,
+  fmtDate,
   IPC_COLORS,
   IPC_LABELS,
 } from '../../lib/format'
-import type { MapOverlay, OperationalBand } from '../../lib/types'
+import type {
+  MapEventWindow,
+  MapOverlay,
+  OperationalBand,
+  RegionalIndicators,
+} from '../../lib/types'
 import { cx } from '../../lib/cx'
 
 const FILTERABLE_BANDS: OperationalBand[] = ['very_high', 'high', 'elevated', 'watch', 'low']
 
-const RAMPS: Record<string, { title: string; min: string; max: string }> = {
-  displacement: { title: 'People displaced', min: '0', max: '50K+' },
-  incidents: { title: 'Incidents, last 180 days', min: '0', max: '150+' },
-  hazards: { title: 'Active hazard bulletins', min: '0', max: '3+' },
+/** Which zone property each sequential overlay reads, and how to say it. */
+const RAMPS: Record<
+  string,
+  { title: string; property: string; format: (value: number) => string }
+> = {
+  displacement: {
+    title: 'People displaced',
+    property: 'idps',
+    format: (value) => fmtCompact(value),
+  },
+  incidents: {
+    title: 'Incidents per zone',
+    property: 'incidents_180d',
+    format: (value) => String(Math.round(value)),
+  },
+  hazards: {
+    title: 'Active hazard bulletins',
+    property: 'active_hazards',
+    format: (value) => String(Math.round(value)),
+  },
+  markets: {
+    title: 'Staple price vs 3-month average',
+    property: 'staple_pct_vs_3m_avg',
+    format: (value) => `${value > 0 ? '+' : ''}${Math.round(value)}%`,
+  },
 }
 
 /**
@@ -22,28 +51,65 @@ const RAMPS: Record<string, { title: string; min: string; max: string }> = {
  * hides the others from both the map and the watchlist. This turns the most
  * decorative element on screen into the primary way to narrow the picture.
  *
- * The sequential overlays keep a plain ramp — a range brush would be more
- * machinery than the question warrants.
+ * The sequential overlays get their real distribution plotted over the ramp
+ * rather than a bare gradient with invented endpoints. A ramp that says
+ * "0 → 50K+" tells you the scale; the distribution tells you whether all 22
+ * zones are bunched at one end, which is usually the actual finding.
  */
 export function MapLegend({
   overlay,
+  indicators,
+  eventWindow,
   bandFilter,
   onToggleBand,
   onResetBands,
 }: {
   overlay: MapOverlay
+  indicators: RegionalIndicators | undefined
+  /** The window the event feed actually returned, for the incidents legend. */
+  eventWindow: MapEventWindow | undefined
   bandFilter: Set<OperationalBand> | null
   onToggleBand: (band: OperationalBand) => void
   onResetBands: () => void
 }) {
+  /** Counts per band, so the legend states how many zones each swatch covers. */
+  const bandCounts = useMemo(() => {
+    const counts = new Map<OperationalBand, number>()
+    for (const feature of indicators?.features ?? []) {
+      const band = feature.properties.operational_band
+      if (band) counts.set(band, (counts.get(band) ?? 0) + 1)
+    }
+    return counts
+  }, [indicators])
+
+  const ramp = RAMPS[overlay]
+
+  /** Every zone's value for the active sequential overlay, plus its range. */
+  const distribution = useMemo(() => {
+    if (!ramp) return null
+    const values = (indicators?.features ?? [])
+      .map((feature) => {
+        const raw = (feature.properties as unknown as Record<string, unknown>)[ramp.property]
+        return typeof raw === 'number' && Number.isFinite(raw) ? raw : null
+      })
+      .filter((value): value is number => value != null)
+
+    if (values.length === 0) return null
+    const sorted = [...values].sort((a, b) => a - b)
+    return {
+      values: sorted,
+      min: sorted[0],
+      max: sorted[sorted.length - 1],
+      median: sorted[Math.floor(sorted.length / 2)],
+    }
+  }, [indicators, ramp])
+
   if (overlay === 'pressure') {
     return (
-      <div className="pointer-events-auto absolute bottom-3 left-[17.5rem] xl:left-[21rem] z-map-ui w-52 rounded-lg border border-line bg-surface/95 p-2.5 shadow-panel backdrop-blur-sm">
-        <div className="mb-1.5 flex items-center justify-between gap-2">
-          <span className="text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
-            Risk band
-          </span>
-          {bandFilter ? (
+      <LegendShell
+        title="Risk band"
+        action={
+          bandFilter ? (
             <button
               type="button"
               onClick={onResetBands}
@@ -52,12 +118,13 @@ export function MapLegend({
               <RotateCcw size={10} strokeWidth={2} aria-hidden />
               Reset
             </button>
-          ) : null}
-        </div>
-
+          ) : null
+        }
+      >
         <ul className="flex flex-col gap-0.5">
           {FILTERABLE_BANDS.map((band) => {
             const active = !bandFilter || bandFilter.has(band)
+            const count = bandCounts.get(band) ?? 0
             return (
               <li key={band}>
                 <button
@@ -78,22 +145,30 @@ export function MapLegend({
                     )}
                     style={{ background: BAND_MAP_COLORS[band] }}
                   />
-                  {BAND_LABELS[band]}
+                  <span className="flex-1">{BAND_LABELS[band]}</span>
+                  <span
+                    className={cx(
+                      'font-mono tabular-nums',
+                      count === 0 ? 'text-line-strong' : 'text-muted',
+                    )}
+                  >
+                    {count}
+                  </span>
                 </button>
               </li>
             )
           })}
         </ul>
 
-        <p className="mt-1.5 border-t border-line pt-1.5 text-2xs text-faint">
+        <p className="mt-1.5 border-t border-line pt-1.5 text-2xs leading-relaxed text-faint">
           <span
             aria-hidden
             className="mr-1.5 inline-block size-2 rounded-full align-middle"
             style={{ background: BAND_MAP_COLORS.ack }}
           />
-          Dot = open situation · green once acknowledged
+          Badge = open situation · green once acknowledged
         </p>
-      </div>
+      </LegendShell>
     )
   }
 
@@ -116,28 +191,123 @@ export function MapLegend({
     )
   }
 
-  const ramp = RAMPS[overlay]
+  /*
+   * The incidents overlay is the one place the heat field *is* the reading, so
+   * its legend explains the heat rather than the zone ramp — and says which
+   * window it covers, because that window is bounded by the row limit rather
+   * than by a fixed number of days.
+   */
+  if (overlay === 'incidents') {
+    return (
+      <LegendShell title="Conflict event density">
+        <span className="flex h-2 overflow-hidden rounded-full">
+          {CHART.heat.map((color) => (
+            <span key={color} className="flex-1" style={{ background: color }} />
+          ))}
+        </span>
+        <span className="mt-1 flex justify-between text-2xs text-faint">
+          <span>Sparse</span>
+          <span>Concentrated</span>
+        </span>
+        <p className="mt-2 border-t border-line pt-1.5 text-2xs leading-relaxed text-faint">
+          {eventWindow?.start && eventWindow.end ? (
+            <>
+              <span className="font-mono tabular-nums text-muted">
+                {eventWindow.count.toLocaleString()}
+              </span>{' '}
+              events, {fmtDate(eventWindow.start)} – {fmtDate(eventWindow.end)}.{' '}
+            </>
+          ) : null}
+          Weighted by fatalities. Includes events outside the 22 assessed zones.
+        </p>
+      </LegendShell>
+    )
+  }
+
+  const colors = overlay === 'markets' ? CHART.diverging : CHART.blues
+
   return (
     <LegendShell title={ramp.title}>
+      {distribution ? (
+        <Distribution
+          values={distribution.values}
+          min={distribution.min}
+          max={distribution.max}
+        />
+      ) : null}
+
       <span className="flex h-2 overflow-hidden rounded-full">
-        {CHART.blues.map((color) => (
+        {colors.map((color) => (
           <span key={color} className="flex-1" style={{ background: color }} />
         ))}
       </span>
-      <span className="mt-1 flex justify-between text-2xs text-faint">
-        <span>{ramp.min}</span>
-        <span>{ramp.max}</span>
-      </span>
+
+      {distribution ? (
+        <span className="mt-1 flex justify-between font-mono text-2xs tabular-nums text-faint">
+          <span>{ramp.format(distribution.min)}</span>
+          <span className="text-muted" title="Median across all zones">
+            {ramp.format(distribution.median)}
+          </span>
+          <span>{ramp.format(distribution.max)}</span>
+        </span>
+      ) : (
+        <span className="mt-1 block text-2xs text-faint">No values this cycle</span>
+      )}
     </LegendShell>
   )
 }
 
-function LegendShell({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * One tick per zone, positioned along the ramp.
+ *
+ * This is the difference between knowing the scale and knowing the shape.
+ * Twenty-two ticks bunched at the left says "one zone is an outlier and the
+ * rest are quiet" — a conclusion a bare gradient actively hides.
+ */
+function Distribution({
+  values,
+  min,
+  max,
+}: {
+  values: number[]
+  min: number
+  max: number
+}) {
+  const span = max - min || 1
   return (
-    <div className="pointer-events-auto absolute bottom-3 left-[17.5rem] xl:left-[21rem] z-map-ui w-52 rounded-lg border border-line bg-surface/95 p-2.5 shadow-panel backdrop-blur-sm">
-      <span className="mb-1.5 block text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
-        {title}
+    <span className="mb-1 flex h-5 items-end gap-px">
+      <span className="relative block h-full w-full">
+        {values.map((value, index) => (
+          <span
+            key={`${value}-${index}`}
+            aria-hidden
+            className="absolute bottom-0 h-2.5 w-px bg-line-strong"
+            style={{ left: `${((value - min) / span) * 100}%` }}
+          />
+        ))}
       </span>
+    </span>
+  )
+}
+
+function LegendShell({
+  title,
+  action,
+  children,
+}: {
+  title: string
+  action?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    // bottom-14 clears the status strip along the bottom edge.
+    <div className="pointer-events-auto absolute bottom-14 left-[17.5rem] xl:left-[21rem] z-map-ui w-56 rounded-lg border border-line bg-surface/95 p-2.5 shadow-panel backdrop-blur-sm">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="font-condensed text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+          {title}
+        </span>
+        {action}
+      </div>
       {children}
     </div>
   )

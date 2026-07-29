@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import { cx } from '../../lib/cx'
 import { fmtPct } from '../../lib/format'
+import { Sparkline } from './Sparkline'
 
 /**
  * A signed change. `goodDirection` is required rather than assumed: in this
@@ -32,13 +33,26 @@ export function MetricDelta({
       : 'text-err-fg'
 
   return (
-    <span className={cx('inline-flex items-center gap-1 text-2xs font-medium tabular-nums', tone, className)}>
+    <span
+      className={cx(
+        'inline-flex items-center gap-1 font-mono text-2xs font-medium tabular-nums',
+        tone,
+        className,
+      )}
+    >
       <Icon size={12} strokeWidth={2} aria-hidden />
       {flat ? 'No change' : fmtPct(value)}
     </span>
   )
 }
 
+/**
+ * A single readout.
+ *
+ * Label in tracked condensed caps, value in mono — a number that changes
+ * between cycles must not reflow the tile it sits in, and mono is also the
+ * clearest signal that this is measured rather than written.
+ */
 export function Stat({
   label,
   value,
@@ -46,6 +60,7 @@ export function Stat({
   delta,
   deltaGoodDirection = 'neutral',
   accent,
+  series,
   className,
 }: {
   label: string
@@ -55,19 +70,34 @@ export function Stat({
   deltaGoodDirection?: 'up' | 'down' | 'neutral'
   /** CSS color for the 3px top rule — usually a band color. */
   accent?: string
+  /** Optional trend behind the number. Turns an airy tile into a dense one. */
+  series?: readonly (number | null | undefined)[]
   className?: string
 }) {
   return (
     <div
       className={cx(
-        'flex flex-col gap-1 rounded-lg border border-line border-t-[3px] bg-surface px-3.5 py-3',
+        'relative flex min-w-0 flex-col gap-1 overflow-hidden rounded-lg border border-line border-t-[3px] bg-surface px-3.5 py-3',
         'transition-shadow duration-[180ms] ease-standard hover:shadow-sm',
         className,
       )}
       style={{ borderTopColor: accent ?? 'var(--color-line-strong)' }}
     >
-      <span className="text-2xs font-medium tracking-[0.04em] text-muted uppercase">{label}</span>
-      <span className="text-2xl leading-none font-semibold tabular-nums text-ink">{value}</span>
+      <span className="font-condensed text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+        {label}
+      </span>
+      <span className="flex items-end justify-between gap-2">
+        <span className="font-mono text-metric font-semibold tabular-nums text-ink">{value}</span>
+        {series ? (
+          <Sparkline
+            values={series}
+            width={54}
+            height={20}
+            color={accent ?? 'var(--color-accent)'}
+            className="mb-0.5 shrink-0"
+          />
+        ) : null}
+      </span>
       {delta != null || detail ? (
         <span className="flex items-center gap-2 text-xs text-faint">
           {delta != null ? <MetricDelta value={delta} goodDirection={deltaGoodDirection} /> : null}
@@ -98,7 +128,9 @@ export function StatRow({ children, className }: { children: ReactNode; classNam
   return (
     <div
       className={cx(
-        'grid grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))] gap-3',
+        // 13rem, not 10.5rem: with only three or four tiles the old minimum
+        // let each one sprawl to ~390px around a single number.
+        'grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-3',
         className,
       )}
     >

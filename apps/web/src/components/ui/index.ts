@@ -19,7 +19,8 @@ export { Tooltip, InfoHint } from './Tooltip'
 export { Sheet } from './Sheet'
 export { Meter, ScoreMeter } from './Meter'
 export { Stat, StatTile, StatRow, MetricDelta } from './Stat'
-export { Card, PageHeader, SectionHeader, Screen } from './Card'
+export { Sparkline } from './Sparkline'
+export { Card, PageHeader, SectionHeader, Section, Screen } from './Card'
 export { BandChip, BandDot, IpcChip, StatusChip, type StatusTone } from './Chips'
 export {
   Callout,

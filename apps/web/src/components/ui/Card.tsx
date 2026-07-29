@@ -1,6 +1,13 @@
 import type { ReactNode } from 'react'
 import { cx } from '../../lib/cx'
 
+/**
+ * Card, page and section framing.
+ *
+ * Every heading here is set in `font-condensed` uppercase rather than sentence
+ * case. Tracked caps are how instrument panels label their readouts, and they
+ * are what stops a screen of cards reading as a Word document.
+ */
 export function Card({
   title,
   subtitle,
@@ -8,6 +15,8 @@ export function Card({
   actions,
   className,
   padded = true,
+  /** Band or status color for the 2px header rule. Omit for a neutral card. */
+  accent,
 }: {
   title?: string
   subtitle?: string
@@ -15,20 +24,30 @@ export function Card({
   actions?: ReactNode
   className?: string
   padded?: boolean
+  accent?: string
 }) {
   return (
     <section
       className={cx(
-        'flex min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-surface',
+        'group/card relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-surface',
         'transition-shadow duration-[180ms] ease-standard hover:shadow-sm',
         className,
       )}
     >
+      {accent ? (
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-0.5"
+          style={{ background: accent }}
+        />
+      ) : null}
       {title || actions ? (
-        <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
+        <div className="flex items-start justify-between gap-3 border-b border-line bg-surface-2/60 px-4 py-2.5">
           <div className="min-w-0">
             {title ? (
-              <h2 className="text-md leading-tight font-semibold text-ink">{title}</h2>
+              <h2 className="font-condensed text-sm leading-tight font-semibold tracking-[0.05em] text-ink uppercase">
+                {title}
+              </h2>
             ) : null}
             {subtitle ? <p className="mt-0.5 text-xs text-faint">{subtitle}</p> : null}
           </div>
@@ -42,6 +61,13 @@ export function Card({
   )
 }
 
+/**
+ * Page title block.
+ *
+ * The description sits *beside* the title rather than under it: stacked, the
+ * eyebrow + title + two-line description cost ~120px above the fold on every
+ * screen before a single number appeared.
+ */
 export function PageHeader({
   eyebrow,
   title,
@@ -54,21 +80,21 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div className="min-w-0">
-        {eyebrow ? (
-          <p className="mb-1 text-2xs font-semibold tracking-[0.08em] text-accent uppercase">
-            {eyebrow}
-          </p>
-        ) : null}
-        <h1 className="text-2xl leading-tight font-semibold tracking-[-0.015em] text-ink">
-          {title}
-        </h1>
-        {description ? (
-          <p className="mt-1.5 max-w-[62ch] text-base text-muted">{description}</p>
-        ) : null}
+    <header className="mb-4 border-b border-line pb-3">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1">
+          {eyebrow ? (
+            <p className="text-eyebrow text-accent-deep uppercase">{eyebrow}</p>
+          ) : null}
+          <h1 className="font-condensed text-2xl leading-none font-bold tracking-[0.01em] text-ink uppercase">
+            {title}
+          </h1>
+          {description ? (
+            <p className="max-w-[64ch] text-sm text-muted">{description}</p>
+          ) : null}
+        </div>
+        {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
     </header>
   )
 }
@@ -87,7 +113,9 @@ export function SectionHeader({
   return (
     <div className={cx('mb-3 flex items-end justify-between gap-3', className)}>
       <div className="min-w-0">
-        <h2 className="text-md font-semibold text-ink">{title}</h2>
+        <h2 className="font-condensed text-sm font-semibold tracking-[0.05em] text-ink uppercase">
+          {title}
+        </h2>
         {description ? <p className="mt-0.5 text-xs text-faint">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
@@ -95,10 +123,67 @@ export function SectionHeader({
   )
 }
 
-/** Standard scrolling screen container for every non-map route. */
-export function Screen({ children, className }: { children: ReactNode; className?: string }) {
+/**
+ * A titled band of a screen, with a rule that runs to the full width.
+ *
+ * Cards alone give every block on a screen identical weight, so a screen reads
+ * as a pile rather than an argument. `Section` restores an outline.
+ */
+export function Section({
+  title,
+  description,
+  actions,
+  children,
+  className,
+  id,
+}: {
+  title: string
+  description?: string
+  actions?: ReactNode
+  children: ReactNode
+  className?: string
+  id?: string
+}) {
   return (
-    <div className={cx('mx-auto w-full max-w-[1240px] px-6 pt-6 pb-12', className)}>
+    <section id={id} className={cx('mb-6', className)}>
+      <div className="mb-3 flex items-center gap-3">
+        <h2 className="font-condensed shrink-0 text-xs font-semibold tracking-[0.1em] text-muted uppercase">
+          {title}
+        </h2>
+        {description ? (
+          <p className="shrink-0 text-xs text-faint">{description}</p>
+        ) : null}
+        <span aria-hidden className="h-px min-w-4 flex-1 bg-line" />
+        {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/**
+ * Standard scrolling screen container for every non-map route.
+ *
+ * `wide` is for tables and boards, which were losing ~340px of gutter on each
+ * side at 1920. `reading` keeps a comfortable measure for the prose-led screens.
+ */
+const SCREEN_WIDTH: Record<'default' | 'wide' | 'reading', string> = {
+  default: 'max-w-[1240px]',
+  wide: 'max-w-[1600px]',
+  reading: 'max-w-[1080px]',
+}
+
+export function Screen({
+  children,
+  className,
+  width = 'default',
+}: {
+  children: ReactNode
+  className?: string
+  width?: 'default' | 'wide' | 'reading'
+}) {
+  return (
+    <div className={cx('mx-auto w-full px-6 pt-5 pb-12', SCREEN_WIDTH[width], className)}>
       {children}
     </div>
   )

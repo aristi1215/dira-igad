@@ -1,4 +1,5 @@
 import type {
+  AdvisorCitation,
   AdvisorResponse,
   Alert,
   AlertDraftResponse,
@@ -7,6 +8,7 @@ import type {
   Delivery,
   EconomyResponse,
   FieldReport,
+  MapEvents,
   ModelCard,
   Recipient,
   RegionalIndicators,
@@ -17,6 +19,7 @@ import type {
   ZoneProfile,
   ZoneSignal,
   ZoneSummary,
+  ZoneTrends,
 } from './types'
 
 /** API base URL for the FastAPI backend. */
@@ -36,6 +39,8 @@ export const queryKeys = {
   zones: ['zones'] as const,
   zoneProfile: (zoneId: string) => ['zones', zoneId, 'profile'] as const,
   regionalIndicators: ['indicators', 'regional'] as const,
+  mapEvents: ['map', 'events'] as const,
+  mapTrends: ['map', 'trends'] as const,
   situationDetail: (id: string) => ['situations', id] as const,
   fieldReports: (zoneId?: string | null, status?: string | null) =>
     ['field-reports', zoneId ?? 'all', status ?? 'all'] as const,
@@ -182,6 +187,108 @@ export function askAdvisor(
   })
 }
 
+/** Events the advisor stream emits, in the order they arrive. */
+export type AdvisorStreamHandlers = {
+  /** A retrieval tool finished. Fires once per tool, in real execution order. */
+  onTool?: (name: string) => void
+  onConversation?: (conversationId: string) => void
+  /** A slice of the answer. One call when the provider cannot stream. */
+  onDelta?: (text: string) => void
+  onDone?: (payload: { citations?: AdvisorCitation[]; tools_used?: string[] }) => void
+  onError?: (message: string) => void
+}
+
+/**
+ * Ask the advisor over SSE.
+ *
+ * `EventSource` cannot POST, and the question does not belong in a query
+ * string, so this reads the body stream directly and parses the SSE framing.
+ * The parser keeps a buffer because a chunk boundary can land anywhere —
+ * including mid-event — and splitting naively drops text.
+ */
+export async function streamAdvisor(
+  question: string,
+  situationId: string | null,
+  options: {
+    zoneId?: string | null
+    conversationId?: string | null
+    signal?: AbortSignal
+  } & AdvisorStreamHandlers = {},
+): Promise<void> {
+  const response = await fetch(apiUrl('/advisor/stream'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: options.signal,
+    body: JSON.stringify({
+      question,
+      situation_id: situationId,
+      zone_id: options.zoneId ?? null,
+      conversation_id: options.conversationId ?? null,
+    }),
+  })
+
+  if (!response.ok || !response.body) {
+    throw new ApiError(`Advisor stream failed (${response.status})`, response.status)
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  const dispatch = (raw: string) => {
+    let event = 'message'
+    const dataLines: string[] = []
+    for (const line of raw.split('\n')) {
+      if (line.startsWith('event:')) event = line.slice(6).trim()
+      else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim())
+    }
+    if (dataLines.length === 0) return
+
+    let payload: Record<string, unknown>
+    try {
+      payload = JSON.parse(dataLines.join('\n')) as Record<string, unknown>
+    } catch {
+      return
+    }
+
+    switch (event) {
+      case 'tool':
+        if (typeof payload.name === 'string') options.onTool?.(payload.name)
+        break
+      case 'conversation':
+        if (typeof payload.conversation_id === 'string') {
+          options.onConversation?.(payload.conversation_id)
+        }
+        break
+      case 'delta':
+        if (typeof payload.text === 'string') options.onDelta?.(payload.text)
+        break
+      case 'done':
+        options.onDone?.(payload as Parameters<NonNullable<typeof options.onDone>>[0])
+        break
+      case 'error':
+        options.onError?.(
+          typeof payload.message === 'string' ? payload.message : 'Advisor failed.',
+        )
+        break
+    }
+  }
+
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    // SSE events are separated by a blank line; anything after the last one is
+    // an incomplete event and must stay buffered.
+    const events = buffer.split('\n\n')
+    buffer = events.pop() ?? ''
+    for (const raw of events) {
+      if (raw.trim()) dispatch(raw)
+    }
+  }
+  if (buffer.trim()) dispatch(buffer)
+}
+
 export function fetchModelCard(): Promise<ModelCard> {
   return requestJson<ModelCard>('/model/card')
 }
@@ -207,6 +314,16 @@ export function fetchZoneProfile(zoneId: string): Promise<ZoneProfile> {
 
 export function fetchRegionalIndicators(): Promise<RegionalIndicators> {
   return requestJson<RegionalIndicators>('/indicators/regional')
+}
+
+/** Individual conflict events. The map's heat field is kernel density over these. */
+export function fetchMapEvents(days = 180): Promise<MapEvents> {
+  return requestJson<MapEvents>(`/map/events?days=${days}`)
+}
+
+/** Recent risk history per zone, oldest first — the badge sparklines. */
+export function fetchMapTrends(cycles = 6): Promise<ZoneTrends> {
+  return requestJson<ZoneTrends>(`/map/trends?cycles=${cycles}`)
 }
 
 export function fetchSituationDetail(id: string): Promise<SituationDetail> {

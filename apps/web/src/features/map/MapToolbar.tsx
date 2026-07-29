@@ -1,4 +1,4 @@
-import { Activity, Swords, TriangleAlert, Users, Wheat } from 'lucide-react'
+import { Activity, Coins, Swords, TriangleAlert, Users, Wheat } from 'lucide-react'
 import { Tabs, type TabItem } from '../../components/ui'
 import type { MapOverlay } from '../../lib/types'
 import { TOUR_ANCHORS } from '../tour/tourAnchors'
@@ -9,19 +9,28 @@ const OVERLAYS: TabItem<MapOverlay>[] = [
   { id: 'displacement', label: 'Displaced', icon: Users },
   { id: 'incidents', label: 'Incidents', icon: Swords },
   { id: 'hazards', label: 'Hazards', icon: TriangleAlert },
+  { id: 'markets', label: 'Markets', icon: Coins },
 ]
 
 /**
  * One short line saying what the color currently means. It sits directly under
  * the control that caused the color, so it reads as an axis label rather than
  * as a banner — the map should explain itself without lecturing.
+ *
+ * Each caption also names the *unit* the shading is drawn on, because the map
+ * now mixes two: zone tint is a per-zone aggregate, while the heat field is
+ * kernel density over individual event coordinates. Blurring that distinction
+ * would let a smoothed picture pass for spatial precision the data lacks.
  */
 const CAPTIONS: Record<MapOverlay, string> = {
-  pressure: 'Shading: forecast conflict pressure, next 30 days',
-  ipc: 'Shading: IPC acute food insecurity phase',
-  displacement: 'Shading: people displaced, latest snapshot',
-  incidents: 'Shading: conflict incidents, last 180 days',
-  hazards: 'Shading: active hazard bulletins',
+  pressure: 'Zone shading: forecast conflict pressure, next 30 days',
+  ipc: 'Zone shading: IPC acute food insecurity phase',
+  displacement: 'Zone shading: people displaced, latest snapshot',
+  // The window is data-dependent, so the legend states it rather than this
+  // caption pretending to a fixed range.
+  incidents: 'Heat: density of individual recorded conflict events',
+  hazards: 'Zone shading: active hazard bulletins',
+  markets: 'Zone shading: staple price vs its own 3-month average',
 }
 
 export function MapToolbar({

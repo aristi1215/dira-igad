@@ -86,6 +86,21 @@ export const CHART = {
   axisInk: '#525252',
   /** Sequential blues, light → dark (IBM blue ramp). */
   blues: ['#edf5ff', '#d0e2ff', '#a6c8ff', '#78a9ff', '#4589ff', '#0f62fe', '#0043ce'],
+  /**
+   * Diverging, for the one variable in the dataset that has a meaningful
+   * zero: staple price against its own 3-month average. Cheaper than usual on
+   * the left, dearer on the right, neutral at parity. Blue↔orange rather than
+   * the conventional red↔green so it survives the common color deficiencies
+   * and does not collide with the band ramp.
+   */
+  diverging: ['#0043ce', '#4589ff', '#d0e2ff', '#f4f4f4', '#ffd9be', '#ff832b', '#a2191f'],
+  /**
+   * Kernel-density ramp for the map's heat field, cool → warm through the
+   * band hues. Deliberately not the usual green→red: the product's whole
+   * color language is these bands, and heat that reads in a foreign palette
+   * would look like a second, competing system on the same canvas.
+   */
+  heat: ['#d0e2ff', '#78a9ff', '#f1c21b', '#ff832b', '#da1e28', '#9f1853'],
 }
 
 export function fmtCompact(value: number | null | undefined): string {

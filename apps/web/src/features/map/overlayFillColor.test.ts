@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { overlayFillColor } from './useMapLayers'
+import { EVENT_SOURCE_ID, overlayFillColor, ZONE_SOURCE_ID } from './useMapLayers'
 import { BAND_MAP_COLORS, CHART, IPC_COLORS } from '../../lib/format'
 import type { MapOverlay } from '../../lib/types'
 
@@ -8,7 +8,14 @@ import type { MapOverlay } from '../../lib/types'
  * paint expression fails silently — every zone just renders in the fallback
  * grey. These assertions pin each overlay to the field it is supposed to read.
  */
-const OVERLAYS: MapOverlay[] = ['pressure', 'ipc', 'displacement', 'incidents', 'hazards']
+const OVERLAYS: MapOverlay[] = [
+  'pressure',
+  'ipc',
+  'displacement',
+  'incidents',
+  'hazards',
+  'markets',
+]
 
 function flatten(expression: unknown): string {
   return JSON.stringify(expression)
@@ -27,6 +34,7 @@ describe('overlayFillColor', () => {
     ['displacement', 'idps'],
     ['incidents', 'incidents_180d'],
     ['hazards', 'active_hazards'],
+    ['markets', 'staple_pct_vs_3m_avg'],
   ] as const)('%s reads the %s property', (overlay, property) => {
     expect(flatten(overlayFillColor(overlay))).toContain(property)
   })
@@ -61,5 +69,33 @@ describe('overlayFillColor', () => {
     for (const overlay of OVERLAYS) {
       expect(flatten(overlayFillColor(overlay))).toContain('coalesce')
     }
+  })
+
+  /*
+   * Staple prices are the one variable here with a meaningful zero. Rendering
+   * them on a sequential ramp would say "more is more" when the actual
+   * question is which side of the 3-month average a market has fallen on, so
+   * the diverging ramp and its neutral midpoint are load-bearing, not taste.
+   */
+  it('gives markets a diverging ramp anchored at parity', () => {
+    const markets = flatten(overlayFillColor('markets'))
+    expect(markets).toContain(CHART.diverging[0])
+    expect(markets).toContain(CHART.diverging[6])
+    // The neutral midpoint must be present, and must sit at exactly 0.
+    expect(markets).toContain(`0,"${CHART.diverging[3]}"`)
+    // A diverging variable must span negatives; a sequential ramp never would.
+    expect(markets).toContain('-30')
+  })
+})
+
+describe('the heat field', () => {
+  /*
+   * Every zone geometry in this dataset is an axis-aligned rectangle, so
+   * anything painted per-zone inherits a box silhouette the data does not
+   * have. The heat layer exists to break that, and it can only do so if it
+   * reads real event coordinates rather than the zone source.
+   */
+  it('is built from the event source, not the zone source', () => {
+    expect(EVENT_SOURCE_ID).not.toBe(ZONE_SOURCE_ID)
   })
 })

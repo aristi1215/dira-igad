@@ -16,7 +16,6 @@ import {
   BAND_GUIDANCE,
   BAND_MAP_COLORS,
   CHART,
-  fmtDate,
   fmtDateTime,
   fmtForecastWindow,
   fmtProbability,
@@ -38,28 +37,17 @@ import {
   Stat,
   StatRow,
   StatusChip,
-  Tabs,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
-import {
-  FieldReportModal,
-  HazardBulletins,
-  ScoreExplainer,
-  ShapDrivers,
-  SignalsList,
-} from '../features/situations'
+import { EvidenceBoard, ScoreExplainer, ShapDrivers } from '../features/situations'
+import { AskAboutButton } from '../features/advisor'
 import { TOUR_ANCHORS } from '../features/tour/tourAnchors'
-import type { FieldReport } from '../lib/types'
-
-type EvidenceTab = 'signals' | 'reports' | 'hazards'
 
 export function SituationDetailScreen() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showScoreExplainer, setShowScoreExplainer] = useState(false)
-  const [selectedReport, setSelectedReport] = useState<FieldReport | null>(null)
-  const [evidenceTab, setEvidenceTab] = useState<EvidenceTab>('signals')
 
   const detailQuery = useQuery({
     queryKey: queryKeys.situationDetail(id),
@@ -119,11 +107,7 @@ export function SituationDetailScreen() {
   }))
 
   const situationAlerts = (alertsQuery.data ?? []).filter((alert) => alert.situation_id === id)
-  const verifiedReports = (reportsQuery.data ?? []).filter(
-    (report) => report.status === 'verified',
-  )
   const hazards = profileQuery.data?.hazard_bulletins ?? []
-  const signalCount = profileQuery.data?.news_signals?.length ?? 0
 
   const band = latest?.operational_band ?? 'none'
   const quietCycles = detail.situation.cycles_below_threshold
@@ -162,35 +146,71 @@ export function SituationDetailScreen() {
         <ErrorNote error={prepareAlertMutation.error} className="mb-4" />
       ) : null}
 
-      {/* The headline answer, before any numbers. */}
+      {/*
+        The headline answer, before any numbers.
+
+        The verdict and the two scores that produced it now sit side by side.
+        Stacked, the banner's right third was permanently blank while the
+        scores that justify it were three cards further down the page.
+      */}
       <div
-        className="mb-5 rounded-lg border border-line border-l-[3px] bg-surface px-5 py-4"
+        className="group mb-5 grid gap-x-6 gap-y-4 rounded-lg border border-line border-l-[3px] bg-surface px-5 py-4 lg:grid-cols-[minmax(0,1fr)_16rem]"
         style={{
           borderLeftColor: BAND_COLORS[band],
           background: `color-mix(in srgb, ${BAND_COLORS[band]} 6%, white)`,
         }}
       >
-        <div className="mb-1.5 flex flex-wrap items-center gap-2">
-          <BandChip band={latest?.operational_band ?? null} />
-          <span className="text-2xs text-faint">
-            {fmtForecastWindow(
-              latest?.window_start,
-              latest?.window_end,
-              latest?.horizon_dekads,
-            )}
-          </span>
-          {quietCycles != null && quietCycles > 0 ? (
-            <StatusChip tone="info">
-              {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
-            </StatusChip>
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <BandChip band={latest?.operational_band ?? null} />
+            <span className="font-mono text-2xs text-faint">
+              {fmtForecastWindow(
+                latest?.window_start,
+                latest?.window_end,
+                latest?.horizon_dekads,
+              )}
+            </span>
+            {quietCycles != null && quietCycles > 0 ? (
+              <StatusChip tone="info">
+                {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
+              </StatusChip>
+            ) : null}
+            <AskAboutButton
+              question={`Explain the current assessment for ${zone?.zone_name ?? detail.situation.zone_id} in plain language, and what it means for the next 30 days.`}
+              className="ml-auto"
+            />
+          </div>
+          {/*
+            The one sentence on this page that is a judgement rather than a
+            measurement, so it is the one sentence set in the serif.
+          */}
+          <p className="font-display max-w-[54ch] text-xl leading-snug font-semibold text-ink">
+            {BAND_GUIDANCE[band]}
+          </p>
+          {latest?.explanation ? (
+            <p className="mt-2 max-w-[68ch] text-sm leading-relaxed text-muted">
+              {latest.explanation}
+            </p>
           ) : null}
         </div>
-        <p className="max-w-[70ch] text-lg leading-snug font-medium text-ink">
-          {BAND_GUIDANCE[band]}
-        </p>
-        {latest?.explanation ? (
-          <p className="mt-1.5 max-w-[80ch] text-sm text-muted">{latest.explanation}</p>
-        ) : null}
+
+        <div className="flex flex-col justify-center gap-3 border-line lg:border-l lg:pl-6">
+          <ScoreLine
+            name="Model risk"
+            hint="Climate and conflict history only"
+            value={latest?.model_risk}
+            color={CHART.cat1}
+            track="var(--color-accent-ring)"
+            showTicks
+          />
+          <ScoreLine
+            name="Corroboration"
+            hint="News and verified field reports"
+            value={latest?.corroboration}
+            color={CHART.cat2}
+            track="#ffd6e8"
+          />
+        </div>
       </div>
 
       <StatRow className="mb-5">
@@ -223,148 +243,89 @@ export function SituationDetailScreen() {
         />
       </StatRow>
 
-      <div className="mb-5 grid gap-5 lg:grid-cols-2">
-        {/*
-          The two-score rule is the product's central claim, so it comes first —
-          it used to sit second, below the trajectory chart.
-        */}
+      {/*
+        Spans rather than equal halves. `lg:grid-cols-2` stretched both cards
+        to the taller one, so the drivers list dragged a column of whitespace
+        alongside it on every situation with few features.
+      */}
+      <div className="mb-5 grid items-start gap-5 lg:grid-cols-12">
         <Card
-          title="Two scores, never blended"
-          subtitle="The band is not a black box: the exact rule is stored on every assessment"
+          title="What the model leaned on"
+          subtitle="Each input's contribution to this cycle's score"
+          className="lg:col-span-7"
           actions={
-            latest ? (
-              <Button size="sm" icon={Sigma} onClick={() => setShowScoreExplainer(true)}>
-                How is this calculated?
-              </Button>
-            ) : undefined
+            <AskAboutButton question="Which drivers are pushing this zone's risk up, and what would have to change for it to fall?" />
           }
         >
-          <div data-tour={TOUR_ANCHORS.twoScore} className="flex flex-col gap-3">
-            <ScoreLine
-              name="Model risk"
-              hint="Climate and conflict history only — never touched by news"
-              value={latest?.model_risk}
-              color={CHART.cat1}
-              track="var(--color-accent-ring)"
-              showTicks
-            />
-            <ScoreLine
-              name="Corroboration"
-              hint="What people and media are reporting right now"
-              value={latest?.corroboration}
-              color={CHART.cat2}
-              track="#ffd6e8"
-            />
-            <p className="rounded-sm border border-line bg-surface-2 px-2.5 py-2 font-mono text-2xs leading-relaxed break-words text-muted">
-              {latest?.combination_rule ?? '—'}
-            </p>
+          <div data-tour={TOUR_ANCHORS.shapDrivers}>
+            <ShapDrivers shap={latest?.shap ?? {}} />
           </div>
         </Card>
 
-        <Card
-          title="How it got here"
-          subtitle="Both scores across every assessment cycle"
-        >
-          {trajectory.length > 0 ? (
-            <TimeSeriesChart
-              data={trajectory}
-              xKey="cycle"
-              series={[
-                { key: 'model_risk', label: 'Model risk', kind: 'line', color: CHART.cat1 },
-                {
-                  key: 'corroboration',
-                  label: 'Corroboration',
-                  kind: 'line',
-                  color: CHART.cat2,
-                },
-              ]}
-              yFormatter={(value) => value.toFixed(1)}
-            />
-          ) : (
-            <EmptyState>No assessments recorded yet.</EmptyState>
-          )}
-        </Card>
+        <div className="flex flex-col gap-5 lg:col-span-5">
+          <Card title="How it got here" subtitle="Both scores across every cycle">
+            {trajectory.length > 0 ? (
+              <TimeSeriesChart
+                data={trajectory}
+                xKey="cycle"
+                series={[
+                  { key: 'model_risk', label: 'Model risk', kind: 'line', color: CHART.cat1 },
+                  {
+                    key: 'corroboration',
+                    label: 'Corroboration',
+                    kind: 'line',
+                    color: CHART.cat2,
+                  },
+                ]}
+                yFormatter={(value) => value.toFixed(1)}
+                height={190}
+              />
+            ) : (
+              <EmptyState>No assessments recorded yet.</EmptyState>
+            )}
+          </Card>
+
+          {/* The combination rule is the product's central claim, and it is a
+              literal string on the row — so it is shown literally. */}
+          <Card
+            title="Two scores, never blended"
+            subtitle="The exact rule, stored on every assessment"
+            actions={
+              latest ? (
+                <Button size="sm" icon={Sigma} onClick={() => setShowScoreExplainer(true)}>
+                  How?
+                </Button>
+              ) : undefined
+            }
+          >
+            <p
+              data-tour={TOUR_ANCHORS.twoScore}
+              className="rounded-sm border border-line bg-surface-2 px-2.5 py-2 font-mono text-2xs leading-relaxed break-words text-muted"
+            >
+              {latest?.combination_rule ?? '—'}
+            </p>
+          </Card>
+        </div>
       </div>
 
       <Card
-        title="What the model leaned on"
-        subtitle="Contribution of each input to this cycle's score — select one for what it means"
-        className="mb-5"
-      >
-        <div data-tour={TOUR_ANCHORS.shapDrivers}>
-          <ShapDrivers shap={latest?.shap ?? {}} />
-        </div>
-      </Card>
-
-      {/*
-        News signals, field reports and hazards used to be three separate cards
-        answering one question. Merged, they cost a third less scrolling.
-      */}
-      <Card
         title="Evidence"
         subtitle="Everything corroborating — or failing to corroborate — this forecast"
-        className="mb-5"
+        className="group mb-5"
+        padded={false}
         actions={
-          <Tabs
-            items={[
-              { id: 'signals', label: 'News', count: signalCount || undefined },
-              { id: 'reports', label: 'Field reports', count: verifiedReports.length || undefined },
-              { id: 'hazards', label: 'Hazards', count: hazards.length || undefined },
-            ]}
-            value={evidenceTab}
-            onChange={setEvidenceTab}
-            layoutId="evidence-tabs"
-            ariaLabel="Evidence type"
-            size="sm"
-          />
+          <AskAboutButton question="Summarise the evidence for this situation and say where it is thin." />
         }
       >
-        {evidenceTab === 'signals' ? (
-          <SignalsList zoneId={detail.situation.zone_id} zoneName={zone?.zone_name} />
-        ) : null}
-
-        {evidenceTab === 'reports' ? (
-          verifiedReports.length > 0 ? (
-            <ul className="flex flex-col gap-2">
-              {verifiedReports.slice(0, 8).map((report) => (
-                <li key={report.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedReport(report)}
-                    className="w-full rounded-md border border-line bg-surface px-3 py-2.5 text-left transition-colors duration-[120ms] hover:border-accent hover:bg-accent-soft"
-                  >
-                    <span className="flex flex-wrap items-center gap-2">
-                      <StatusChip tone="success">Verified</StatusChip>
-                      <span className="text-sm font-medium text-ink">
-                        {titleCase(report.category)}
-                      </span>
-                      <span className="ml-auto text-2xs text-faint">
-                        {fmtDate(report.reported_at)}
-                      </span>
-                    </span>
-                    <p className="mt-1.5 text-sm text-muted">{report.narrative}</p>
-                    <p className="mt-1 text-2xs text-faint">
-                      {titleCase(report.reporter_role)} · severity {report.severity}/3
-                      {report.verified_by ? ` · verified by ${report.verified_by}` : ''}
-                    </p>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState title="No verified reports">
-              Unverified reports contribute exactly zero corroboration until someone verifies
-              them.
-            </EmptyState>
-          )
-        ) : null}
-
-        {evidenceTab === 'hazards' ? (
-          <HazardBulletins bulletins={hazards} zoneName={zone?.zone_name} />
-        ) : null}
+        <EvidenceBoard
+          zoneId={detail.situation.zone_id}
+          zoneName={zone?.zone_name}
+          reports={reportsQuery.data ?? []}
+          hazards={hazards}
+        />
       </Card>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card
           title="Alert timeline"
           subtitle="Every alert drafted for this situation and where it stands"
@@ -439,13 +400,6 @@ export function SituationDetailScreen() {
 
       {showScoreExplainer && latest ? (
         <ScoreExplainer assessment={latest} onClose={() => setShowScoreExplainer(false)} />
-      ) : null}
-      {selectedReport ? (
-        <FieldReportModal
-          report={selectedReport}
-          zoneName={zone?.zone_name}
-          onClose={() => setSelectedReport(null)}
-        />
       ) : null}
     </Screen>
   )
