@@ -203,16 +203,29 @@ class DBChannel:
     def enabled(self) -> bool:
         return self._enabled
 
-    def inject_news(self, zone_id: str, cycle: date, run_tag: str, index: int) -> bool:
+    def inject_news(
+        self,
+        zone_id: str,
+        cycle: date,
+        run_tag: str,
+        index: int,
+        confidence: float | None = None,
+        available_at: datetime | None = None,
+    ) -> bool:
         """Insert one news document + unconfirmed signal for a zone."""
         if not self._enabled or self._connect is None:
             return False
-        signal_type, source, title_t, body_t, confidence = random.choice(NEWS_TEMPLATES)
+        signal_type, source, title_t, body_t, template_confidence = random.choice(
+            NEWS_TEMPLATES
+        )
+        signal_confidence = (
+            template_confidence if confidence is None else max(0.0, min(1.0, confidence))
+        )
         loc = _place(zone_id)
         title = title_t.format(loc=loc)
         body = body_t.format(loc=loc)
         external_id = f"demo-pulse-{run_tag}-news-{index:04d}"
-        now = datetime.now(UTC)
+        published_at = available_at or datetime.now(UTC)
         try:
             with self._connect(self._url) as conn:
                 with conn.transaction():
@@ -225,7 +238,14 @@ class DBChannel:
                             ON CONFLICT (external_id) DO NOTHING
                             RETURNING id
                             """,
-                            (external_id, title, body, source, now, now),
+                            (
+                                external_id,
+                                title,
+                                body,
+                                source,
+                                published_at,
+                                published_at,
+                            ),
                         )
                         row = cur.fetchone()
                         if row is None:
@@ -238,13 +258,60 @@ class DBChannel:
                               excerpt, cycle
                             ) VALUES (%s, %s, %s, %s, 'unconfirmed', %s, %s)
                             """,
-                            (document_id, zone_id, signal_type, confidence, body[:280], cycle),
+                            (
+                                document_id,
+                                zone_id,
+                                signal_type,
+                                signal_confidence,
+                                body[:280],
+                                cycle,
+                            ),
                         )
             logger.info("  news  signal injected: %s (%s)", title, zone_id)
             return True
         except Exception as exc:  # noqa: BLE001
             logger.warning("  news injection failed for %s: %s", zone_id, exc)
             return False
+
+    def insert_field_report(
+        self,
+        zone_id: str,
+        reporter_role: str,
+        category: str,
+        severity: int,
+        narrative: str,
+        reported_at: datetime,
+    ) -> str | None:
+        """Insert an unverified, bitemporally positioned field report."""
+        if not self._enabled or self._connect is None:
+            return None
+        try:
+            with self._connect(self._url) as conn:
+                with conn.transaction():
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            INSERT INTO field_reports (
+                              zone_id, reporter_role, category, severity, narrative,
+                              reported_at, status, available_at
+                            ) VALUES (%s, %s, %s, %s, %s, %s, 'unverified', %s)
+                            RETURNING id
+                            """,
+                            (
+                                zone_id,
+                                reporter_role,
+                                category,
+                                severity,
+                                narrative,
+                                reported_at,
+                                reported_at,
+                            ),
+                        )
+                        row = cur.fetchone()
+            return str(row["id"]) if row else None
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("  field-report DB insert failed for %s: %s", zone_id, exc)
+            return None
 
     def point_roster_at(self, phone: str, zone_id: str | None) -> bool:
         """Make ``phone`` the single active voice recipient (deactivate the rest)
@@ -378,6 +445,23 @@ def _verify_report(client: httpx.Client, zone_id: str, narrative: str,
         pass
 
 
+def _verify_report_id(
+    client: httpx.Client,
+    zone_id: str,
+    report_id: str,
+    counters: Counters,
+) -> None:
+    try:
+        client.post(
+            f"{API}/field-reports/{report_id}/verify",
+            json={"verified_by": "demo-duty-officer"},
+        ).raise_for_status()
+        counters.verified += 1
+        logger.info("  report verified: %s (%s)", report_id[:8], zone_id)
+    except httpx.HTTPError as exc:
+        logger.warning("  report verification failed for %s: %s", zone_id, exc)
+
+
 def _draft_alert(client: httpx.Client, zone: dict[str, Any],
                  counters: Counters) -> str | None:
     situation_id = zone.get("situation_id")
@@ -464,6 +548,260 @@ def _report_deliveries(client: httpx.Client, alert_id: str, call_number: str | N
         )
 
 
+def _open_situation_naturally(
+    client: httpx.Client,
+    db: DBChannel,
+    args: argparse.Namespace,
+    run_tag: str,
+    counters: Counters,
+) -> None:
+    """Use current-cycle corroboration and the real pipeline to open a situation."""
+    if not db.enabled:
+        logger.warning(
+            "natural escalation unavailable — DB channel is disabled; "
+            "continuing with HTTP-only behavior"
+        )
+        return
+
+    try:
+        from dira_core.time import dekad_end
+        from dira_data.db import connect
+        from dira_worker.pipeline import stage_e4_e7
+        from dira_worker.settings import get_settings
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "natural escalation unavailable — worker/data packages could not load: %s",
+            exc,
+        )
+        return
+
+    try:
+        with connect(args.db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT max(cycle) AS cycle FROM assessments")
+                row = cur.fetchone()
+        cycle = row["cycle"] if row else None
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("natural escalation unavailable — could not find latest cycle: %s", exc)
+        return
+    if cycle is None:
+        logger.warning("natural escalation unavailable — no existing assessment cycle")
+        return
+    cutoff = dekad_end(cycle)
+    report_time = datetime.combine(
+        cutoff - timedelta(days=5),
+        datetime.min.time(),
+        tzinfo=UTC,
+    ).replace(hour=12)
+
+    def _run_model() -> None:
+        try:
+            with connect(args.db_url) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT zone_id, max(confidence) AS confidence
+                        FROM news_signals
+                        WHERE cycle = %s
+                        GROUP BY zone_id
+                        """,
+                        (cycle,),
+                    )
+                    corroboration = {
+                        str(row["zone_id"]): float(row["confidence"])
+                        for row in cur.fetchall()
+                    }
+                stage_e4_e7(conn, cycle, corroboration, get_settings())
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(f"model run failed for cycle {cycle}: {exc}") from exc
+
+    def _assessment(zone_id: str) -> dict[str, Any] | None:
+        with connect(args.db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT a.zone_id, a.model_risk, a.model_band, a.operational_band
+                    FROM assessments a
+                    WHERE a.zone_id = %s AND a.cycle = %s
+                    """,
+                    (zone_id, cycle),
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+
+    def _pick_target() -> dict[str, Any] | None:
+        with connect(args.db_url) as conn:
+            with conn.cursor() as cur:
+                if args.escalate_zone:
+                    cur.execute(
+                        """
+                        SELECT a.zone_id, a.model_risk, a.model_band, a.operational_band
+                        FROM assessments a
+                        WHERE a.zone_id = %s AND a.cycle = %s
+                          AND NOT EXISTS (
+                            SELECT 1
+                            FROM situations s
+                            WHERE s.zone_id = a.zone_id
+                              AND s.hazard = 'conflict_pressure'
+                              AND s.status = 'open'
+                          )
+                        """,
+                        (args.escalate_zone, cycle),
+                    )
+                    row = cur.fetchone()
+                else:
+                    cur.execute(
+                        """
+                        SELECT a.zone_id, a.model_risk, a.model_band, a.operational_band
+                        FROM assessments a
+                        WHERE a.cycle = %s
+                          AND a.model_band = 'elevated'
+                          AND NOT EXISTS (
+                            SELECT 1
+                            FROM situations s
+                            WHERE s.zone_id = a.zone_id
+                              AND s.hazard = 'conflict_pressure'
+                              AND s.status = 'open'
+                          )
+                        ORDER BY a.model_risk DESC
+                        LIMIT 1
+                        """,
+                        (cycle,),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        cur.execute(
+                            """
+                            SELECT a.zone_id, a.model_risk, a.model_band,
+                                   a.operational_band
+                            FROM assessments a
+                            WHERE a.cycle = %s
+                              AND NOT EXISTS (
+                                SELECT 1
+                                FROM situations s
+                                WHERE s.zone_id = a.zone_id
+                                  AND s.hazard = 'conflict_pressure'
+                                  AND s.status = 'open'
+                              )
+                            ORDER BY a.model_risk DESC
+                            LIMIT 1
+                            """,
+                            (cycle,),
+                        )
+                        row = cur.fetchone()
+                return dict(row) if row else None
+
+    try:
+        target = _pick_target()
+        if target is None:
+            logger.warning("natural escalation found no dormant target at cycle %s", cycle)
+            return
+        target_zone = str(target["zone_id"])
+        logger.info(
+            "natural escalation target: %s model_risk=%.3f model_band=%s "
+            "operational_band=%s",
+            target_zone,
+            float(target["model_risk"]),
+            target["model_band"],
+            target["operational_band"],
+        )
+        if args.call_number:
+            db.point_roster_at(args.call_number, target_zone)
+
+        escalation_reports = (
+            (
+                "ngo_monitor",
+                "migration_influx",
+                "Three separate monitors report violent competition at {loc} "
+                "water points; elders request immediate mediation.",
+            ),
+            (
+                "chief",
+                "pasture_dispute",
+                "Community leaders near {loc} report armed groups blocking the main "
+                "grazing corridor and households sheltering away from the route.",
+            ),
+            (
+                "water_committee",
+                "water_dispute",
+                "Field teams near {loc} confirm repeated livestock losses and rising "
+                "tension around the remaining pasture and water access.",
+            ),
+        )
+        for offset, (role, category, template) in enumerate(escalation_reports):
+            narrative = (
+                f"DP-{run_tag}-{1000 + offset:04d}: "
+                f"{template.format(loc=_place(target_zone))}"
+            )
+            report_id = db.insert_field_report(
+                target_zone,
+                role,
+                category,
+                3,
+                narrative,
+                report_time,
+            )
+            if report_id:
+                counters.reports += 1
+                logger.info(
+                    "  report filed: %s [%s sev3] (%s; available=%s)",
+                    category,
+                    role,
+                    target_zone,
+                    report_time.date(),
+                )
+                _verify_report_id(client, target_zone, report_id, counters)
+        if db.inject_news(
+            target_zone,
+            cycle,
+            run_tag,
+            1000,
+            confidence=0.8,
+            available_at=report_time,
+        ):
+            counters.news += 1
+        logger.info("natural escalation: corroborating data fed; running model")
+        _run_model()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("natural escalation failed — continuing without escalation: %s", exc)
+        return
+
+    feature = next(
+        (
+            feature
+            for feature in client.get(f"{API}/map/situations").json().get("features", [])
+            if feature.get("properties", {}).get("zone_id") == target_zone
+        ),
+        None,
+    )
+    properties = feature.get("properties", {}) if feature else {}
+    situation_id = properties.get("situation_id")
+    if situation_id:
+        logger.info(
+            "SITUATION OPENED naturally at %s — operational_band=%s, "
+            "now rendered on the map",
+            target_zone,
+            properties.get("operational_band"),
+        )
+        alert_id = _draft_alert(client, properties, counters)
+        if alert_id and args.dispatch:
+            _approve_and_dispatch(
+                client, alert_id, target_zone, args.call_number, counters
+            )
+        return
+
+    latest = _assessment(target_zone)
+    model_risk = latest.get("model_risk") if latest else "unknown"
+    operational_band = latest.get("operational_band") if latest else "unknown"
+    logger.warning(
+        "natural escalation did not open a situation at %s — model_risk=%s "
+        "operational_band=%s",
+        target_zone,
+        model_risk,
+        operational_band,
+    )
+
+
 # ---------------------------------------------------------------------------
 # One tick of the continuous feed: touches every data flow.
 # ---------------------------------------------------------------------------
@@ -535,6 +873,10 @@ def main() -> None:
                              "runs DISPATCH_MODE=twilio)")
     parser.add_argument("--no-news", action="store_true",
                         help="skip news-signal injection (pure HTTP mode)")
+    parser.add_argument("--escalate", action="store_true",
+                        help="naturally open a new situation from corroborating data")
+    parser.add_argument("--escalate-zone", metavar="ZONE_ID",
+                        help="zone to escalate (default: highest-risk dormant zone)")
     parser.add_argument("--db-url", default=os.environ.get("DATABASE_URL"),
                         help="Postgres URL for news/roster writes (default $DATABASE_URL)")
     parser.add_argument("--seed", type=int, default=None,
@@ -580,9 +922,11 @@ def main() -> None:
 
         tick = 0
         try:
-            if args.once:
+            if args.escalate:
+                _open_situation_naturally(client, db, args, run_tag, counters)
+            if args.once and not args.escalate:
                 _tick(client, db, tick, run_tag, args, counters, state)
-            else:
+            elif not args.once:
                 while True:
                     _tick(client, db, tick, run_tag, args, counters, state)
                     tick += 1
