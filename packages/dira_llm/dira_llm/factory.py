@@ -21,6 +21,8 @@ def get_language_model(
     openai_api_key: str | None = None,
     anthropic_api_key: str | None = None,
 ) -> LanguageModel:
+    if os.environ.get("DATA_MODE", "seeded") != "live":
+        return CannedResponseAdapter()
     openai_key = openai_api_key or os.environ.get("OPENAI_API_KEY")
     if openai_key:
         try:

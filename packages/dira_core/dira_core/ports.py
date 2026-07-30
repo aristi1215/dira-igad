@@ -89,6 +89,29 @@ class LanguageModel(Protocol):
     def complete_json(self, prompt: str, *, system: str | None = None) -> dict[str, Any]: ...
 
 
+@dataclass(frozen=True)
+class ToolCall:
+    name: str
+    arguments: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ToolTurn:
+    text: str
+    tool_calls: tuple[ToolCall, ...]
+
+
+@runtime_checkable
+class ToolCallingLanguageModel(Protocol):
+    def complete_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        *,
+        system: str | None = None,
+    ) -> ToolTurn: ...
+
+
 @runtime_checkable
 class EmbeddingModel(Protocol):
     dimensions: int

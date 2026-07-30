@@ -7,6 +7,7 @@ import os
 from collections.abc import Iterator
 from typing import Any
 
+from dira_core.ports import ToolCall, ToolTurn
 from openai import OpenAI
 
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -75,3 +76,49 @@ class OpenAIAdapter:
         if not isinstance(parsed, dict):
             raise ValueError("Model did not return a JSON object")
         return parsed
+
+    def complete_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        *,
+        system: str | None = None,
+    ) -> ToolTurn:
+        request_messages: list[dict[str, Any]] = []
+        if system:
+            request_messages.append({"role": "system", "content": system})
+        for message in messages:
+            if message.get("role") == "assistant" and message.get("tool_calls"):
+                request_messages.append(
+                    {
+                        **message,
+                        "tool_calls": [
+                            {
+                                "id": call["id"],
+                                "type": "function",
+                                "function": {
+                                    "name": call["name"],
+                                    "arguments": json.dumps(call["arguments"]),
+                                },
+                            }
+                            for call in message["tool_calls"]
+                        ],
+                    }
+                )
+            else:
+                request_messages.append(message)
+        response = self.client.chat.completions.create(
+            model=self.model,
+            max_tokens=1000,
+            messages=request_messages,  # type: ignore[arg-type]
+            tools=tools,  # type: ignore[arg-type]
+        )
+        message = response.choices[0].message
+        calls = tuple(
+            ToolCall(
+                name=call.function.name,
+                arguments=json.loads(call.function.arguments or "{}"),
+            )
+            for call in (message.tool_calls or [])
+        )
+        return ToolTurn(text=message.content or "", tool_calls=calls)

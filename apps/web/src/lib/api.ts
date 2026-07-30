@@ -1,6 +1,7 @@
 import type {
   AdvisorCitation,
   AdvisorResponse,
+  AdvisorProposal,
   Alert,
   AlertDraftResponse,
   AnalyticsOverview,
@@ -192,11 +193,16 @@ export function askAdvisor(
 /** Events the advisor stream emits, in the order they arrive. */
 export type AdvisorStreamHandlers = {
   /** A retrieval tool finished. Fires once per tool, in real execution order. */
-  onTool?: (name: string) => void
+  onTool?: (name: string, args?: Record<string, unknown>) => void
+  onProposal?: (proposal: AdvisorProposal) => void
   onConversation?: (conversationId: string) => void
   /** A slice of the answer. One call when the provider cannot stream. */
   onDelta?: (text: string) => void
-  onDone?: (payload: { citations?: AdvisorCitation[]; tools_used?: string[] }) => void
+  onDone?: (payload: {
+    citations?: AdvisorCitation[]
+    tools_used?: string[]
+    proposals?: AdvisorProposal[]
+  }) => void
   onError?: (message: string) => void
 }
 
@@ -255,7 +261,17 @@ export async function streamAdvisor(
 
     switch (event) {
       case 'tool':
-        if (typeof payload.name === 'string') options.onTool?.(payload.name)
+        if (typeof payload.name === 'string') {
+          options.onTool?.(
+            payload.name,
+            typeof payload.args === 'object' && payload.args !== null
+              ? (payload.args as Record<string, unknown>)
+              : undefined,
+          )
+        }
+        break
+      case 'proposal':
+        options.onProposal?.(payload as unknown as AdvisorProposal)
         break
       case 'conversation':
         if (typeof payload.conversation_id === 'string') {

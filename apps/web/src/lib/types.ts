@@ -180,6 +180,15 @@ export type AdvisorResponse = {
   citations?: AdvisorCitation[]
   tools_used?: string[]
   conversation_id?: string
+  proposals?: AdvisorProposal[]
+}
+
+export type AdvisorProposal = {
+  type: 'verify-field-report' | 'alert-draft'
+  report_id?: string
+  situation_id?: string
+  reason?: string
+  language?: string
 }
 
 export type AdvisorCitation = {

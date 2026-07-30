@@ -20,6 +20,7 @@ import { cx } from '../../lib/cx'
 import { T } from '../../lib/motion'
 import { useAdvisorStore } from './advisorStore'
 import { renderMarkish } from './markish'
+import { ProposalCard } from './ProposalCard'
 
 /** Human labels for the retrieval tools the backend actually names. */
 const TOOL_LABELS: Record<string, string> = {
@@ -89,6 +90,8 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
   const addTurn = useAdvisorStore((state) => state.addTurn)
   const appendToLast = useAdvisorStore((state) => state.appendToLast)
   const finishLast = useAdvisorStore((state) => state.finishLast)
+  const addProposalToLast = useAdvisorStore((state) => state.addProposalToLast)
+  const dismissProposal = useAdvisorStore((state) => state.dismissProposal)
   const setConversationId = useAdvisorStore((state) => state.setConversationId)
   const consumeSeed = useAdvisorStore((state) => state.consumeSeed)
 
@@ -113,6 +116,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
       conversationId,
       signal: controller.signal,
       onTool: (name) => setActiveTools((current) => [...current, name]),
+      onProposal: addProposalToLast,
       onConversation: setConversationId,
       onDelta: (text) => appendToLast(text),
       onDone: (payload) => {
@@ -270,6 +274,13 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
                   {turn.citations && turn.citations.length > 0 ? (
                     <Citations citations={turn.citations} />
                   ) : null}
+                  {turn.proposals?.map((proposal, proposalIndex) => (
+                    <ProposalCard
+                      key={`${proposal.type}-${proposal.report_id ?? proposal.situation_id ?? proposalIndex}`}
+                      proposal={proposal}
+                      onDismiss={() => dismissProposal(proposal)}
+                    />
+                  ))}
                 </div>
               ) : (
                 <p className="leading-relaxed whitespace-pre-wrap">{turn.text}</p>
@@ -362,7 +373,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
         <div className="mt-2 flex items-center justify-between gap-2">
           <span className="flex items-center gap-1 text-2xs text-faint">
             <Radar size={11} strokeWidth={1.75} aria-hidden />
-            Read-only · cannot approve or dispatch
+            Can suggest actions · only you can approve or dispatch
           </span>
         </div>
         {error ? (

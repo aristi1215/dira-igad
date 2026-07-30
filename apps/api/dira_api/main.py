@@ -10,6 +10,7 @@ from typing import Any
 from uuid import UUID
 
 from dira_core.alerts import derive_idempotency_key
+from dira_core.ports import ToolCallingLanguageModel
 from dira_data.db import connect
 from dira_data.economy import get_economy_source
 from dira_data.retrieval import search_corpus
@@ -25,10 +26,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from dira_api.advisor_tools import TOOL_HANDLERS, TOOL_SPECS
 from dira_api.context_routes import router as context_router
 from dira_api.settings import Settings, get_settings
 
 logger = logging.getLogger("dira.api")
+MAX_TOOL_ROUNDS = 5
 
 app = FastAPI(
     title="Dira API",
@@ -611,6 +614,142 @@ def _advisor_persist(
             )
 
 
+def _advisor_persist_tool_message(
+    conn: Any,
+    conversation_id: Any,
+    *,
+    role: str,
+    content: str,
+    tool_name: str | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO advisor_messages (
+                  conversation_id, role, content, tool_name, citations
+                ) VALUES (%s, %s, %s, %s, %s::jsonb)
+                """,
+                (
+                    conversation_id,
+                    role,
+                    content,
+                    tool_name,
+                    json.dumps(metadata or {}, default=str),
+                ),
+            )
+
+
+def _advisor_tool_loop(
+    conn: Any,
+    conversation_id: Any,
+    history: list[dict[str, Any]],
+    context: dict[str, Any],
+    citations: list[dict[str, Any]],
+    tools: list[str],
+    question: str,
+    *,
+    on_tool: Any = None,
+    on_proposal: Any = None,
+) -> tuple[str, list[dict[str, Any]]]:
+    """Run at most five model/tool rounds, with proposal results kept inert."""
+    llm = _language_model()
+    prompt = _advisor_prompt(history, context, tools, question)
+    messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+    proposals: list[dict[str, Any]] = []
+    answer = ""
+
+    if not isinstance(llm, ToolCallingLanguageModel):
+        try:
+            answer = llm.complete(prompt, system=ADVISOR_SYSTEM)
+        except Exception:
+            logger.exception("Advisor LLM failed; deterministic fallback")
+        return answer or _advisor_fallback(context), proposals
+
+    for _round in range(MAX_TOOL_ROUNDS):
+        # The model and embedding adapters are called only after the preceding
+        # DB read/write transaction has been closed.
+        conn.commit()
+        try:
+            turn = llm.complete_with_tools(messages, TOOL_SPECS, system=ADVISOR_SYSTEM)
+        except Exception:
+            logger.exception("Advisor tool-calling round failed")
+            break
+        if turn.text:
+            answer = turn.text
+        if not turn.tool_calls:
+            break
+
+        serialized_calls: list[dict[str, Any]] = []
+        for index, call in enumerate(turn.tool_calls):
+            call_id = f"advisor-tool-{_round}-{index}"
+            serialized_calls.append(
+                {"id": call_id, "name": call.name, "arguments": call.arguments}
+            )
+        messages.append(
+            {
+                "role": "assistant",
+                "content": turn.text,
+                "tool_calls": serialized_calls,
+            }
+        )
+        _advisor_persist_tool_message(
+            conn,
+            conversation_id,
+            role="assistant",
+            content=turn.text or "",
+            tool_name=turn.tool_calls[0].name,
+            metadata={"tool_calls": serialized_calls},
+        )
+
+        for index, call in enumerate(turn.tool_calls):
+            call_id = f"advisor-tool-{_round}-{index}"
+            args = dict(call.arguments)
+            handler = TOOL_HANDLERS.get(call.name)
+            if handler is None:
+                result: dict[str, Any] = {"error": "Unknown advisor tool"}
+            else:
+                if call.name == "search_corpus":
+                    conn.commit()
+                    args["_query_embedding"] = get_embedding_model().embed(
+                        [str(args.get("query", question))]
+                    )[0]
+                    args["_cutoff"] = datetime.now(UTC)
+                try:
+                    result = handler(conn, args)
+                except Exception:
+                    logger.exception("Advisor tool failed: %s", call.name)
+                    result = {"error": "The advisor tool could not complete."}
+            conn.commit()
+            tools.append(call.name)
+            if on_tool is not None:
+                on_tool(call.name, call.arguments)
+            if result.get("type") in {"verify-field-report", "alert-draft"}:
+                proposals.append(result)
+                if on_proposal is not None:
+                    on_proposal(result)
+            result_text = json.dumps(result, default=str)
+            messages.append(
+                {"role": "tool", "tool_call_id": call_id, "content": result_text}
+            )
+            _advisor_persist_tool_message(
+                conn,
+                conversation_id,
+                role="tool",
+                content=result_text,
+                tool_name=call.name,
+                metadata={"arguments": call.arguments, "result": result},
+            )
+
+    if not answer:
+        answer = (
+            "I reviewed the available grounded context. The suggested next step "
+            "is ready for your decision."
+        )
+    return answer, proposals
+
+
 @app.post("/advisor")
 def advisor(body: AdvisorBody) -> dict[str, Any]:
     """Grounded advisor: retrieval tools + multi-turn history + citations.
@@ -618,17 +757,15 @@ def advisor(body: AdvisorBody) -> dict[str, Any]:
     with connect(_settings().database_url) as conn:
         context, citations, tools = _advisor_gather(conn, body)
         conversation_id, history = _advisor_open_turn(conn, body)
-
-        prompt = _advisor_prompt(history, context, tools, body.question)
-        llm = _language_model()
-        answer: str | None = None
-        if not isinstance(llm, CannedResponseAdapter):
-            try:
-                answer = llm.complete(prompt, system=ADVISOR_SYSTEM)
-            except Exception:
-                logger.exception("Advisor LLM failed; deterministic fallback")
-        if not answer:
-            answer = _advisor_fallback(context)
+        answer, proposals = _advisor_tool_loop(
+            conn,
+            conversation_id,
+            history,
+            context,
+            citations,
+            tools,
+            body.question,
+        )
 
         _advisor_persist(conn, conversation_id, answer, citations)
 
@@ -637,6 +774,7 @@ def advisor(body: AdvisorBody) -> dict[str, Any]:
         "context": context,
         "citations": citations,
         "tools_used": tools,
+        "proposals": proposals,
         "conversation_id": str(conversation_id),
     }
 
@@ -678,31 +816,33 @@ def advisor_stream(body: AdvisorBody) -> StreamingResponse:
                 conversation_id, history = _advisor_open_turn(conn, body)
                 yield emit("conversation", {"conversation_id": str(conversation_id)})
 
-                prompt = _advisor_prompt(history, context, tools, body.question)
-                llm = _language_model()
+                def on_tool(name: str, args: dict[str, Any]) -> None:
+                    yield_queue.append(("tool", {"name": name, "args": args}))
 
-                chunks: list[str] = []
-                if not isinstance(llm, CannedResponseAdapter):
-                    try:
-                        if hasattr(llm, "stream"):
-                            for delta in llm.stream(prompt, system=ADVISOR_SYSTEM):
-                                chunks.append(delta)
-                                yield emit("delta", {"text": delta})
-                        else:
-                            whole = llm.complete(prompt, system=ADVISOR_SYSTEM)
-                            if whole:
-                                chunks.append(whole)
-                                yield emit("delta", {"text": whole})
-                    except Exception:
-                        logger.exception("Advisor stream failed; deterministic fallback")
+                def on_proposal(proposal: dict[str, Any]) -> None:
+                    yield_queue.append(("proposal", proposal))
 
-                answer = "".join(chunks)
-                if not answer:
-                    answer = _advisor_fallback(context)
-                    yield emit("delta", {"text": answer})
+                yield_queue: list[tuple[str, dict[str, Any]]] = []
+                answer, proposals = _advisor_tool_loop(
+                    conn,
+                    conversation_id,
+                    history,
+                    context,
+                    citations,
+                    tools,
+                    body.question,
+                    on_tool=on_tool,
+                    on_proposal=on_proposal,
+                )
+                for event_name, payload in yield_queue:
+                    yield emit(event_name, payload)
+                yield emit("delta", {"text": answer})
 
                 _advisor_persist(conn, conversation_id, answer, citations)
-                yield emit("done", {"citations": citations, "tools_used": tools})
+                yield emit(
+                    "done",
+                    {"citations": citations, "tools_used": tools, "proposals": proposals},
+                )
         except Exception:
             logger.exception("Advisor stream aborted")
             yield emit("error", {"message": "The advisor could not answer."})

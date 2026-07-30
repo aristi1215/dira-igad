@@ -6,6 +6,8 @@ import json
 import re
 from typing import Any
 
+from dira_core.ports import ToolCall, ToolTurn
+
 
 class CannedResponseAdapter:
     """Return stable JSON for signal extraction and do-no-harm alert drafting."""
@@ -35,6 +37,66 @@ class CannedResponseAdapter:
                 ),
             }
         return {"signals": self._signals(prompt)}
+
+    def complete_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        *,
+        system: str | None = None,
+    ) -> ToolTurn:
+        """Deterministic proposal examples for seeded advisor demonstrations."""
+        text = " ".join(str(message.get("content", "")) for message in messages)
+        lower = text.lower()
+        if any(message.get("role") == "tool" for message in messages):
+            return ToolTurn(
+                text="I reviewed that result. The suggested next step is ready for your decision.",
+                tool_calls=(),
+            )
+        report_match = re.search(
+            r"(?:verify|vouch for|check)\D+([0-9a-f]{8}-[0-9a-f-]{27,})",
+            text,
+            re.IGNORECASE,
+        )
+        situation_match = re.search(
+            r"(?:draft|prepare).{0,30}(?:alert|warning)\D+"
+            r"([0-9a-f]{8}-[0-9a-f-]{27,})",
+            text,
+            re.IGNORECASE,
+        )
+        if report_match and "verify" in lower:
+            return ToolTurn(
+                text="I can suggest verification of that field report for your review.",
+                tool_calls=(
+                    ToolCall(
+                        name="propose_verify_field_report",
+                        arguments={
+                            "report_id": report_match.group(1),
+                            "reason": "The operator asked to review this field report.",
+                        },
+                    ),
+                ),
+            )
+        if situation_match and "alert" in lower:
+            return ToolTurn(
+                text="I can suggest an alert draft for your review.",
+                tool_calls=(
+                    ToolCall(
+                        name="propose_alert_draft",
+                        arguments={
+                            "situation_id": situation_match.group(1),
+                            "language": "sw",
+                        },
+                    ),
+                ),
+            )
+        return ToolTurn(
+            text=(
+                "I reviewed the grounded situation context. I can explain the evidence "
+                "or suggest a next step for you to decide."
+            ),
+            tool_calls=(),
+        )
 
     def _signals(self, prompt: str) -> list[dict[str, Any]]:
         zone_ids = _relevant_zone_ids(prompt)

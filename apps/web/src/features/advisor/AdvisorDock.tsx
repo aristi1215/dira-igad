@@ -57,7 +57,7 @@ export function AdvisorDock({
               <div className="min-w-0">
                 <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Ask Dira</h2>
                 <p className="mt-0.5 text-xs text-faint">
-                  Grounded and read-only — it can never approve or dispatch.
+                  Grounded suggestions only — you decide what to approve or dispatch.
                 </p>
               </div>
               <div className="flex items-center gap-1">
