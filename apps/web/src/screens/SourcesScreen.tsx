@@ -241,12 +241,18 @@ export function SourcesScreen() {
             />
           </StatRow>
 
+          {/*
+            The label and the note were flex siblings, so the note was one
+            unwrappable flex item and a two-line paragraph ran off the right
+            edge of the callout. The note is ordinary prose now, with the
+            label inline in it.
+          */}
           <Callout tone="info" className="mb-5" icon={Radio}>
-            <span className="flex flex-wrap items-center gap-1.5">
-              <Term term="frozen snapshot">What we knew at the time</Term>
-              {data.bitemporal_note}
+            <p className="min-w-0 leading-relaxed">
+              <Term term="frozen snapshot">What we knew at the time</Term>{' '}
+              {data.bitemporal_note}{' '}
               <InfoHint content={glossaryEntry('frozen snapshot')?.explanation} />
-            </span>
+            </p>
           </Callout>
 
           {/*

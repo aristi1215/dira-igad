@@ -208,7 +208,9 @@ export function ZonesScreen() {
             selected={bandFilter}
             onSelect={setBandFilter}
           />
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {/* mt-auto: the hero beside this card is taller, so the counts sit
+              on the baseline of the row rather than leaving it half empty. */}
+          <div className="mt-auto grid grid-cols-2 gap-4 pt-8 sm:grid-cols-4">
             <div><Eyebrow>Zones</Eyebrow><p className="mt-1 text-2xl font-semibold tabular-nums">{zones.length}</p></div>
             <div><Eyebrow>High+</Eyebrow><p className="mt-1 text-2xl font-semibold tabular-nums">{attentionZones.length}</p></div>
             <div><Eyebrow>Filtered</Eyebrow><p className="mt-1 text-2xl font-semibold tabular-nums">{filtered.length}</p></div>
@@ -217,7 +219,7 @@ export function ZonesScreen() {
         </BentoCard>
 
         <BentoCard span={2} tone="inverse" eyebrow="Priority signal" title="Needs attention now">
-          <p className="text-4xl font-semibold tabular-nums">{attentionZones.length}</p>
+          <p className="text-metric font-semibold tabular-nums">{attentionZones.length}</p>
           <ul className="mt-4 flex flex-col gap-1 text-sm text-muted">
             {attentionZones.slice(0, 4).map((zone) => <li key={zone.zone_id}>{zone.zone_name}</li>)}
             {attentionZones.length > 4 ? <li className="text-xs text-faint">+{attentionZones.length - 4} more</li> : null}

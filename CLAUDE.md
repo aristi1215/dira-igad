@@ -130,13 +130,23 @@ the dark-mode sun/moon toggle, the single SSE EventSource, the advisor `Sheet`, 
 `src/layouts/AppLayout.tsx`, and the five chart-heavy screens are `React.lazy`-loaded so the map
 route does not pay for recharts.
 
-Type is **Inter + JetBrains Mono**. Every screen composes the `Bento` primitive
-(`BentoGrid`/`BentoCard`/`BentoSpan`, `src/components/ui/Bento.tsx`); motion uses `motion/react`
-(never `framer-motion`) with tokens in `src/lib/motion.ts` (`EASE`; panel/spotlight spring
-`stiffness 380 / damping 32`). Dates use the shared `DateStamp` treatment. **Dark mode** (D-022) is a
-`@custom-variant dark` + `html.dark` semantic-token override, persisted via `stores/theme.ts` with an
-OS fallback and a pre-paint init script in `index.html`; band/IPC palettes are NOT redefined in dark
-and stay byte-identical (guarded by `lib/tokens.test.ts`).
+Type is **Geist and nothing else** (Google Fonts). There is deliberately **no monospaced family** —
+numerals are set in Geist with `tabular-nums`, and `--font-mono` is aliased to the sans stack so a
+stray `font-mono` cannot fall through to Tailwind's default. Because Preflight is off, `@layer base`
+sets `font-family` on `html` **explicitly**; without that line the whole app renders in the UA serif.
+
+Every screen composes the `Bento` primitive (`BentoGrid`/`BentoCard`/`BentoSpan`,
+`src/components/ui/Bento.tsx`); motion uses `motion/react` (never `framer-motion`) with tokens in
+`src/lib/motion.ts` (`EASE`; panel/spotlight spring `stiffness 380 / damping 32`). Dates use the
+shared `DateStamp` treatment. **Dark mode** (D-022) is a `@custom-variant dark` + `html.dark`
+semantic-token override, persisted via `stores/theme.ts` with an OS fallback and a pre-paint init
+script in `index.html`; band/IPC palettes are NOT redefined in dark and stay byte-identical (guarded
+by `lib/tokens.test.ts`).
+
+`cx` (`src/lib/cx.ts`) is a **configured tailwind-merge**, not a join: it resolves same-property
+conflicts so a `className` prop actually overrides a primitive's own utility. Every custom token
+outside a Tailwind namespace needs a `classGroups` entry — an unrecognised `text-*` is read as a
+*color* and would silently drop `text-eyebrow`. `cx.test.ts` guards it.
 
 `App.css` has been **deleted** (D-021) — all styling is Tailwind utilities; do not reintroduce it.
 
@@ -146,12 +156,29 @@ Styling is **Tailwind v4**, configured entirely in `src/index.css`. Two things t
   *into* the `vendor` layer. Unlayered CSS beats every layered rule regardless of specificity, so an
   unlayered `.maplibregl-map { position: relative }` silently overrides Tailwind's `absolute` and
   collapses the map container to zero height.
-- **Preflight is disabled**; `@layer base` in `index.css` supplies a minimal stand-in. Consequence:
-  always write `border border-line`, never a bare `border`.
+- **Preflight is disabled**; `@layer base` in `index.css` supplies a minimal stand-in. Consequences:
+  always write `border border-line`, never a bare `border`; and the stand-in must set
+  `font-family` on `html` itself, because nothing else will.
+- **Tailwind v4 has no `--z-*` theme namespace.** Declaring `--z-drawer: 45` in `@theme` publishes
+  the custom property but generates no class. The named layers are therefore declared with explicit
+  `@utility z-<name>` rules against those tokens, and `lib/zScale.test.ts` asserts the two lists stay
+  in step. The same caveat applies to any future scale outside Tailwind's own namespaces.
 
 > **Variable class names must come from an explicit `Record<K, string>` of full literal class
 > names** (see `components/ui/Chips.tsx`). Tailwind's scanner cannot see `` `bg-band-${band}` `` and
 > the class simply never gets generated — it fails silently, with no build error.
+>
+> The general lesson: this codebase has shipped several classes that generate **no CSS at all**. When
+> a style mysteriously does nothing, `npm run build` and grep `dist/assets/*.css` for the selector
+> before assuming a specificity problem.
+
+Band and IPC fills are theme-invariant by design, so the ink on them must be too: use `bandInk` /
+`ipcInk` from `lib/format.ts`, never the semantic `text-ink`, which inverts in dark mode.
+Chart *chrome* (gridlines, axis ink, empty cells) is the opposite — it carries no meaning and must
+follow the theme, so it lives in `lib/chartChrome.ts` and is read per render via `useChartChrome()`.
+`BentoCard tone="inverse"` is the one hero tile per screen; it applies `.tone-inverse`, which
+re-points the semantic tokens for its subtree so ordinary `text-muted`/`border-line` descendants work
+inside it unchanged.
 
 Primitives live in `src/components/ui/` (Button, Field/Select, Tabs, DataTable, Skeleton, Tooltip,
 Sheet, Meter, Stat, Card, Chips, Callout, Bento, DateStamp, Eyebrow). Band/IPC palettes are

@@ -122,7 +122,7 @@
   --text-eyebrow--letter-spacing: 0.06em;
   --text-eyebrow--font-weight: 600;
 
-  /* Numbers only. Paired with font-mono + tabular-nums at the call site. */
+  /* Numbers only. Paired with `tabular-nums` at the call site. */
   --text-metric: 2rem;
   --text-metric--line-height: 1;
   --text-metric--letter-spacing: -0.02em;
