@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 import { cx } from '../../lib/cx'
 import { Skeleton } from './Skeleton'
 import { EmptyState } from './Notes'
+import { Eyebrow } from './Card'
 
 export type Column<T> = {
   key: string
@@ -99,7 +100,7 @@ export function DataTable<T>({
                   style={column.width ? { width: column.width } : undefined}
                   aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   className={cx(
-                    'font-condensed px-3 py-2 text-2xs font-semibold tracking-[0.09em] text-muted uppercase',
+                    'px-5 py-2',
                     column.align === 'right' ? 'text-right' : 'text-left',
                     column.secondary && 'hidden lg:table-cell',
                   )}
@@ -114,11 +115,11 @@ export function DataTable<T>({
                         active && 'text-ink',
                       )}
                     >
-                      {column.header}
+                      <Eyebrow>{column.header}</Eyebrow>
                       <SortIcon size={12} strokeWidth={2} aria-hidden className={cx(!active && 'opacity-40')} />
                     </button>
                   ) : (
-                    column.header
+                    <Eyebrow>{column.header}</Eyebrow>
                   )}
                 </th>
               )
@@ -146,7 +147,7 @@ export function DataTable<T>({
                 className={cx(
                   'border-b border-line last:border-b-0',
                   'transition-colors duration-[120ms] ease-standard',
-                  onRowClick && 'cursor-pointer hover:bg-accent-soft focus-visible:bg-accent-soft',
+                  onRowClick && 'cursor-pointer hover:bg-surface-2 focus-visible:bg-surface-2',
                 )}
                 style={accent ? { boxShadow: `inset 3px 0 0 ${accent}` } : undefined}
               >
@@ -154,7 +155,7 @@ export function DataTable<T>({
                   <td
                     key={column.key}
                     className={cx(
-                      'px-3 py-2.5 text-ink',
+                      'px-5 py-3 text-ink',
                       column.align === 'right' ? 'text-right tabular-nums' : 'text-left',
                       column.secondary && 'hidden lg:table-cell',
                     )}

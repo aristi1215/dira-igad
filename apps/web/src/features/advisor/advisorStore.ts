@@ -1,11 +1,12 @@
 import { create } from 'zustand'
-import type { AdvisorCitation } from '../../lib/types'
+import type { AdvisorCitation, AdvisorProposal } from '../../lib/types'
 
 export type AdvisorTurn = {
   role: 'user' | 'assistant'
   text: string
   citations?: AdvisorCitation[]
   tools?: string[]
+  proposals?: AdvisorProposal[]
 }
 
 type AdvisorState = {
@@ -30,6 +31,8 @@ type AdvisorState = {
   /** Append streamed text onto the last assistant turn. */
   appendToLast: (text: string) => void
   finishLast: (patch: Partial<AdvisorTurn>) => void
+  addProposalToLast: (proposal: AdvisorProposal) => void
+  dismissProposal: (proposal: AdvisorProposal) => void
   setConversationId: (id: string) => void
   reset: () => void
 }
@@ -77,6 +80,31 @@ export const useAdvisorStore = create<AdvisorState>((set, get) => ({
       turns[turns.length - 1] = { ...last, ...patch }
       return { turns }
     }),
+
+  addProposalToLast: (proposal) =>
+    set((state) => {
+      const turns = [...state.turns]
+      const last = turns[turns.length - 1]
+      if (!last || last.role !== 'assistant') return state
+      turns[turns.length - 1] = {
+        ...last,
+        proposals: [...(last.proposals ?? []), proposal],
+      }
+      return { turns }
+    }),
+
+  dismissProposal: (proposal) =>
+    set((state) => ({
+      turns: state.turns.map((turn) => ({
+        ...turn,
+        proposals: turn.proposals?.filter(
+          (candidate) =>
+            candidate.type !== proposal.type ||
+            candidate.report_id !== proposal.report_id ||
+            candidate.situation_id !== proposal.situation_id,
+        ),
+      })),
+    })),
 
   setConversationId: (conversationId) => set({ conversationId }),
 

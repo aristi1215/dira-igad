@@ -15,10 +15,12 @@ type MapUiState = {
   hoveredZoneId: string | null
   /** Null means no filter. Otherwise only these bands are shown. */
   bandFilter: Set<OperationalBand> | null
+  showHazards: boolean
   setViewport: (viewport: Viewport) => void
   setHoveredZoneId: (id: string | null) => void
   toggleBand: (band: OperationalBand) => void
   resetBands: () => void
+  toggleHazards: () => void
 }
 
 const ALL_BANDS: OperationalBand[] = ['very_high', 'high', 'elevated', 'watch', 'low']
@@ -31,6 +33,7 @@ export const useMapUiStore = create<MapUiState>((set) => ({
   },
   hoveredZoneId: null,
   bandFilter: null,
+  showHazards: true,
   setViewport: (viewport) => set({ viewport }),
   setHoveredZoneId: (hoveredZoneId) => set({ hoveredZoneId }),
   toggleBand: (band) =>
@@ -52,4 +55,5 @@ export const useMapUiStore = create<MapUiState>((set) => ({
       return { bandFilter: next }
     }),
   resetBands: () => set({ bandFilter: null }),
+  toggleHazards: () => set((state) => ({ showHazards: !state.showHazards })),
 }))

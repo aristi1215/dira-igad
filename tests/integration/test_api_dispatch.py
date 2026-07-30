@@ -47,6 +47,177 @@ def test_human_gate_unbypassable(api_client: TestClient, db_conn, make_alert) ->
         assert cur.fetchone()["status"] == "pending_approval"
 
 
+def test_recipient_validation_and_soft_delete(
+    api_client: TestClient,
+    db_conn,
+    first_zone_id: str,
+) -> None:
+    invalid = api_client.post(
+        "/recipients",
+        json={
+            "name": "Invalid",
+            "zone_id": first_zone_id,
+            "phone_e164": "0700000000",
+            "language": "sw",
+            "channel": "voice",
+        },
+    )
+    assert invalid.status_code == 422
+
+    created = api_client.post(
+        "/recipients",
+        json={
+            "name": "Integration recipient",
+            "zone_id": first_zone_id,
+            "phone_e164": "+254700000099",
+            "language": "sw",
+            "channel": "sms",
+        },
+    )
+    assert created.status_code == 200
+    recipient_id = created.json()["id"]
+
+    deleted = api_client.delete(f"/recipients/{recipient_id}")
+    assert deleted.status_code == 200
+    assert deleted.json()["active"] is False
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT active FROM recipients WHERE id = %s", (recipient_id,))
+        assert cur.fetchone()["active"] is False
+
+
+@pytest.mark.parametrize("status", ["approved", "dispatching"])
+def test_alert_edit_requires_pending_approval(
+    api_client: TestClient,
+    make_alert,
+    status: str,
+) -> None:
+    alert_id = make_alert(status=status)
+    response = api_client.patch(
+        f"/alerts/{alert_id}",
+        json={"body_text": "Edited alert", "language": "sw"},
+    )
+    assert response.status_code == 409
+
+
+def test_alert_edit_pending_approval(api_client: TestClient, make_alert) -> None:
+    alert_id = make_alert(status="pending_approval")
+    response = api_client.patch(
+        f"/alerts/{alert_id}",
+        json={"body_text": "Edited alert", "language": "en"},
+    )
+    assert response.status_code == 200
+    assert response.json()["body_text"] == "Edited alert"
+    assert response.json()["language"] == "en"
+
+
+def test_advisor_dispatch_is_human_gated_and_queues_direct_numbers(
+    api_client: TestClient,
+    db_conn,
+    make_situation,
+) -> None:
+    situation_id = make_situation()
+    with db_conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) AS count FROM deliveries WHERE alert_id IN "
+            "(SELECT id FROM alerts WHERE situation_id = %s)",
+            (situation_id,),
+        )
+        assert int(cur.fetchone()["count"]) == 0
+
+    response = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["+254700000091", "+254700000092"],
+            "channel": "voice",
+            "approved_by": "Named operator",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "approved"
+    assert payload["approved_by"] == "Named operator"
+    assert payload["deliveries"] == 2
+
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT a.status AS alert_status, a.approved_by,
+                   d.status AS delivery_status, r.phone_e164
+            FROM alerts a
+            JOIN deliveries d ON d.alert_id = a.id
+            JOIN recipients r ON r.id = d.recipient_id
+            WHERE a.id = %s
+            ORDER BY r.phone_e164
+            """,
+            (payload["alert_id"],),
+        )
+        rows = cur.fetchall()
+    assert len(rows) == 2
+    assert {row["phone_e164"] for row in rows} == {"+254700000091", "+254700000092"}
+    assert all(row["alert_status"] == "approved" for row in rows)
+    assert all(row["delivery_status"] == "queued" for row in rows)
+
+
+def test_advisor_dispatch_expands_both_channel(
+    api_client: TestClient,
+    db_conn,
+    make_situation,
+) -> None:
+    situation_id = make_situation()
+    response = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["+254700000093"],
+            "channel": "both",
+            "approved_by": "Named operator",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["deliveries"] == 2
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT d.channel, d.status
+            FROM deliveries d
+            WHERE d.alert_id = %s
+            ORDER BY d.channel
+            """,
+            (response.json()["alert_id"],),
+        )
+        assert cur.fetchall() == [
+            {"channel": "sms", "status": "queued"},
+            {"channel": "voice", "status": "queued"},
+        ]
+
+
+def test_advisor_dispatch_validates_signer_and_phone(
+    api_client: TestClient,
+    make_situation,
+) -> None:
+    situation_id = make_situation()
+    empty_signer = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["+254700000094"],
+            "approved_by": "",
+        },
+    )
+    assert empty_signer.status_code == 422
+    bad_phone = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["0700000095"],
+            "approved_by": "Named operator",
+        },
+    )
+    assert bad_phone.status_code == 400
+    assert "0700000095" in bad_phone.json()["detail"]
+
+
 def test_approve_is_atomic(
     api_client: TestClient,
     db_conn,
@@ -76,6 +247,47 @@ def test_approve_is_atomic(
         delivery_count = int(cur.fetchone()["count"])
     assert alert == {"status": "pending_approval", "approved_by": None, "approved_at": None}
     assert delivery_count == 0
+
+
+def test_approve_expands_both_channel(
+    api_client: TestClient,
+    db_conn,
+    make_alert,
+    first_zone_id: str,
+) -> None:
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO recipients (name, zone_id, phone_e164, language, channel)
+            VALUES ('Both integration', %s, '+254700000098', 'sw', 'both')
+            RETURNING id
+            """,
+            (first_zone_id,),
+        )
+        recipient_id = cur.fetchone()["id"]
+    db_conn.commit()
+    alert_id = make_alert(zone_id=first_zone_id, status="pending_approval")
+
+    response = api_client.post(
+        f"/alerts/{alert_id}/approve",
+        json={"approved_by": "reviewer"},
+    )
+    assert response.status_code == 200
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT channel
+            FROM deliveries
+            WHERE alert_id = %s AND recipient_id = %s
+            ORDER BY channel
+            """,
+            (alert_id, recipient_id),
+        )
+        channels = [row["channel"] for row in cur.fetchall()]
+    assert channels == ["sms", "voice"]
+    with db_conn.cursor() as cur:
+        cur.execute("UPDATE recipients SET active = FALSE WHERE id = %s", (recipient_id,))
+    db_conn.commit()
 
 
 def test_webhook_spoof_rejected(
@@ -256,3 +468,46 @@ class _InspectingVoice:
     def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef:
         self.saw_idle_transaction = self.conn.info.transaction_status == TransactionStatus.IDLE
         return ProviderRef(provider_message_id="provider-no-open-tx")
+
+
+class _InspectingSms:
+    def __init__(self, conn: Any) -> None:
+        self.conn = conn
+        self.saw_idle_transaction = False
+        self.body = ""
+
+    def send(self, to_e164: str, body: str, idempotency_key: str) -> str:
+        self.saw_idle_transaction = self.conn.info.transaction_status == TransactionStatus.IDLE
+        self.body = body
+        return "provider-sms"
+
+
+def test_sms_delivery_uses_sms_channel(db_conn, make_delivery) -> None:
+    delivery_id = make_delivery(status="queued")
+    with db_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE deliveries SET channel = 'sms' WHERE id = %s",
+            (delivery_id,),
+        )
+        cur.execute(
+            """
+            UPDATE alerts
+            SET body_text = 'SMS body'
+            WHERE id = (SELECT alert_id FROM deliveries WHERE id = %s)
+            """,
+            (delivery_id,),
+        )
+    db_conn.commit()
+    sms = _InspectingSms(db_conn)
+    voice = _InspectingVoice(db_conn)
+    settings = WorkerSettings(database_url="postgresql://unused")
+
+    assert process_one(
+        db_conn,
+        voice,
+        settings,
+        audio_fallback="file://fallback.wav",
+        sms=sms,
+    ) is True
+    assert sms.saw_idle_transaction is True
+    assert sms.body == "SMS body"

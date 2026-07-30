@@ -78,6 +78,19 @@ export function featureCenter(
   ]
 }
 
+export function spreadCoincident(
+  points: [number, number][],
+  radiusPx: number,
+): [number, number][] {
+  return points.map(([x, y], index) => {
+    const group = points.filter(([px, py]) => px === x && py === y)
+    if (group.length < 2) return [x, y]
+    const groupIndex = points.slice(0, index).filter(([px, py]) => px === x && py === y).length
+    const angle = (2 * Math.PI * groupIndex) / group.length
+    return [x + Math.cos(angle) * radiusPx, y + Math.sin(angle) * radiusPx]
+  })
+}
+
 function flattenGeometry(geometry: Geometry): [number, number][] {
   if (geometry.type === 'GeometryCollection') {
     return geometry.geometries.flatMap((item) => flattenGeometry(item))

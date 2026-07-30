@@ -52,6 +52,7 @@ type MapViewProps = {
   onOverlayChange: (overlay: MapOverlay) => void
   selectedZoneId: string | null
   onSelect: (zoneId: string, situationId: string | null) => void
+  onMapReady?: (map: Map | null) => void
 }
 
 export function MapView({
@@ -65,6 +66,7 @@ export function MapView({
   onOverlayChange,
   selectedZoneId,
   onSelect,
+  onMapReady,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
@@ -92,6 +94,8 @@ export function MapView({
   const bandFilter = useMapUiStore((state) => state.bandFilter)
   const toggleBand = useMapUiStore((state) => state.toggleBand)
   const resetBands = useMapUiStore((state) => state.resetBands)
+  const showHazards = useMapUiStore((state) => state.showHazards)
+  const toggleHazards = useMapUiStore((state) => state.toggleHazards)
 
   // Create the MapLibre instance once. Viewport must NOT be an effect
   // dependency: moveend writes the store, which would tear down and rebuild
@@ -163,6 +167,7 @@ export function MapView({
 
     mapRef.current = nextMap
     setMap(nextMap)
+    onMapReady?.(nextMap)
 
     // Dev-only handle for inspecting layers and sources from the console.
     if (import.meta.env.DEV) {
@@ -175,10 +180,11 @@ export function MapView({
       nextMap.remove()
       mapRef.current = null
       setMap(null)
+      onMapReady?.(null)
     }
     // Viewport must NOT be a dependency (see above); `webglSupported` never
     // changes after its lazy probe, so this still runs exactly once.
-  }, [webglSupported])
+  }, [onMapReady, webglSupported])
 
   useMapLayers({
     map,
@@ -321,7 +327,12 @@ export function MapView({
             onSelect={onSelect}
           />
 
-          <MapToolbar overlay={overlay} onChange={onOverlayChange} />
+          <MapToolbar
+            overlay={overlay}
+            onChange={onOverlayChange}
+            showHazards={showHazards}
+            onToggleHazards={toggleHazards}
+          />
 
           <MapLegend
             overlay={overlay}

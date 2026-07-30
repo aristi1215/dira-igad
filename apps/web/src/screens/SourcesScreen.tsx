@@ -5,7 +5,8 @@ import { fetchSources, queryKeys } from '../lib/api'
 import { fmtNumber, titleCase } from '../lib/format'
 import {
   Callout,
-  Card,
+  BentoCard,
+  BentoGrid,
   DataTable,
   ErrorNote,
   Field,
@@ -15,11 +16,12 @@ import {
   Select,
   SkeletonCard,
   Stat,
-  StatRow,
   StatusChip,
   type Column,
 } from '../components/ui'
 import type { DataSource } from '../lib/types'
+import { glossaryEntry } from '../lib/glossary'
+import { Term } from '../components/ui/Term'
 
 /** How long ago, in the plainest words that are still accurate. */
 function freshness(iso: string | null): string {
@@ -150,7 +152,9 @@ export function SourcesScreen() {
         The red lines are the credibility statement, so they lead rather than
         sitting at the bottom of the page as an appendix.
       */}
-      <Card
+      <BentoCard
+        span={4}
+        tone="inverse"
         title="Red lines"
         subtitle="Enforced in code and database schema — not in prose"
         className="mb-5"
@@ -168,11 +172,11 @@ export function SourcesScreen() {
             },
             {
               title: 'Unverified means zero',
-              body: 'Unverified reports and signals contribute exactly 0 corroboration until a person verifies them. Dismissed ones stay at 0 forever.',
+              body: `Unverified reports contribute exactly 0 to the combined score until a person verifies them. Dismissed ones stay at 0 forever.`,
             },
             {
               title: 'The forecast stays pure',
-              body: 'Food security, displacement, prices, health and hazards are context and corroboration — never silent model inputs.',
+              body: 'Food security, displacement, prices, health and hazards are context and supporting evidence — never silent model inputs.',
             },
             {
               title: 'The arithmetic is visible',
@@ -201,14 +205,14 @@ export function SourcesScreen() {
             </li>
           ))}
         </ul>
-      </Card>
+      </BentoCard>
 
       {sourcesQuery.isError ? <ErrorNote error={sourcesQuery.error} className="mb-4" /> : null}
       {sourcesQuery.isLoading ? <SkeletonCard /> : null}
 
       {data ? (
         <>
-          <StatRow className="mb-5">
+          <BentoGrid className="mb-5">
             <Stat label="Feeds" value={sources.length} detail="Distinct inputs" />
             <Stat
               label="Reading live"
@@ -230,12 +234,13 @@ export function SourcesScreen() {
                   : 'Fixed fixtures, identical every run'
               }
             />
-          </StatRow>
+          </BentoGrid>
 
           <Callout tone="info" className="mb-5" icon={Radio}>
             <span className="flex flex-wrap items-center gap-1.5">
+              <Term term="frozen snapshot">What we knew at the time</Term>
               {data.bitemporal_note}
-              <InfoHint content="Every record carries the date it describes and the date it became available. Assessments only ever read what was knowable at the time — so a rerun of an old cycle cannot cheat with hindsight." />
+              <InfoHint content={glossaryEntry('frozen snapshot')?.explanation} />
             </span>
           </Callout>
 
@@ -266,14 +271,14 @@ export function SourcesScreen() {
             </span>
           </div>
 
-          <Card padded={false}>
+          <BentoCard span={6} padded={false} title="All data sources">
             <DataTable
               columns={sourceColumns}
               rows={visibleSources}
               getRowId={(source) => source.key}
               caption="Data sources"
             />
-          </Card>
+          </BentoCard>
 
           <p className="mt-4 text-xs text-faint">
             Freshness is the newest <span className="font-mono">available_at</span> in each feed —

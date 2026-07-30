@@ -1,6 +1,7 @@
+import { CheckCircle2, MapPin, TriangleAlert } from 'lucide-react'
 import { Modal, DetailRow } from '../../components/Modal'
-import { StatusChip } from '../../components/ui'
-import { fmtDateTime, titleCase } from '../../lib/format'
+import { DateStamp, InfoHint, StatusChip } from '../../components/ui'
+import { fmtDate, fmtDateTime, titleCase } from '../../lib/format'
 import { reportCategoryMeta, REPORTER_ROLE_META } from '../../lib/explain'
 import type { FieldReport } from '../../lib/types'
 
@@ -12,11 +13,11 @@ const STATUS_TONE = {
 
 const STATUS_MEANING: Record<FieldReport['status'], string> = {
   verified:
-    'A named duty officer vouched for this report — it contributes to field corroboration on the next assessment cycle.',
+    'A named duty officer vouched for this report — it contributes to field evidence on the next assessment cycle.',
   unverified:
-    'Awaiting human verification. Unverified reports contribute exactly 0 to corroboration — a raw report alone never moves the operational band.',
+    'Awaiting human verification. Unverified reports contribute exactly 0 to the combined score — a raw report alone never moves the operational band.',
   dismissed:
-    'Reviewed and dismissed by a named officer. Dismissed reports contribute exactly 0 to corroboration.',
+    'Reviewed and dismissed by a named officer. Dismissed reports contribute exactly 0 to the combined score.',
 }
 
 const SEVERITY_LABELS: Record<number, string> = {
@@ -41,28 +42,31 @@ export function FieldReportModal({
       onClose={onClose}
       wide
     >
-      <div className="detail-chips">
-        <StatusChip tone={STATUS_TONE[report.status]}>{report.status}</StatusChip>
-        <StatusChip tone={report.severity >= 3 ? 'error' : report.severity === 2 ? 'warning' : 'neutral'}>
+      <div className="flex flex-wrap gap-1.5">
+        <StatusChip tone={STATUS_TONE[report.status]} className="px-2.5 py-1 text-xs font-semibold">
+          {report.status === 'verified' ? <CheckCircle2 size={14} strokeWidth={1.9} aria-hidden /> : <TriangleAlert size={14} strokeWidth={1.9} aria-hidden />}
+          {report.status}
+        </StatusChip>
+        <StatusChip tone={report.severity >= 3 ? 'error' : report.severity === 2 ? 'warning' : 'neutral'} className="px-2.5 py-1 text-xs font-semibold">
           Severity {report.severity}/3
         </StatusChip>
       </div>
 
-      <p className="detail-lede">{reportCategoryMeta(report.category)}</p>
+      <p className="m-0 text-sm leading-relaxed text-ink">{reportCategoryMeta(report.category)}</p>
 
-      <div className="detail-section">
+      <div className="grid gap-1.5">
         <h3>Narrative</h3>
-        <blockquote className="detail-quote">“{report.narrative}”</blockquote>
+        <blockquote className="m-0 rounded-r-md border-l-[3px] border-accent bg-surface-2 px-3.5 py-2.5 text-sm leading-relaxed text-ink">“{report.narrative}”</blockquote>
       </div>
 
-      <div className="detail-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-x-4 gap-y-2">
         <DetailRow label="Zone">
           {zoneName ?? report.zone_name ?? report.zone_id ?? '—'}
         </DetailRow>
         <DetailRow label="Reporter">
           {titleCase(report.reporter_role)}
           {REPORTER_ROLE_META[report.reporter_role] ? (
-            <small className="muted-block">
+            <small className="mt-px block text-xs text-faint">
               {REPORTER_ROLE_META[report.reporter_role]}
             </small>
           ) : null}
@@ -70,24 +74,33 @@ export function FieldReportModal({
         <DetailRow label="Severity">
           {SEVERITY_LABELS[report.severity] ?? `${report.severity}/3`}
         </DetailRow>
-        <DetailRow label="Reported">{fmtDateTime(report.reported_at)}</DetailRow>
+        <DetailRow label="Reported"><DateStamp>{fmtDate(report.reported_at)}</DateStamp></DetailRow>
         <DetailRow label="Available to system">
           {fmtDateTime(report.available_at)}
         </DetailRow>
         <DetailRow label={report.status === 'dismissed' ? 'Dismissed by' : 'Verified by'}>
           {report.verified_by ?? '—'}
           {report.verified_at ? (
-            <small className="muted-block">{fmtDateTime(report.verified_at)}</small>
+            <small className="mt-px block text-xs text-faint">{fmtDateTime(report.verified_at)}</small>
           ) : null}
+        </DetailRow>
+        <DetailRow label="Location">
+          <span className="inline-flex items-center gap-1.5 text-muted">
+            <MapPin size={14} strokeWidth={1.75} aria-hidden />
+            {zoneName ?? report.zone_name ?? report.zone_id ?? 'Zone location unavailable'}
+          </span>
+        </DetailRow>
+        <DetailRow label="Operator provenance">
+          {report.reporter_role}
         </DetailRow>
       </div>
 
-      <div className="detail-section detail-note">
-        <h3>How this affects the risk score</h3>
+      <div className="grid gap-1.5 rounded-lg border border-accent-ring bg-accent-soft px-3.5 py-3">
+        <h3 className="flex items-center gap-1.5">How this affects the risk score <InfoHint content="Only verified reports contribute to corroboration; unverified and dismissed reports contribute zero." /></h3>
         <p>{STATUS_MEANING[report.status]}</p>
         {report.status === 'verified' ? (
           <p>
-            Verified reports set the field corroboration channel by a written
+            Verified reports set the field evidence channel by a written
             rule: base 0.35 for any verified report, +0.15 per severity step of
             the worst report, +0.05 per extra report (max 3), capped at 0.90. The
             channel is merged with news as <code>max(news, field)</code> and

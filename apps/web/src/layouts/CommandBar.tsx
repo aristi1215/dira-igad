@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { Compass, MessageSquareText } from 'lucide-react'
+import { Compass, Moon, MessageSquareText, Sun } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { T } from '../lib/motion'
-import { Button } from '../components/ui'
+import { Button, IconButton } from '../components/ui'
+import { useThemeStore } from '../stores/theme'
 import { StatusCluster } from './StatusCluster'
 import { BrandMark } from './BrandMark'
 import { PRIMARY_NAV, SECONDARY_NAV, type NavItem } from './navItems'
@@ -26,19 +27,21 @@ export function CommandBar({
   onOpenTour: () => void
   tourResumable: boolean
 }) {
+  const theme = useThemeStore((state) => state.theme)
+  const toggleTheme = useThemeStore((state) => state.toggleTheme)
+
   return (
     <header
       className={cx(
-        'z-header flex h-14 shrink-0 items-center gap-4 bg-surface px-4',
+        'z-header flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface/80 px-4 backdrop-blur-xl',
         // A rule plus a whisper of cast shadow, so the bar sits above the
         // canvas instead of being drawn onto it.
-        'shadow-[0_1px_0_var(--color-line),0_1px_10px_rgba(22,22,22,0.035)]',
       )}
     >
       <div className="flex shrink-0 items-center gap-2.5" data-tour={TOUR_ANCHORS.brand}>
         <BrandMark size={21} className="text-accent" />
-        <span className="font-condensed text-xl leading-none font-bold tracking-[0.08em] text-ink">
-          DIRA
+        <span className="text-xl leading-none font-semibold tracking-[-0.02em] text-ink">
+          Dira
         </span>
         <span aria-hidden className="hidden h-5 w-px bg-line lg:block" />
         <span className="text-eyebrow hidden text-faint uppercase lg:inline">
@@ -58,6 +61,12 @@ export function CommandBar({
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <StatusCluster cycle={cycle} dataMode={dataMode} degraded={degraded} />
+        <IconButton
+          icon={theme === 'dark' ? Sun : Moon}
+          label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          size="sm"
+          onClick={toggleTheme}
+        />
         <div className="relative">
           <Button variant="ghost" size="sm" icon={Compass} onClick={onOpenTour}>
             <span className="hidden sm:inline">Guide</span>
@@ -106,7 +115,7 @@ function NavItemLink({
       title={`${item.label} — ${item.hint}  (G then ${item.key.toUpperCase()})`}
       className={({ isActive }) =>
         cx(
-          'relative flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium whitespace-nowrap',
+          'relative flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap',
           'transition-colors duration-[120ms] ease-standard',
           // Active is a real state, not a hairline: the label, the icon and the
           // plate all move together.

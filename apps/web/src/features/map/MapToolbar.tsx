@@ -1,4 +1,4 @@
-import { Activity, Coins, Swords, TriangleAlert, Users, Wheat } from 'lucide-react'
+import { Activity, Flame, ShoppingBasket, Swords, Users, Wheat } from 'lucide-react'
 import { Tabs, type TabItem } from '../../components/ui'
 import type { MapOverlay } from '../../lib/types'
 import { TOUR_ANCHORS } from '../tour/tourAnchors'
@@ -8,8 +8,8 @@ const OVERLAYS: TabItem<MapOverlay>[] = [
   { id: 'ipc', label: 'Food', icon: Wheat },
   { id: 'displacement', label: 'Displaced', icon: Users },
   { id: 'incidents', label: 'Incidents', icon: Swords },
-  { id: 'hazards', label: 'Hazards', icon: TriangleAlert },
-  { id: 'markets', label: 'Markets', icon: Coins },
+  { id: 'hazards', label: 'Hazards', icon: Flame },
+  { id: 'markets', label: 'Markets', icon: ShoppingBasket },
 ]
 
 /**
@@ -36,9 +36,13 @@ const CAPTIONS: Record<MapOverlay, string> = {
 export function MapToolbar({
   overlay,
   onChange,
+  showHazards,
+  onToggleHazards,
 }: {
   overlay: MapOverlay
   onChange: (overlay: MapOverlay) => void
+  showHazards: boolean
+  onToggleHazards: () => void
 }) {
   return (
     <div
@@ -51,9 +55,17 @@ export function MapToolbar({
         onChange={onChange}
         layoutId="map-overlay"
         ariaLabel="Map overlay"
-        className="shadow-panel"
+        className="rounded-full border border-line bg-surface/92 shadow-panel backdrop-blur-xl"
       />
-      <p className="rounded-full bg-surface/85 px-2.5 py-0.5 text-2xs text-muted backdrop-blur-sm">
+      <button
+        type="button"
+        aria-pressed={showHazards}
+        onClick={onToggleHazards}
+        className="rounded-full border border-line bg-surface/92 px-2.5 py-1 text-2xs font-medium text-muted shadow-panel backdrop-blur-xl transition-colors hover:bg-surface-2 hover:text-ink"
+      >
+        {showHazards ? 'Hide hazard pins' : 'Show hazard pins'}
+      </button>
+      <p className="rounded-full border border-line bg-surface/92 px-2.5 py-0.5 text-2xs text-muted shadow-panel backdrop-blur-xl">
         {CAPTIONS[overlay]}
       </p>
     </div>

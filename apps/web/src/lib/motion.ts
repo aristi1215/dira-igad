@@ -12,9 +12,9 @@ import type { Transition } from 'motion/react'
 
 /** Cubic-bezier control points, matching the CSS custom properties. */
 export const EASE = {
-  standard: [0.2, 0, 0.38, 0.9],
-  entrance: [0, 0, 0.38, 0.9],
-  exit: [0.2, 0, 1, 0.9],
+  standard: [0.4, 0, 0.2, 1],
+  entrance: [0.16, 1, 0.3, 1],
+  exit: [0.4, 0, 1, 1],
 } as const
 
 export const DURATION = {
@@ -31,9 +31,9 @@ export const T = {
   enter: { duration: DURATION.base, ease: EASE.entrance },
   exit: { duration: DURATION.fast, ease: EASE.exit },
   /** Drawers, sheets, and the map zone card. */
-  panel: { type: 'spring', stiffness: 380, damping: 40, mass: 0.9 },
+  panel: { type: 'spring', stiffness: 380, damping: 32 },
   /** The tour spotlight cutout — tighter, so it reads as precise. */
-  spotlight: { type: 'spring', stiffness: 400, damping: 38, mass: 0.8 },
+  spotlight: { type: 'spring', stiffness: 380, damping: 32 },
   /** Meters and counters: deliberate, never bouncy. */
   value: { duration: DURATION.deliberate, ease: EASE.standard },
 } satisfies Record<string, Transition>

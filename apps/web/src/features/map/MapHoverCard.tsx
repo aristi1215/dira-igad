@@ -105,7 +105,7 @@ export function MapHoverCard({
       <span aria-hidden className="block h-0.5 w-full" style={{ background: color }} />
 
       <div className="p-2.5">
-        <p className="font-condensed text-sm leading-tight font-semibold tracking-[0.03em] text-ink uppercase">
+        <p className="text-md leading-tight font-semibold tracking-[-0.01em] text-ink">
           {zone.zone_name}
         </p>
         <p className="mt-0.5 text-2xs text-faint">

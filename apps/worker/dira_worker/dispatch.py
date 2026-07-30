@@ -13,12 +13,13 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from dira_core.ports import SpeechSynthesizer, VoiceChannel
+from dira_core.ports import ProviderRef, SmsChannel, SpeechSynthesizer, VoiceChannel
 from dira_core.time import dispatch_backoff_delta
 from dira_data.db import connect
 from dira_dispatch import (
     MockDispatcher,
     PrerecordedAudioAdapter,
+    TwilioSmsAdapter,
     TwilioVoiceAdapter,
     get_speech_synthesizer,
 )
@@ -172,21 +173,24 @@ def process_one(
     *,
     audio_fallback: str,
     synthesizer: SpeechSynthesizer | None = None,
+    sms: SmsChannel | None = None,
 ) -> bool:
-    """Claim → call outside Tx → record. Returns True if work was done."""
+    """Claim → provider handoff outside Tx → record. Returns True if work was done."""
     claimed = claim_next(conn)
     if claimed is None:
         return False
 
     delivery_id = claimed["id"]
     phone = claimed["phone_e164"]
-    audio_url = claimed["audio_url"] or audio_fallback
     idem = claimed["idempotency_key"]
     attempts = int(claimed["attempt_count"])
+    channel = claimed["channel"]
+    provider: Any
+    audio_url = claimed["audio_url"] or audio_fallback
 
     # Live mode: synthesize alert audio to a public URL (outside any Tx).
     # TTS failure is non-fatal — the adapter falls back to <Say>.
-    if synthesizer is not None and claimed.get("body_text"):
+    if channel == "voice" and synthesizer is not None and claimed.get("body_text"):
         try:
             audio_url = synthesizer.synthesize(str(claimed["body_text"]), "sw").url
         except Exception as exc:  # noqa: BLE001
@@ -199,16 +203,28 @@ def process_one(
 
         if conn.info.transaction_status != TransactionStatus.IDLE:
             raise RuntimeError("Provider call attempted inside an open transaction")
-        ref = voice.call(phone, audio_url, idem)
+        if channel == "sms":
+            if sms is None:
+                raise RuntimeError("SMS delivery claimed but no SMS channel is configured")
+            provider = sms
+            provider_message_id = provider.send(
+                phone, str(claimed.get("body_text") or ""), idem
+            )
+            ref = ProviderRef(provider_message_id=provider_message_id)
+        elif channel == "voice":
+            provider = voice
+            ref = provider.call(phone, audio_url, idem)
+        else:
+            raise RuntimeError(f"Unsupported delivery channel: {channel}")
         record_success(conn, delivery_id, ref.provider_message_id)
         # Schedule seeded ack AFTER provider_message_id is durable (avoids race +
         # --once process exit killing the timer before Tx B commits).
-        if isinstance(voice, MockDispatcher) and voice.database_url:
-            delay = voice.ack_delay_seconds or 0.0
+        if isinstance(provider, MockDispatcher) and provider.database_url:
+            delay = provider.ack_delay_seconds or 0.0
             if delay <= 0:
-                voice._db_ack(ref)
+                provider._db_ack(ref)
             else:
-                timer = threading.Timer(delay, voice._db_ack, args=(ref,))
+                timer = threading.Timer(delay, provider._db_ack, args=(ref,))
                 timer.daemon = True
                 timer.start()
         logger.info("Dispatched delivery=%s provider=%s", delivery_id, ref.provider_message_id)
@@ -230,6 +246,7 @@ def run_loop(
     tts = PrerecordedAudioAdapter()
     audio = tts.synthesize("generic alert", "sw")
     synthesizer: Any = None
+    sms: SmsChannel | None = None
     if voice is None:
         if settings.dispatch_mode == "twilio":
             voice = TwilioVoiceAdapter(
@@ -240,6 +257,14 @@ def run_loop(
                 from_number=settings.twilio_from_number,
                 api_base_url=settings.twilio_api_base_url,
                 public_base_url=settings.public_base_url,
+            )
+            sms = TwilioSmsAdapter(
+                settings.twilio_account_sid,
+                api_key_sid=settings.twilio_api_key_sid,
+                api_key_secret=settings.twilio_api_key_secret,
+                auth_token=settings.twilio_auth_token,
+                from_number=settings.twilio_from_number,
+                api_base_url=settings.twilio_api_base_url,
             )
             synthesizer = get_speech_synthesizer(
                 tts_provider=settings.tts_provider,
@@ -257,6 +282,7 @@ def run_loop(
                 database_url=settings.database_url,
                 ack_callback=None,
             )
+            sms = voice
 
     with connect(settings.database_url) as conn:
         conn.autocommit = True
@@ -265,11 +291,23 @@ def run_loop(
 
         while True:
             sweep_zombies(conn, settings)
-            process_one(conn, voice, settings, audio_fallback=audio.url, synthesizer=synthesizer)
+            process_one(
+                conn,
+                voice,
+                settings,
+                audio_fallback=audio.url,
+                synthesizer=synthesizer,
+                sms=sms,
+            )
             if once:
                 for _ in range(50):
                     if not process_one(
-                        conn, voice, settings, audio_fallback=audio.url, synthesizer=synthesizer
+                        conn,
+                        voice,
+                        settings,
+                        audio_fallback=audio.url,
+                        synthesizer=synthesizer,
+                        sms=sms,
                     ):
                         break
                 # Allow delayed mock acks to land before exit.

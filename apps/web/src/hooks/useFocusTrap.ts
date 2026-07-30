@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 
 const FOCUSABLE = [
   'a[href]',
@@ -26,6 +26,14 @@ export function useFocusTrap(
   active: boolean,
   onEscape?: () => void,
 ): void {
+  // Hold the latest onEscape in a ref so a caller passing a fresh closure each
+  // render does not re-run the effect below — re-running it steals focus back
+  // to the first control on every keystroke, dropping input in modal fields.
+  const onEscapeRef = useRef(onEscape)
+  useEffect(() => {
+    onEscapeRef.current = onEscape
+  }, [onEscape])
+
   useEffect(() => {
     const container = ref.current
     if (!active || !container) {
@@ -42,9 +50,9 @@ export function useFocusTrap(
     initial.focus({ preventScroll: true })
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && onEscape) {
+      if (event.key === 'Escape' && onEscapeRef.current) {
         event.stopPropagation()
-        onEscape()
+        onEscapeRef.current()
         return
       }
       if (event.key !== 'Tab') {
@@ -75,5 +83,5 @@ export function useFocusTrap(
       document.removeEventListener('keydown', handleKeyDown, true)
       previouslyFocused?.focus?.({ preventScroll: true })
     }
-  }, [active, onEscape, ref])
+  }, [active, ref])
 }

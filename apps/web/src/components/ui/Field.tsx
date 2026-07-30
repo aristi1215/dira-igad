@@ -7,12 +7,13 @@ import {
 } from 'react'
 import { ChevronDown, Search } from 'lucide-react'
 import { cx } from '../../lib/cx'
+import { Eyebrow } from './Card'
 
 const CONTROL = cx(
-  'h-8.5 w-full rounded-sm border border-line-strong bg-surface px-2.5 text-sm text-ink',
+  'h-8.5 w-full rounded-md border border-line bg-surface-2 px-2.5 text-sm text-ink',
   'transition-colors duration-[120ms] ease-standard',
   'placeholder:text-faint hover:border-faint',
-  'focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ring',
+  'focus:border-accent focus:bg-surface focus:outline-none focus:ring-4 focus:ring-accent-ring/40',
   'disabled:cursor-not-allowed disabled:opacity-55',
 )
 
@@ -33,11 +34,8 @@ export function Field({
 }) {
   return (
     <div className={cx('flex flex-col gap-1.5', className)}>
-      <label
-        htmlFor={htmlFor}
-        className="font-condensed text-2xs font-semibold tracking-[0.09em] text-muted uppercase"
-      >
-        {label}
+      <label htmlFor={htmlFor}>
+        <Eyebrow>{label}</Eyebrow>
       </label>
       {children}
       {error ? (

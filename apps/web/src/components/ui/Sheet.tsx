@@ -36,7 +36,7 @@ export function Sheet({
             transition={T.fast}
             onClick={onClose}
             aria-hidden
-            className="fixed inset-0 z-drawer bg-ink/25"
+            className="fixed inset-0 z-drawer bg-surface/25"
           />
           <motion.aside
             ref={panelRef}
@@ -48,9 +48,9 @@ export function Sheet({
             exit={{ x: '100%' }}
             transition={T.panel}
             style={{ width: `min(${width}, 94vw)` }}
-            className="fixed inset-y-0 right-0 z-drawer flex flex-col border-l border-line bg-surface shadow-lg"
+            className="fixed inset-y-0 right-0 z-drawer flex flex-col rounded-l-bento border border-line bg-surface/95 shadow-panel"
           >
-            <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
+            <header className="flex items-start justify-between gap-3 px-5 py-4">
               <div className="min-w-0">
                 <h2 className="text-md font-semibold text-ink">{title}</h2>
                 {subtitle ? <p className="mt-0.5 text-xs text-faint">{subtitle}</p> : null}

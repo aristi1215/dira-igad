@@ -113,17 +113,14 @@ export function overlayFillColor(overlay: MapOverlay): ExpressionSpecification {
 }
 
 /**
- * Base opacity per overlay.
- *
- * Much lower than it used to be. Zone geometries are coarse boxes, and a
- * saturated fill makes the box itself the loudest mark on the map — which is
- * exactly the shape the data does *not* have. The fill is now a tint that
- * locates a reading; the heat field and the glow carry the intensity.
+ * Base opacity per overlay. Zone geometries are coarse boxes, so these are
+ * readable tints rather than saturated fills that make the box itself the
+ * loudest mark on the map.
  */
 function baseOpacity(overlay: MapOverlay): number {
-  if (overlay === 'incidents') return 0.05 // the heat field carries this one alone
-  if (overlay === 'pressure') return 0.16
-  return 0.3
+  if (overlay === 'incidents') return 0.08 // the heat field carries this one alone
+  if (overlay === 'pressure') return 0.28
+  return 0.4
 }
 
 /**
@@ -519,14 +516,13 @@ function zoneOutlineLayer(): LayerSpecification {
     type: 'line',
     source: ZONE_SOURCE_ID,
     paint: {
-      // Resting outlines are a warm grey hairline rather than white: they are
-      // reference furniture now, not the subject, and white read as a drawn
-      // border around a filled tile.
+      // Resting outlines are a neutral token grey: visible enough to separate
+      // zone clusters without turning each coarse geometry into a card.
       'line-color': [
         'case',
         ['boolean', ['feature-state', 'selected'], false], '#161616',
         ['boolean', ['feature-state', 'hover'], false], '#161616',
-        '#8d8d8d',
+        '#c7c7cc',
       ],
       'line-width': [
         'case',
@@ -539,7 +535,7 @@ function zoneOutlineLayer(): LayerSpecification {
         ['boolean', ['feature-state', 'filteredOut'], false], 0.12,
         ['boolean', ['feature-state', 'selected'], false], 0.95,
         ['boolean', ['feature-state', 'hover'], false], 0.6,
-        0.28,
+        0.4,
       ],
       'line-width-transition': { duration: 160, delay: 0 },
     },

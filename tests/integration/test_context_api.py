@@ -74,6 +74,30 @@ def test_regional_indicators_is_geojson_for_all_zones(client: TestClient) -> Non
         assert key in props
 
 
+def test_hazards_is_geojson_with_current_bulletins(client: TestClient) -> None:
+    response = client.get("/hazards")
+    assert response.status_code == 200
+    collection = response.json()
+    assert collection["type"] == "FeatureCollection"
+    assert len(collection["features"]) >= 3
+    feature = collection["features"][0]
+    assert feature["geometry"]["type"] == "Point"
+    assert len(feature["geometry"]["coordinates"]) == 2
+    assert {
+        "id",
+        "zone_id",
+        "zone_name",
+        "country_iso2",
+        "hazard_type",
+        "severity",
+        "headline",
+        "detail",
+        "valid_from",
+        "valid_to",
+        "source",
+    } <= feature["properties"].keys()
+
+
 def test_sources_catalog_reports_mode_and_freshness(client: TestClient) -> None:
     response = client.get("/sources")
     assert response.status_code == 200

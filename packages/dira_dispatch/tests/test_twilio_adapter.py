@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import httpx
 import pytest
-from dira_dispatch import TwilioVoiceAdapter
+from dira_dispatch import TwilioSmsAdapter, TwilioVoiceAdapter
 
 
 def _adapter() -> TwilioVoiceAdapter:
@@ -13,6 +13,14 @@ def _adapter() -> TwilioVoiceAdapter:
         auth_token="token",
         from_number="+15550001111",
         public_base_url="https://example.org",
+    )
+
+
+def _sms_adapter() -> TwilioSmsAdapter:
+    return TwilioSmsAdapter(
+        account_sid="ACtest",
+        auth_token="token",
+        from_number="+15550001111",
     )
 
 
@@ -101,3 +109,31 @@ def test_call_uses_url_not_inline_twiml(
     assert payload["StatusCallback"].endswith("/webhooks/twilio/status")
     assert payload["StatusCallbackEvent"] == "completed"
     assert provider_ref.provider_message_id == "CAfake"
+
+
+def test_sms_posts_message_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_post(
+        _client: httpx.Client,
+        url: str,
+        **kwargs: object,
+    ) -> httpx.Response:
+        captured["url"] = url
+        captured.update(kwargs)
+        return httpx.Response(
+            201,
+            json={"sid": "SMfake"},
+            request=httpx.Request("POST", url),
+        )
+
+    monkeypatch.setattr(httpx.Client, "post", fake_post)
+    provider_ref = _sms_adapter().send("+15551234567", "Habari", "sms-idem")
+
+    assert str(captured["url"]).endswith("/Messages.json")
+    assert captured["data"] == {
+        "To": "+15551234567",
+        "From": "+15550001111",
+        "Body": "Habari",
+    }
+    assert provider_ref == "SMfake"

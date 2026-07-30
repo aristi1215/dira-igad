@@ -1,13 +1,7 @@
 import type { ReactNode } from 'react'
 import { cx } from '../../lib/cx'
 
-/**
- * Card, page and section framing.
- *
- * Every heading here is set in `font-condensed` uppercase rather than sentence
- * case. Tracked caps are how instrument panels label their readouts, and they
- * are what stops a screen of cards reading as a Word document.
- */
+/** Card, page and section framing. */
 export function Card({
   title,
   subtitle,
@@ -29,8 +23,8 @@ export function Card({
   return (
     <section
       className={cx(
-        'group/card relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-surface',
-        'transition-shadow duration-[180ms] ease-standard hover:shadow-sm',
+        'group/card relative flex min-w-0 flex-col overflow-hidden rounded-bento border border-line bg-surface',
+        'shadow-bento transition-shadow duration-200 ease-entrance hover:shadow-lg',
         className,
       )}
     >
@@ -42,10 +36,10 @@ export function Card({
         />
       ) : null}
       {title || actions ? (
-        <div className="flex items-start justify-between gap-3 border-b border-line bg-surface-2/60 px-4 py-2.5">
+        <div className="flex items-start justify-between gap-3 px-5 pt-5">
           <div className="min-w-0">
             {title ? (
-              <h2 className="font-condensed text-sm leading-tight font-semibold tracking-[0.05em] text-ink uppercase">
+              <h2 className="text-md leading-tight font-semibold tracking-[-0.01em] text-ink">
                 {title}
               </h2>
             ) : null}
@@ -56,7 +50,7 @@ export function Card({
           ) : null}
         </div>
       ) : null}
-      <div className={cx('min-w-0 flex-1', padded && 'p-4')}>{children}</div>
+      <div className={cx('min-w-0 flex-1', padded && 'p-5')}>{children}</div>
     </section>
   )
 }
@@ -64,9 +58,7 @@ export function Card({
 /**
  * Page title block.
  *
- * The description sits *beside* the title rather than under it: stacked, the
- * eyebrow + title + two-line description cost ~120px above the fold on every
- * screen before a single number appeared.
+ * The description sits below the title for a calmer reading hierarchy.
  */
 export function PageHeader({
   eyebrow,
@@ -80,17 +72,17 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <header className="mb-4 border-b border-line pb-3">
+    <header className="mb-6">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1">
+        <div className="min-w-0">
           {eyebrow ? (
-            <p className="text-eyebrow text-accent-deep uppercase">{eyebrow}</p>
+            <Eyebrow className="text-accent-deep">{eyebrow}</Eyebrow>
           ) : null}
-          <h1 className="font-condensed text-2xl leading-none font-bold tracking-[0.01em] text-ink uppercase">
+          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.02em] text-ink">
             {title}
           </h1>
           {description ? (
-            <p className="max-w-[64ch] text-sm text-muted">{description}</p>
+            <p className="mt-2 max-w-[62ch] text-md text-faint">{description}</p>
           ) : null}
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
@@ -113,7 +105,7 @@ export function SectionHeader({
   return (
     <div className={cx('mb-3 flex items-end justify-between gap-3', className)}>
       <div className="min-w-0">
-        <h2 className="font-condensed text-sm font-semibold tracking-[0.05em] text-ink uppercase">
+        <h2 className="text-md font-semibold tracking-[-0.01em] text-ink">
           {title}
         </h2>
         {description ? <p className="mt-0.5 text-xs text-faint">{description}</p> : null}
@@ -124,10 +116,7 @@ export function SectionHeader({
 }
 
 /**
- * A titled band of a screen, with a rule that runs to the full width.
- *
- * Cards alone give every block on a screen identical weight, so a screen reads
- * as a pile rather than an argument. `Section` restores an outline.
+ * A titled band of a screen.
  */
 export function Section({
   title,
@@ -146,14 +135,11 @@ export function Section({
 }) {
   return (
     <section id={id} className={cx('mb-6', className)}>
-      <div className="mb-3 flex items-center gap-3">
-        <h2 className="font-condensed shrink-0 text-xs font-semibold tracking-[0.1em] text-muted uppercase">
-          {title}
-        </h2>
+      <div className="mb-4 flex items-center gap-3">
+        <Eyebrow>{title}</Eyebrow>
         {description ? (
           <p className="shrink-0 text-xs text-faint">{description}</p>
         ) : null}
-        <span aria-hidden className="h-px min-w-4 flex-1 bg-line" />
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
       {children}
@@ -183,8 +169,18 @@ export function Screen({
   width?: 'default' | 'wide' | 'reading'
 }) {
   return (
-    <div className={cx('mx-auto w-full px-6 pt-5 pb-12', SCREEN_WIDTH[width], className)}>
+    <div className={cx('mx-auto w-full px-6 pt-8 pb-16 lg:px-10', SCREEN_WIDTH[width], className)}>
       {children}
     </div>
   )
+}
+
+export function Eyebrow({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return <span className={cx('text-eyebrow text-faint uppercase', className)}>{children}</span>
 }

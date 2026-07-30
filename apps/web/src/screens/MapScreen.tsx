@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Map } from 'maplibre-gl'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { MapStatusStrip, MapView, WatchlistRail, ZoneCard } from '../features/map'
+import { HazardPins, MapStatusStrip, MapView, WatchlistRail, ZoneCard } from '../features/map'
 import {
   fetchMapEvents,
   fetchMapSituations,
   fetchMapTrends,
+  fetchHazards,
   fetchPendingAlerts,
   fetchRegionalIndicators,
   fetchZones,
@@ -21,12 +23,14 @@ export function MapScreen() {
   const { sseFailed } = useOutletContext<{ sseFailed: boolean }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [map, setMap] = useState<Map | null>(null)
 
   const { selectedZoneId, overlay, selectZone, setOverlay } = useSelectedZone()
   const hoveredZoneId = useMapUiStore((state) => state.hoveredZoneId)
   const setHoveredZoneId = useMapUiStore((state) => state.setHoveredZoneId)
   const bandFilter = useMapUiStore((state) => state.bandFilter)
   const toggleBand = useMapUiStore((state) => state.toggleBand)
+  const showHazards = useMapUiStore((state) => state.showHazards)
 
   const fallbackInterval = sseFailed ? 5_000 : false
 
@@ -58,6 +62,11 @@ export function MapScreen() {
   const trendsQuery = useQuery({
     queryKey: queryKeys.mapTrends,
     queryFn: () => fetchMapTrends(6),
+    staleTime: 5 * 60 * 1000,
+  })
+  const hazardsQuery = useQuery({
+    queryKey: queryKeys.hazards,
+    queryFn: fetchHazards,
     staleTime: 5 * 60 * 1000,
   })
   const pendingAlertsQuery = useQuery({
@@ -99,6 +108,10 @@ export function MapScreen() {
       )?.properties ?? null
     )
   }, [selectedZoneId, situationsQuery.data])
+  const selectedIndicator = useMemo(
+    () => indicatorsQuery.data?.features.find((feature) => feature.properties.zone_id === selectedZoneId),
+    [selectedZoneId, indicatorsQuery.data],
+  )
 
   const prepareAlertMutation = useMutation({
     mutationFn: (situationId: string) => prepareAlert(situationId),
@@ -142,7 +155,10 @@ export function MapScreen() {
         onOverlayChange={setOverlay}
         selectedZoneId={selectedZoneId}
         onSelect={handleMapSelect}
+        onMapReady={setMap}
       />
+
+      <HazardPins map={map} hazards={hazardsQuery.data} visible={showHazards} />
 
       <WatchlistRail
         zones={watchlist}
@@ -159,6 +175,9 @@ export function MapScreen() {
           key={selectedZone.zone_id}
           zone={selectedZone}
           situation={selectedSituation}
+          overlay={overlay}
+          incidents180d={selectedIndicator?.properties.incidents_180d}
+          fatalities180d={selectedIndicator?.properties.fatalities_180d}
           trend={trendsQuery.data?.[selectedZone.zone_id]}
           onClose={() => selectZone(null)}
           onPrepareAlert={(situationId) => prepareAlertMutation.mutate(situationId)}

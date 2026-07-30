@@ -16,11 +16,13 @@ export { Tabs, type TabItem } from './Tabs'
 export { DataTable, type Column } from './DataTable'
 export { Skeleton, SkeletonText, SkeletonCard, SkeletonRows, ScreenSkeleton } from './Skeleton'
 export { Tooltip, InfoHint } from './Tooltip'
+export { Term } from './Term'
 export { Sheet } from './Sheet'
 export { Meter, ScoreMeter } from './Meter'
 export { Stat, StatTile, StatRow, MetricDelta } from './Stat'
 export { Sparkline } from './Sparkline'
-export { Card, PageHeader, SectionHeader, Section, Screen } from './Card'
+export { Card, PageHeader, SectionHeader, Section, Screen, Eyebrow } from './Card'
+export { BentoGrid, BentoCard, type BentoSpan, type BentoTone, type BentoCardProps } from './Bento'
 export { BandChip, BandDot, IpcChip, StatusChip, type StatusTone } from './Chips'
 export {
   Callout,
@@ -31,3 +33,4 @@ export {
   type CalloutTone,
 } from './Notes'
 export { Kbd } from './Kbd'
+export { DateStamp } from './DateStamp'

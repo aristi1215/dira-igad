@@ -3,6 +3,7 @@ import { TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import { cx } from '../../lib/cx'
 import { fmtPct } from '../../lib/format'
 import { Sparkline } from './Sparkline'
+import { Eyebrow } from './Card'
 
 /**
  * A signed change. `goodDirection` is required rather than assumed: in this
@@ -49,7 +50,7 @@ export function MetricDelta({
 /**
  * A single readout.
  *
- * Label in tracked condensed caps, value in mono — a number that changes
+ * Label above the metric, value in mono — a number that changes
  * between cycles must not reflow the tile it sits in, and mono is also the
  * clearest signal that this is measured rather than written.
  */
@@ -77,15 +78,17 @@ export function Stat({
   return (
     <div
       className={cx(
-        'relative flex min-w-0 flex-col gap-1 overflow-hidden rounded-lg border border-line border-t-[3px] bg-surface px-3.5 py-3',
-        'transition-shadow duration-[180ms] ease-standard hover:shadow-sm',
+        'relative flex min-w-0 flex-col gap-1 overflow-hidden rounded-bento border border-line bg-surface px-4 py-4',
+        'shadow-bento transition-shadow duration-200 ease-entrance hover:shadow-lg',
         className,
       )}
-      style={{ borderTopColor: accent ?? 'var(--color-line-strong)' }}
     >
-      <span className="font-condensed text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
-        {label}
-      </span>
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-0.5"
+        style={{ background: accent ?? 'var(--color-line-strong)' }}
+      />
+      <Eyebrow>{label}</Eyebrow>
       <span className="flex items-end justify-between gap-2">
         <span className="font-mono text-metric font-semibold tabular-nums text-ink">{value}</span>
         {series ? (

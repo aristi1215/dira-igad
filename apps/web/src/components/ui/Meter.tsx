@@ -60,8 +60,8 @@ export function Meter({
  */
 export function ScoreMeter({
   value,
-  color = '#0f62fe',
-  track = '#d0e2ff',
+  color = 'var(--color-accent)',
+  track = 'var(--color-accent-ring)',
 }: {
   value: number | null | undefined
   color?: string

@@ -40,7 +40,7 @@ export function Tabs<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cx(
-        'inline-flex items-center gap-0.5 rounded-md border border-line bg-surface p-0.5',
+        'inline-flex items-center gap-0.5 rounded-full border border-line bg-surface p-0.5 shadow-sm',
         className,
       )}
     >
@@ -55,7 +55,7 @@ export function Tabs<T extends string>({
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={cx(
-              'relative inline-flex items-center gap-1.5 rounded-sm font-medium whitespace-nowrap',
+              'relative inline-flex items-center gap-1.5 rounded-full font-medium whitespace-nowrap',
               'transition-colors duration-[120ms] ease-standard',
               size === 'sm' ? 'h-6.5 px-2 text-2xs' : 'h-7.5 px-2.5 text-xs',
               active ? 'text-white' : 'text-muted hover:bg-surface-3 hover:text-ink',
@@ -65,7 +65,7 @@ export function Tabs<T extends string>({
               <motion.span
                 layoutId={layoutId}
                 transition={T.panel}
-                className="absolute inset-0 rounded-sm bg-accent"
+                className="absolute inset-0 rounded-full bg-accent"
                 aria-hidden
               />
             ) : null}
@@ -77,7 +77,7 @@ export function Tabs<T extends string>({
               <span
                 className={cx(
                   'relative z-1 tabular-nums',
-                  active ? 'text-white/70' : 'text-faint',
+                  active ? 'text-accent-deep' : 'text-faint',
                 )}
               >
                 {item.count}

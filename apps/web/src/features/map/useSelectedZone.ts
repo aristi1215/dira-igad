@@ -7,7 +7,7 @@ import type { MapOverlay, ZoneSummary } from '../../lib/types'
 const ZONE_PARAM = 'zone'
 const OVERLAY_PARAM = 'overlay'
 
-const OVERLAYS: MapOverlay[] = ['pressure', 'ipc', 'displacement', 'incidents', 'hazards']
+const OVERLAYS: MapOverlay[] = ['pressure', 'ipc', 'displacement', 'incidents', 'hazards', 'markets']
 
 function isOverlay(value: string | null): value is MapOverlay {
   return value != null && (OVERLAYS as string[]).includes(value)

@@ -1,4 +1,4 @@
-import type { Feature, FeatureCollection, Geometry } from 'geojson'
+import type { Feature, FeatureCollection, Geometry, Point } from 'geojson'
 
 export type OperationalBand =
   | 'low'
@@ -28,6 +28,8 @@ export type AckStatus =
   | 'acknowledged'
   | 'conflict_reported'
   | 'resolved'
+
+export type DeliveryChannel = 'voice' | 'sms' | 'both'
 
 export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
@@ -110,7 +112,7 @@ export type Delivery = {
   id: string
   alert_id: string
   recipient_id: string
-  channel: string
+  channel: DeliveryChannel
   status: DeliveryStatus
   ack_status: AckStatus
   attempt_count: number
@@ -180,6 +182,17 @@ export type AdvisorResponse = {
   citations?: AdvisorCitation[]
   tools_used?: string[]
   conversation_id?: string
+  proposals?: AdvisorProposal[]
+}
+
+export type AdvisorProposal = {
+  type: 'verify-field-report' | 'alert-draft' | 'dispatch'
+  report_id?: string
+  situation_id?: string
+  reason?: string
+  language?: string
+  channel?: 'voice' | 'sms' | 'both'
+  phone_numbers?: string[]
 }
 
 export type AdvisorCitation = {
@@ -368,14 +381,43 @@ export type HealthRow = {
 
 export type HazardBulletin = {
   id: string
-  hazard_type: string
-  severity: 'advisory' | 'watch' | 'warning'
+  hazard_type: HazardType
+  severity: HazardSeverity
   headline: string
   detail: string | null
   valid_from: string
   valid_to: string | null
   source: string
   available_at?: string | null
+}
+
+export type HazardSeverity = 'advisory' | 'watch' | 'warning'
+export type HazardType =
+  | 'drought'
+  | 'flood'
+  | 'heat'
+  | 'locust'
+  | 'volcanic'
+  | 'earthquake'
+  | 'landslide'
+
+export type HazardProperties = {
+  id: string
+  zone_id: string
+  zone_name: string
+  country_iso2: string
+  hazard_type: HazardType
+  severity: HazardSeverity
+  headline: string
+  detail: string | null
+  valid_from: string
+  valid_to: string | null
+  source: string
+}
+
+export type HazardFeature = Feature<Point, HazardProperties>
+export type HazardCollection = FeatureCollection<Point, HazardProperties> & {
+  window?: { count: number; truncated: boolean }
 }
 
 export type FieldReportStatus = 'unverified' | 'verified' | 'dismissed'
@@ -412,9 +454,9 @@ export type Recipient = {
   id: string
   name: string
   phone_e164: string
-  zone_id: string
+  zone_id: string | null
   zone_name?: string
-  channel: string
+  channel: 'voice' | 'sms' | 'both'
   language: string
   active: boolean
 }

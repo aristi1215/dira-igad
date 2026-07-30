@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchAnalytics, queryKeys } from '../lib/api'
 import {
-  BAND_MAP_COLORS,
   BAND_ORDER,
   CHART,
   COUNTRY_NAMES,
@@ -10,13 +9,13 @@ import {
   fmtMonth,
 } from '../lib/format'
 import {
-  Card,
+  BentoCard,
+  BentoGrid,
   ErrorNote,
+  Eyebrow,
   PageHeader,
   Screen,
   SkeletonCard,
-  Stat,
-  StatRow,
 } from '../components/ui'
 import { BandDistributionBar, type BandCounts } from '../components/BandDistributionBar'
 import { HBarList, HeatStrip, TimeSeriesChart } from '../components/charts'
@@ -87,77 +86,16 @@ export function AnalyticsScreen() {
 
       {data ? (
         <>
-          <StatRow className="mb-5">
-            <Stat
-              label="Zones needing attention"
-              value={severeZones}
-              detail="High or very high this cycle"
-              accent={BAND_MAP_COLORS.high}
-            />
-            <Stat
-              label="Incidents, latest month"
-              value={incidentTrend ? incidentTrend.latest : '—'}
-              delta={incidentTrend?.delta ?? null}
-              deltaGoodDirection="down"
-              detail={
-                incidentTrend ? `${fmtMonth(incidentTrend.month)} vs the month before` : undefined
-              }
-            />
-            <Stat
-              label="Verified field reports"
-              value={data.field_report_stats.verified}
-              detail={`${data.field_report_stats.unverified} awaiting verification`}
-              accent={BAND_MAP_COLORS.ack}
-            />
-            <Stat
-              label="Alerts acknowledged"
-              value={ackRate != null ? `${ackRate}%` : '—'}
-              detail={
-                data.delivery_stats.needs_review > 0
-                  ? `${data.delivery_stats.needs_review} deliveries need review`
-                  : `${data.delivery_stats.total} calls placed`
-              }
-              accent={BAND_MAP_COLORS.low}
-            />
-          </StatRow>
-
-          {/* The only true time series in the product leads, full width. */}
-          <Card
-            title="Conflict incidents and fatalities"
-            subtitle="Region-wide monthly totals across all monitored zones"
-            className="group mb-5"
-            actions={
-              <AskAboutButton question="What is driving the regional trend in conflict incidents over the last year?" />
-            }
-          >
-            <TimeSeriesChart
-              data={data.incidents_monthly as unknown as Record<string, unknown>[]}
-              xKey="month"
-              xFormatter={fmtMonth}
-              height={300}
-              series={[
-                { key: 'events', label: 'Incidents', kind: 'bar', color: CHART.cat1 },
-                { key: 'fatalities', label: 'Fatalities', kind: 'line', color: CHART.cat2 },
-              ]}
-            />
-          </Card>
-
-          {/*
-            Explicit spans, and the band bar folded into the card beside it.
-            `lg:grid-cols-2` stretched a 24px distribution bar to match a
-            seven-row list next to it, which produced most of the whitespace
-            on this screen.
-          */}
-          <div className="mb-5 grid items-start gap-5 lg:grid-cols-12">
-            <Card
-              title="People in food crisis"
-              subtitle="Population in IPC Phase 3 or worse, by country"
-              className="lg:col-span-7"
+          <BentoGrid className="mb-5">
+            <BentoCard
+              span={4}
+              rowSpan={2}
+              eyebrow="Regional picture"
+              title="Band distribution"
+              subtitle="Zones by operational band this cycle"
             >
               <div className="mb-4 border-b border-line pb-3">
-                <span className="font-condensed mb-1.5 block text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
-                  Zones by risk band, this cycle
-                </span>
+                <Eyebrow className="mb-1.5 block">Zones by risk band, this cycle</Eyebrow>
                 <BandDistributionBar counts={bandCounts} />
               </div>
               <HBarList
@@ -168,13 +106,47 @@ export function AnalyticsScreen() {
                 }))}
                 formatter={fmtCompact}
               />
-            </Card>
+            </BentoCard>
 
-            <Card
-              title="Internally displaced people"
-              subtitle="Latest snapshots summed by country"
-              className="lg:col-span-5"
-            >
+            <BentoCard span={2} tone="inverse" eyebrow="Priority signal" title="Zones at risk">
+              <p className="font-mono text-4xl font-semibold tabular-nums">{severeZones}</p>
+              <p className="mt-2 text-sm text-muted">high or very high this cycle</p>
+              <p className="mt-5 text-xs text-faint">
+                {data.delivery_stats.needs_review > 0
+                  ? `${data.delivery_stats.needs_review} deliveries need review`
+                  : 'No delivery exceptions'}
+              </p>
+            </BentoCard>
+
+            <BentoCard span={2} eyebrow="Food security" title="People in P3+">
+              <HBarList
+                items={data.food_security_by_country.slice(0, 4).map((row) => ({
+                  key: row.country_iso2,
+                  label: COUNTRY_NAMES[row.country_iso2] ?? row.country_iso2,
+                  value: row.pop_phase3_plus,
+                }))}
+                formatter={fmtCompact}
+              />
+            </BentoCard>
+
+            <BentoCard span={4} rowSpan={2} eyebrow="Conflict" title="Incidents by month" subtitle="Region-wide monthly totals across monitored zones" actions={<AskAboutButton question="What is driving the regional trend in conflict incidents over the last year?" />}>
+              <TimeSeriesChart
+                data={data.incidents_monthly as unknown as Record<string, unknown>[]}
+                xKey="month"
+                xFormatter={fmtMonth}
+                height={300}
+                series={[
+                  { key: 'events', label: 'Incidents', kind: 'bar', color: CHART.cat1 },
+                  { key: 'fatalities', label: 'Fatalities', kind: 'line', color: CHART.cat2 },
+                ]}
+              />
+              <p className="mt-3 text-xs text-faint">
+                Latest month: <span className="font-mono text-ink">{incidentTrend?.latest ?? '—'}</span>
+                {incidentTrend ? ` · ${fmtMonth(incidentTrend.month)}` : ''}
+              </p>
+            </BentoCard>
+
+            <BentoCard span={2} rowSpan={2} eyebrow="Movement" title="Displacement">
               <HBarList
                 items={data.displacement_by_country.map((row) => ({
                   key: row.country_iso2,
@@ -184,13 +156,21 @@ export function AnalyticsScreen() {
                 formatter={fmtCompact}
                 color={CHART.cat4}
               />
-            </Card>
+            </BentoCard>
 
-            <Card
-              title="Rainfall by cluster"
-              subtitle="Millimetres per 10-day period — darker is wetter, pale strips are dry spells"
-              className="lg:col-span-12"
-            >
+            <BentoCard span={2} eyebrow="Field evidence" title="Report funnel">
+              <p className="font-mono text-3xl font-semibold tabular-nums text-ink">{data.field_report_stats.verified}</p>
+              <p className="mt-1 text-xs text-faint">verified reports</p>
+              <p className="mt-4 text-xs text-muted">{data.field_report_stats.unverified} awaiting verification</p>
+            </BentoCard>
+
+            <BentoCard span={2} eyebrow="Dispatch" title="Delivery health">
+              <p className="font-mono text-3xl font-semibold tabular-nums text-ink">{ackRate != null ? `${ackRate}%` : '—'}</p>
+              <p className="mt-1 text-xs text-faint">acknowledged</p>
+              <p className="mt-4 text-xs text-muted">{data.delivery_stats.total} calls placed</p>
+            </BentoCard>
+
+            <BentoCard span={2} eyebrow="Climate" title="Rainfall by cluster" subtitle="Millimetres per 10-day period">
               {rainfall.clusters.length > 0 ? (
                 <HeatStrip
                   rows={rainfall.clusters}
@@ -198,7 +178,7 @@ export function AnalyticsScreen() {
                   valueAt={(row, column) => rainfall.lookup.get(`${row}|${column}`) ?? null}
                   maxValue={rainfall.maxValue}
                   columnFormatter={fmtMonth}
-                  title="Rainfall by cluster and dekad"
+                  title="Rainfall by cluster and 10-day period"
                 />
               ) : null}
               <p className="mt-3 flex items-center gap-2 text-2xs text-faint">
@@ -210,17 +190,18 @@ export function AnalyticsScreen() {
                 </span>
                 Wetter
               </p>
-            </Card>
-          </div>
+            </BentoCard>
+          </BentoGrid>
         </>
       ) : null}
 
-      <Card
+      <BentoCard
+        span={6}
         title="Country economies"
         subtitle="World Bank indicators for the seven IGAD countries"
       >
         <EconomyPanel focusCountry={null} />
-      </Card>
+      </BentoCard>
     </Screen>
   )
 }

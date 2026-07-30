@@ -1,8 +1,8 @@
 import { motion } from 'motion/react'
 import type { Rect } from '../../lib/anchor'
-import { T } from '../../lib/motion'
+import { EASE } from '../../lib/motion'
 
-const RADIUS = 8
+const RADIUS = 18
 
 /**
  * The dimming scrim with a hole cut out of it.
@@ -18,7 +18,7 @@ const RADIUS = 8
  * can let real clicks through while still looking identical.
  */
 export function Spotlight({ rect, reduceMotion }: { rect: Rect | null; reduceMotion: boolean }) {
-  const transition = reduceMotion ? { duration: 0 } : T.spotlight
+  const transition = reduceMotion ? { duration: 0 } : { duration: 0.3, ease: EASE.entrance }
 
   // With no anchor yet, dim everything and cut nothing.
   const target = rect ?? { top: -9999, left: -9999, width: 0, height: 0 }
@@ -48,15 +48,17 @@ export function Spotlight({ rect, reduceMotion }: { rect: Rect | null; reduceMot
           y="0"
           width="100%"
           height="100%"
-          fill="rgba(22, 22, 22, 0.55)"
+          fill="color-mix(in srgb, var(--color-ink) 55%, transparent)"
           mask="url(#dira-tour-mask)"
         />
       </svg>
 
       {rect ? (
         <motion.div
-          className="absolute rounded-lg ring-[1.5px] ring-accent"
-          style={{ boxShadow: '0 0 0 4px rgba(15, 98, 254, 0.15)' }}
+          className="absolute rounded-[18px] ring-[1.5px] ring-accent"
+          style={{
+            boxShadow: '0 0 0 4px color-mix(in srgb, var(--color-accent) 15%, transparent)',
+          }}
           initial={false}
           animate={{
             top: rect.top,

@@ -4,25 +4,36 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from dira_core.alerts import derive_idempotency_key
+from dira_core.ports import ToolCallingLanguageModel
 from dira_data.db import connect
 from dira_data.economy import get_economy_source
+from dira_data.retrieval import search_corpus
 from dira_dispatch import build_voice_twiml
-from dira_llm import ALERT_DRAFT_SYSTEM, CannedResponseAdapter, get_language_model
+from dira_llm import (
+    ALERT_DRAFT_SYSTEM,
+    CannedResponseAdapter,
+    get_embedding_model,
+    get_language_model,
+)
+from dira_llm.openai_adapter import OpenAIAdapter
 from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from dira_api.advisor_tools import TOOL_HANDLERS, TOOL_SPECS
 from dira_api.context_routes import router as context_router
 from dira_api.settings import Settings, get_settings
 
 logger = logging.getLogger("dira.api")
+MAX_TOOL_ROUNDS = 5
 
 app = FastAPI(
     title="Dira API",
@@ -49,6 +60,42 @@ class AlertDraftBody(BaseModel):
     language: str = "sw"
 
 
+class AlertEditBody(BaseModel):
+    body_text: str | None = Field(default=None, min_length=1, max_length=4000)
+    language: str | None = Field(
+        default=None, pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12
+    )
+
+
+class RecipientCreateBody(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    zone_id: str | None = None
+    phone_e164: str = Field(pattern=r"^\+[1-9][0-9]{7,14}$")
+    language: str = Field(default="sw", pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12)
+    channel: Literal["voice", "sms", "both"] = "voice"
+
+
+class RecipientPatchBody(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    phone_e164: str | None = Field(default=None, pattern=r"^\+[1-9][0-9]{7,14}$")
+    language: str | None = Field(
+        default=None, pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12
+    )
+    channel: Literal["voice", "sms", "both"] | None = None
+    active: bool | None = None
+
+
+class AdvisorDispatchBody(BaseModel):
+    situation_id: UUID
+    phone_numbers: list[str]
+    channel: Literal["voice", "sms", "both"] = "voice"
+    language: str = Field(
+        default="sw", pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12
+    )
+    body_text: str | None = Field(default=None, min_length=1, max_length=4000)
+    approved_by: str = Field(min_length=1, max_length=200)
+
+
 class RetryBody(BaseModel):
     pass
 
@@ -66,6 +113,14 @@ def _settings() -> Settings:
 
 def _language_model() -> Any:
     settings = _settings()
+    if settings.openai_api_key:
+        try:
+            return OpenAIAdapter(
+                api_key=settings.openai_api_key,
+                model=settings.openai_model,
+            )
+        except Exception:
+            logger.exception("OpenAI advisor adapter unavailable; using configured fallback")
     return get_language_model(
         openai_api_key=settings.openai_api_key,
         anthropic_api_key=settings.anthropic_api_key,
@@ -85,6 +140,7 @@ def health() -> dict[str, str]:
 
 
 AUDIO_DIR = Path(__file__).resolve().parents[3] / "artifacts" / "audio"
+E164_PATTERN = re.compile(r"^\+[1-9][0-9]{7,14}$")
 
 
 @app.get("/audio/{filename}")
@@ -169,36 +225,50 @@ def situation_detail(situation_id: UUID) -> dict[str, Any]:
     }
 
 
+def _latest_alert_assessment(
+    conn: Any, situation_id: UUID
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, zone_id FROM situations WHERE id = %s", (situation_id,))
+        sit = cur.fetchone()
+        if sit is None:
+            raise HTTPException(404, "Situation not found")
+        cur.execute(
+            """
+            SELECT explanation, operational_band, window_start, window_end
+            FROM assessments
+            WHERE situation_id = %s ORDER BY cycle DESC LIMIT 1
+            """,
+            (situation_id,),
+        )
+        latest = cur.fetchone()
+    return dict(sit), (dict(latest) if latest is not None else None)
+
+
+def _draft_alert_text(
+    conn: Any, situation_id: UUID, language: str
+) -> tuple[str, dict[str, Any]]:
+    sit, latest = _latest_alert_assessment(conn, situation_id)
+    conn.commit()
+    prompt = (
+        f"Draft alert for zone {sit['zone_id']} "
+        f"band={latest and latest['operational_band']}. "
+        f"Model explanation: {latest and latest['explanation']}. "
+        f'Return JSON {{"language": "{language}", "body_text": "..."}} '
+        f"with body_text in language code '{language}', under 320 characters."
+    )
+    try:
+        draft = _language_model().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
+    except Exception:
+        logger.exception("LLM draft failed; using canned fallback")
+        draft = CannedResponseAdapter().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
+    return str(draft.get("body_text") or draft.get("text") or "Tahadhari ya hali."), latest or {}
+
+
 @app.post("/situations/{situation_id}/alert")
 def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, Any]:
     with connect(_settings().database_url) as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, zone_id FROM situations WHERE id = %s", (situation_id,))
-            sit = cur.fetchone()
-            if sit is None:
-                raise HTTPException(404, "Situation not found")
-            cur.execute(
-                """
-                SELECT explanation, operational_band, window_start, window_end
-                FROM assessments
-                WHERE situation_id = %s ORDER BY cycle DESC LIMIT 1
-                """,
-                (situation_id,),
-            )
-            latest = cur.fetchone()
-        prompt = (
-            f"Draft alert for zone {sit['zone_id']} "
-            f"band={latest and latest['operational_band']}. "
-            f"Model explanation: {latest and latest['explanation']}. "
-            f'Return JSON {{"language": "{body.language}", "body_text": "..."}} '
-            f"with body_text in language code '{body.language}', under 320 characters."
-        )
-        try:
-            draft = _language_model().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
-        except Exception:
-            logger.exception("LLM draft failed; using canned fallback")
-            draft = CannedResponseAdapter().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
-        text = str(draft.get("body_text") or draft.get("text") or "Tahadhari ya hali.")
+        text, latest = _draft_alert_text(conn, situation_id, body.language)
         with conn.transaction():
             with conn.cursor() as cur:
                 cur.execute(
@@ -216,12 +286,217 @@ def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, An
                         body.language,
                         text,
                         body.created_by,
-                        latest and latest["window_start"],
-                        latest and latest["window_end"],
+                        latest.get("window_start"),
+                        latest.get("window_end"),
                     ),
                 )
                 row = cur.fetchone()
     return _jsonable(dict(row))
+
+
+@app.patch("/alerts/{alert_id}")
+def edit_alert(alert_id: UUID, body: AlertEditBody) -> dict[str, Any]:
+    updates: dict[str, Any] = {}
+    if body.body_text is not None:
+        updates["body_text"] = body.body_text
+    if body.language is not None:
+        updates["language"] = body.language
+    if not updates:
+        raise HTTPException(422, "At least one alert field is required")
+
+    assignments = ", ".join(f"{key} = %s" for key in updates)
+    values = [*updates.values(), alert_id]
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE alerts
+                    SET {assignments}, updated_at = now()
+                    WHERE id = %s AND status = 'pending_approval'
+                    RETURNING id, situation_id, status, language, body_text,
+                              created_by, approved_by, approved_at, created_at,
+                              updated_at, window_start, window_end
+                    """,
+                    values,
+                )
+                row = cur.fetchone()
+                if row is None:
+                    cur.execute("SELECT id, status FROM alerts WHERE id = %s", (alert_id,))
+                    existing = cur.fetchone()
+                    if existing is None:
+                        raise HTTPException(404, "Alert not found")
+                    raise HTTPException(409, f"Alert status is {existing['status']}")
+    return _jsonable(dict(row))
+
+
+@app.post("/recipients")
+def create_recipient(body: RecipientCreateBody) -> dict[str, Any]:
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO recipients (name, zone_id, phone_e164, language, channel)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, name, phone_e164, zone_id, language, channel, active
+                    """,
+                    (body.name, body.zone_id, body.phone_e164, body.language, body.channel),
+                )
+                row = cur.fetchone()
+    return _jsonable(dict(row))
+
+
+@app.patch("/recipients/{recipient_id}")
+def edit_recipient(recipient_id: UUID, body: RecipientPatchBody) -> dict[str, Any]:
+    updates = body.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(422, "At least one recipient field is required")
+    assignments = ", ".join(f"{key} = %s" for key in updates)
+    values = [*updates.values(), recipient_id]
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE recipients
+                    SET {assignments}
+                    WHERE id = %s
+                    RETURNING id, name, phone_e164, zone_id, language, channel, active
+                    """,
+                    values,
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise HTTPException(404, "Recipient not found")
+    return _jsonable(dict(row))
+
+
+@app.delete("/recipients/{recipient_id}")
+def delete_recipient(recipient_id: UUID) -> dict[str, Any]:
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE recipients SET active = FALSE
+                    WHERE id = %s
+                    RETURNING id, name, phone_e164, zone_id, language, channel, active
+                    """,
+                    (recipient_id,),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise HTTPException(404, "Recipient not found")
+    return _jsonable(dict(row))
+
+
+@app.post("/advisor/dispatch")
+def advisor_dispatch(body: AdvisorDispatchBody) -> dict[str, Any]:
+    signer = body.approved_by.strip()
+    if not signer:
+        raise HTTPException(400, "approved_by required")
+    if not body.phone_numbers:
+        raise HTTPException(400, "phone_numbers must contain at least one number")
+    if len(body.phone_numbers) > 10:
+        raise HTTPException(400, "phone_numbers cannot contain more than 10 numbers")
+
+    invalid = [number for number in body.phone_numbers if not E164_PATTERN.fullmatch(number)]
+    if invalid:
+        raise HTTPException(
+            400,
+            f"Invalid E.164 phone number(s): {', '.join(invalid)}",
+        )
+    phone_numbers = list(dict.fromkeys(body.phone_numbers))
+
+    with connect(_settings().database_url) as conn:
+        if body.body_text is None:
+            text, latest = _draft_alert_text(conn, body.situation_id, body.language)
+        else:
+            _, latest_row = _latest_alert_assessment(conn, body.situation_id)
+            conn.commit()
+            text = body.body_text
+            latest = latest_row or {}
+
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT zone_id FROM situations WHERE id = %s",
+                    (body.situation_id,),
+                )
+                situation = cur.fetchone()
+                if situation is None:
+                    raise HTTPException(404, "Situation not found")
+
+                cur.execute(
+                    """
+                    INSERT INTO alerts (
+                      situation_id, status, language, body_text, created_by,
+                      approved_by, approved_at, window_start, window_end
+                    )
+                    VALUES (%s, 'approved', %s, %s, 'advisor', %s, now(), %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        body.situation_id,
+                        body.language,
+                        text,
+                        signer,
+                        latest.get("window_start"),
+                        latest.get("window_end"),
+                    ),
+                )
+                alert_id = cur.fetchone()["id"]
+                deliveries = 0
+                channels = (
+                    ("voice", "sms")
+                    if body.channel == "both"
+                    else (body.channel,)
+                )
+                for phone_number in phone_numbers:
+                    cur.execute(
+                        """
+                        INSERT INTO recipients (
+                          name, zone_id, phone_e164, language, channel, active
+                        )
+                        VALUES (%s, %s, %s, %s, %s, FALSE)
+                        RETURNING id
+                        """,
+                        (
+                            f"Direct dispatch · {phone_number}",
+                            situation["zone_id"],
+                            phone_number,
+                            body.language,
+                            body.channel,
+                        ),
+                    )
+                    recipient_id = cur.fetchone()["id"]
+                    for channel in channels:
+                        idem = derive_idempotency_key(
+                            str(alert_id), str(recipient_id), channel
+                        )
+                        cur.execute(
+                            """
+                            INSERT INTO deliveries (
+                              alert_id, recipient_id, channel, idempotency_key, status
+                            )
+                            VALUES (%s, %s, %s, %s, 'queued')
+                            ON CONFLICT (idempotency_key) DO NOTHING
+                            RETURNING id
+                            """,
+                            (alert_id, recipient_id, channel, idem),
+                        )
+                        if cur.fetchone() is not None:
+                            deliveries += 1
+
+    return {
+        "alert_id": str(alert_id),
+        "status": "approved",
+        "approved_by": signer,
+        "channel": body.channel,
+        "phone_numbers": phone_numbers,
+        "deliveries": deliveries,
+    }
 
 
 @app.post("/alerts/{alert_id}/approve")
@@ -276,20 +551,27 @@ def approve_alert(
                         (alert["zone_id"],),
                     )
                     recipients = cur.fetchall()
-                    expected_delivery_count = len(recipients)
+                    expected_delivery_count = 0
                     for rec in recipients:
-                        idem = derive_idempotency_key(
-                            str(alert_id), str(rec["id"]), str(rec["channel"])
+                        channels = (
+                            ("voice", "sms")
+                            if rec["channel"] == "both"
+                            else (rec["channel"],)
                         )
-                        cur.execute(
-                            """
-                            INSERT INTO deliveries (
-                              alert_id, recipient_id, channel, idempotency_key, status
-                            ) VALUES (%s, %s, %s, %s, 'queued')
-                            ON CONFLICT (idempotency_key) DO NOTHING
-                            """,
-                            (alert_id, rec["id"], rec["channel"], idem),
-                        )
+                        expected_delivery_count += len(channels)
+                        for channel in channels:
+                            idem = derive_idempotency_key(
+                                str(alert_id), str(rec["id"]), channel
+                            )
+                            cur.execute(
+                                """
+                                INSERT INTO deliveries (
+                                  alert_id, recipient_id, channel, idempotency_key, status
+                                ) VALUES (%s, %s, %s, %s, 'queued')
+                                ON CONFLICT (idempotency_key) DO NOTHING
+                                """,
+                                (alert_id, rec["id"], channel, idem),
+                            )
                     cur.execute(
                         "SELECT count(*) AS count FROM deliveries WHERE alert_id = %s",
                         (alert_id,),
@@ -376,7 +658,16 @@ ADVISOR_SYSTEM = (
     "You are the Dira situation-room advisor for a governmental early-warning team "
     "in the IGAD region. Answer using only the structured context provided. Give "
     "practical, do-no-harm preparedness guidance. Never name actors, ethnicities, "
-    "clans, or communities. Keep answers under 180 words."
+    "clans, or communities. Keep answers under 180 words.\n\n"
+    "You have safe, operator-gated proposal tools: propose_verify_field_report, "
+    "propose_alert_draft, and propose_dispatch. When the operator asks you to alert, "
+    "call, text, message, or dispatch to one or more phone numbers, DO call "
+    "propose_dispatch with the situation_id, the chosen channel (voice, sms, or both), "
+    "and the phone_numbers they gave (E.164, e.g. +254712345678) — this only prepares a "
+    "proposal for the operator to review and confirm. You never approve, dispatch, call, "
+    "or send anything yourself; a named human must confirm in the panel. Prefer preparing "
+    "a proposal over declining when an action is requested, then briefly explain what you "
+    "prepared and that it awaits their confirmation."
 )
 
 
@@ -389,9 +680,13 @@ def _advisor_gather(
     citations: list[dict[str, Any]] = []
     tools: list[str] = []
     zone_id = body.zone_id
+    # Embed before opening the read cursor: live adapters may make an external
+    # request, and no external network call belongs inside a DB transaction.
+    query_embedding = get_embedding_model().embed([body.question])[0]
     with conn.cursor() as cur:
         if body.situation_id:
             tools.append("read_situation")
+            context["situation_id"] = str(body.situation_id)
             cur.execute(
                 """
                 SELECT zone_id, zone_name, operational_band, model_risk, corroboration,
@@ -422,6 +717,7 @@ def _advisor_gather(
                 FROM news_signals ns
                 LEFT JOIN news_documents nd ON nd.id = ns.document_id
                 WHERE ns.zone_id = %s
+                  AND nd.available_at <= now()
                 ORDER BY ns.cycle DESC LIMIT 5
                 """,
                 (zone_id,),
@@ -441,7 +737,8 @@ def _advisor_gather(
             cur.execute(
                 """
                 SELECT hazard_type, severity, headline, source, valid_from
-                FROM hazard_bulletins WHERE zone_id = %s
+                FROM hazard_bulletins
+                WHERE zone_id = %s AND available_at <= now()
                 ORDER BY valid_from DESC LIMIT 5
                 """,
                 (zone_id,),
@@ -461,7 +758,8 @@ def _advisor_gather(
             cur.execute(
                 """
                 SELECT reporter_role, category, severity, status, reported_at
-                FROM field_reports WHERE zone_id = %s
+                FROM field_reports
+                WHERE zone_id = %s AND available_at <= now()
                 ORDER BY reported_at DESC LIMIT 5
                 """,
                 (zone_id,),
@@ -487,6 +785,25 @@ def _advisor_gather(
                 """
             )
             context = {"top_zones": [_jsonable(dict(r)) for r in cur.fetchall()]}
+    tools.append("search_corpus")
+    corpus_hits = search_corpus(
+        conn,
+        query_embedding,
+        cutoff=datetime.now(UTC),
+        zone_id=zone_id,
+        limit=6,
+    )
+    context["retrieval_chunks"] = [_jsonable(hit) for hit in corpus_hits]
+    citations += [
+        {
+            "kind": hit["kind"],
+            "title": str(hit["content"]).splitlines()[0][:160],
+            "source": hit["source_id"],
+            "reference": hit["available_at"],
+            "similarity": hit["similarity"],
+        }
+        for hit in corpus_hits
+    ]
     return context, citations, tools
 
 
@@ -580,6 +897,142 @@ def _advisor_persist(
             )
 
 
+def _advisor_persist_tool_message(
+    conn: Any,
+    conversation_id: Any,
+    *,
+    role: str,
+    content: str,
+    tool_name: str | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO advisor_messages (
+                  conversation_id, role, content, tool_name, citations
+                ) VALUES (%s, %s, %s, %s, %s::jsonb)
+                """,
+                (
+                    conversation_id,
+                    role,
+                    content,
+                    tool_name,
+                    json.dumps(metadata or {}, default=str),
+                ),
+            )
+
+
+def _advisor_tool_loop(
+    conn: Any,
+    conversation_id: Any,
+    history: list[dict[str, Any]],
+    context: dict[str, Any],
+    citations: list[dict[str, Any]],
+    tools: list[str],
+    question: str,
+    *,
+    on_tool: Any = None,
+    on_proposal: Any = None,
+) -> tuple[str, list[dict[str, Any]]]:
+    """Run at most five model/tool rounds, with proposal results kept inert."""
+    llm = _language_model()
+    prompt = _advisor_prompt(history, context, tools, question)
+    messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+    proposals: list[dict[str, Any]] = []
+    answer = ""
+
+    if not isinstance(llm, ToolCallingLanguageModel):
+        try:
+            answer = llm.complete(prompt, system=ADVISOR_SYSTEM)
+        except Exception:
+            logger.exception("Advisor LLM failed; deterministic fallback")
+        return answer or _advisor_fallback(context), proposals
+
+    for _round in range(MAX_TOOL_ROUNDS):
+        # The model and embedding adapters are called only after the preceding
+        # DB read/write transaction has been closed.
+        conn.commit()
+        try:
+            turn = llm.complete_with_tools(messages, TOOL_SPECS, system=ADVISOR_SYSTEM)
+        except Exception:
+            logger.exception("Advisor tool-calling round failed")
+            break
+        if turn.text:
+            answer = turn.text
+        if not turn.tool_calls:
+            break
+
+        serialized_calls: list[dict[str, Any]] = []
+        for index, call in enumerate(turn.tool_calls):
+            call_id = f"advisor-tool-{_round}-{index}"
+            serialized_calls.append(
+                {"id": call_id, "name": call.name, "arguments": call.arguments}
+            )
+        messages.append(
+            {
+                "role": "assistant",
+                "content": turn.text,
+                "tool_calls": serialized_calls,
+            }
+        )
+        _advisor_persist_tool_message(
+            conn,
+            conversation_id,
+            role="assistant",
+            content=turn.text or "",
+            tool_name=turn.tool_calls[0].name,
+            metadata={"tool_calls": serialized_calls},
+        )
+
+        for index, call in enumerate(turn.tool_calls):
+            call_id = f"advisor-tool-{_round}-{index}"
+            args = dict(call.arguments)
+            handler = TOOL_HANDLERS.get(call.name)
+            if handler is None:
+                result: dict[str, Any] = {"error": "Unknown advisor tool"}
+            else:
+                if call.name == "search_corpus":
+                    conn.commit()
+                    args["_query_embedding"] = get_embedding_model().embed(
+                        [str(args.get("query", question))]
+                    )[0]
+                    args["_cutoff"] = datetime.now(UTC)
+                try:
+                    result = handler(conn, args)
+                except Exception:
+                    logger.exception("Advisor tool failed: %s", call.name)
+                    result = {"error": "The advisor tool could not complete."}
+            conn.commit()
+            tools.append(call.name)
+            if on_tool is not None:
+                on_tool(call.name, call.arguments)
+            if result.get("type") in {"verify-field-report", "alert-draft", "dispatch"}:
+                proposals.append(result)
+                if on_proposal is not None:
+                    on_proposal(result)
+            result_text = json.dumps(result, default=str)
+            messages.append(
+                {"role": "tool", "tool_call_id": call_id, "content": result_text}
+            )
+            _advisor_persist_tool_message(
+                conn,
+                conversation_id,
+                role="tool",
+                content=result_text,
+                tool_name=call.name,
+                metadata={"arguments": call.arguments, "result": result},
+            )
+
+    if not answer:
+        answer = (
+            "I reviewed the available grounded context. The suggested next step "
+            "is ready for your decision."
+        )
+    return answer, proposals
+
+
 @app.post("/advisor")
 def advisor(body: AdvisorBody) -> dict[str, Any]:
     """Grounded advisor: retrieval tools + multi-turn history + citations.
@@ -587,17 +1040,15 @@ def advisor(body: AdvisorBody) -> dict[str, Any]:
     with connect(_settings().database_url) as conn:
         context, citations, tools = _advisor_gather(conn, body)
         conversation_id, history = _advisor_open_turn(conn, body)
-
-        prompt = _advisor_prompt(history, context, tools, body.question)
-        llm = _language_model()
-        answer: str | None = None
-        if not isinstance(llm, CannedResponseAdapter):
-            try:
-                answer = llm.complete(prompt, system=ADVISOR_SYSTEM)
-            except Exception:
-                logger.exception("Advisor LLM failed; deterministic fallback")
-        if not answer:
-            answer = _advisor_fallback(context)
+        answer, proposals = _advisor_tool_loop(
+            conn,
+            conversation_id,
+            history,
+            context,
+            citations,
+            tools,
+            body.question,
+        )
 
         _advisor_persist(conn, conversation_id, answer, citations)
 
@@ -606,6 +1057,7 @@ def advisor(body: AdvisorBody) -> dict[str, Any]:
         "context": context,
         "citations": citations,
         "tools_used": tools,
+        "proposals": proposals,
         "conversation_id": str(conversation_id),
     }
 
@@ -647,31 +1099,33 @@ def advisor_stream(body: AdvisorBody) -> StreamingResponse:
                 conversation_id, history = _advisor_open_turn(conn, body)
                 yield emit("conversation", {"conversation_id": str(conversation_id)})
 
-                prompt = _advisor_prompt(history, context, tools, body.question)
-                llm = _language_model()
+                def on_tool(name: str, args: dict[str, Any]) -> None:
+                    yield_queue.append(("tool", {"name": name, "args": args}))
 
-                chunks: list[str] = []
-                if not isinstance(llm, CannedResponseAdapter):
-                    try:
-                        if hasattr(llm, "stream"):
-                            for delta in llm.stream(prompt, system=ADVISOR_SYSTEM):
-                                chunks.append(delta)
-                                yield emit("delta", {"text": delta})
-                        else:
-                            whole = llm.complete(prompt, system=ADVISOR_SYSTEM)
-                            if whole:
-                                chunks.append(whole)
-                                yield emit("delta", {"text": whole})
-                    except Exception:
-                        logger.exception("Advisor stream failed; deterministic fallback")
+                def on_proposal(proposal: dict[str, Any]) -> None:
+                    yield_queue.append(("proposal", proposal))
 
-                answer = "".join(chunks)
-                if not answer:
-                    answer = _advisor_fallback(context)
-                    yield emit("delta", {"text": answer})
+                yield_queue: list[tuple[str, dict[str, Any]]] = []
+                answer, proposals = _advisor_tool_loop(
+                    conn,
+                    conversation_id,
+                    history,
+                    context,
+                    citations,
+                    tools,
+                    body.question,
+                    on_tool=on_tool,
+                    on_proposal=on_proposal,
+                )
+                for event_name, payload in yield_queue:
+                    yield emit(event_name, payload)
+                yield emit("delta", {"text": answer})
 
                 _advisor_persist(conn, conversation_id, answer, citations)
-                yield emit("done", {"citations": citations, "tools_used": tools})
+                yield emit(
+                    "done",
+                    {"citations": citations, "tools_used": tools, "proposals": proposals},
+                )
         except Exception:
             logger.exception("Advisor stream aborted")
             yield emit("error", {"message": "The advisor could not answer."})

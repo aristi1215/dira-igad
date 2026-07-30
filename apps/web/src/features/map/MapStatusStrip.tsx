@@ -4,6 +4,7 @@ import { ArrowRight, Megaphone } from 'lucide-react'
 import { BAND_LABELS, BAND_MAP_COLORS, BAND_ORDER, fmtCompact } from '../../lib/format'
 import type { OperationalBand, ZoneSummary } from '../../lib/types'
 import { cx } from '../../lib/cx'
+import { DateStamp } from '../../components/ui'
 
 /**
  * The bottom edge of the map.
@@ -61,7 +62,7 @@ export function MapStatusStrip({
   if (summary.assessed === 0) return null
 
   return (
-    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-map-ui flex h-11 items-center gap-4 border-t border-line bg-surface/92 px-4 backdrop-blur-sm">
+    <div className="pointer-events-auto absolute inset-x-3 bottom-3 z-map-ui flex min-h-11 items-center gap-4 rounded-full border border-line bg-surface/92 px-4 py-2 shadow-panel backdrop-blur-xl">
       <Readout
         label="Need attention"
         value={`${summary.needAttention}`}
@@ -77,7 +78,7 @@ export function MapStatusStrip({
 
       {/* The distribution, at a width that makes the proportions readable. */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="font-condensed shrink-0 text-2xs font-semibold tracking-[0.09em] text-faint uppercase">
+        <span className="shrink-0 text-eyebrow text-faint uppercase">
           Distribution
         </span>
         <div className="flex h-2.5 min-w-0 flex-1 overflow-hidden rounded-full">
@@ -106,16 +107,16 @@ export function MapStatusStrip({
 
       <Divider />
       {cycle ? (
-        <span className="shrink-0 font-mono text-2xs tabular-nums text-faint">
+        <DateStamp className="shrink-0">
           Cycle {cycle}
-        </span>
+        </DateStamp>
       ) : null}
 
       {pendingAlerts > 0 ? (
         <Link
           to="/dispatch"
           className={cx(
-            'flex shrink-0 items-center gap-1.5 rounded-sm border border-line-strong bg-surface px-2 py-1',
+            'flex shrink-0 items-center gap-1.5 rounded-full border border-line-strong bg-surface px-2 py-1',
             'text-2xs font-medium text-ink transition-colors duration-[120ms] ease-standard',
             'hover:border-accent hover:bg-accent-soft hover:text-accent-deep',
           )}
@@ -141,7 +142,7 @@ function Readout({
 }) {
   return (
     <span className="flex shrink-0 items-baseline gap-1.5">
-      <span className="font-condensed text-2xs font-semibold tracking-[0.09em] text-faint uppercase">
+      <span className="text-eyebrow text-faint uppercase">
         {label}
       </span>
       <span className="font-mono text-sm font-semibold tabular-nums text-ink">{value}</span>

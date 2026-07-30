@@ -1,6 +1,7 @@
 import type {
   AdvisorCitation,
   AdvisorResponse,
+  AdvisorProposal,
   Alert,
   AlertDraftResponse,
   AnalyticsOverview,
@@ -9,6 +10,7 @@ import type {
   EconomyResponse,
   FieldReport,
   MapEvents,
+  HazardCollection,
   ModelCard,
   Recipient,
   RegionalIndicators,
@@ -40,6 +42,7 @@ export const queryKeys = {
   zoneProfile: (zoneId: string) => ['zones', zoneId, 'profile'] as const,
   regionalIndicators: ['indicators', 'regional'] as const,
   mapEvents: ['map', 'events'] as const,
+  hazards: ['hazards'] as const,
   mapTrends: ['map', 'trends'] as const,
   situationDetail: (id: string) => ['situations', id] as const,
   fieldReports: (zoneId?: string | null, status?: string | null) =>
@@ -54,7 +57,10 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: JsonBody
 }
 
-type JsonBody = Record<string, string | number | boolean | null>
+type JsonBody = Record<
+  string,
+  string | number | boolean | string[] | null | undefined
+>
 
 export class ApiError extends Error {
   readonly status: number
@@ -163,6 +169,39 @@ export function approveAlert(
   })
 }
 
+export type AdvisorDispatchResponse = {
+  alert_id: string
+  status: string
+  approved_by: string
+  channel: string
+  phone_numbers: string[]
+  deliveries: number
+}
+
+export function advisorDispatch(input: {
+  situation_id: string
+  phone_numbers: string[]
+  channel: 'voice' | 'sms' | 'both'
+  language?: string
+  body_text?: string
+  approved_by: string
+}): Promise<AdvisorDispatchResponse> {
+  return requestJson<AdvisorDispatchResponse>('/advisor/dispatch', {
+    method: 'POST',
+    body: input,
+  })
+}
+
+export function updateAlert(
+  alertId: string,
+  input: { body_text?: string; language?: string },
+): Promise<Alert> {
+  return requestJson<Alert>(`/alerts/${alertId}`, {
+    method: 'PATCH',
+    body: input,
+  })
+}
+
 export function fetchEconomy(): Promise<EconomyResponse> {
   return requestJson<EconomyResponse>('/economy')
 }
@@ -190,11 +229,16 @@ export function askAdvisor(
 /** Events the advisor stream emits, in the order they arrive. */
 export type AdvisorStreamHandlers = {
   /** A retrieval tool finished. Fires once per tool, in real execution order. */
-  onTool?: (name: string) => void
+  onTool?: (name: string, args?: Record<string, unknown>) => void
+  onProposal?: (proposal: AdvisorProposal) => void
   onConversation?: (conversationId: string) => void
   /** A slice of the answer. One call when the provider cannot stream. */
   onDelta?: (text: string) => void
-  onDone?: (payload: { citations?: AdvisorCitation[]; tools_used?: string[] }) => void
+  onDone?: (payload: {
+    citations?: AdvisorCitation[]
+    tools_used?: string[]
+    proposals?: AdvisorProposal[]
+  }) => void
   onError?: (message: string) => void
 }
 
@@ -253,7 +297,17 @@ export async function streamAdvisor(
 
     switch (event) {
       case 'tool':
-        if (typeof payload.name === 'string') options.onTool?.(payload.name)
+        if (typeof payload.name === 'string') {
+          options.onTool?.(
+            payload.name,
+            typeof payload.args === 'object' && payload.args !== null
+              ? (payload.args as Record<string, unknown>)
+              : undefined,
+          )
+        }
+        break
+      case 'proposal':
+        options.onProposal?.(payload as unknown as AdvisorProposal)
         break
       case 'conversation':
         if (typeof payload.conversation_id === 'string') {
@@ -321,6 +375,10 @@ export function fetchMapEvents(days = 180): Promise<MapEvents> {
   return requestJson<MapEvents>(`/map/events?days=${days}`)
 }
 
+export function fetchHazards(): Promise<HazardCollection> {
+  return requestJson<HazardCollection>('/hazards')
+}
+
 /** Recent risk history per zone, oldest first — the badge sparklines. */
 export function fetchMapTrends(cycles = 6): Promise<ZoneTrends> {
   return requestJson<ZoneTrends>(`/map/trends?cycles=${cycles}`)
@@ -385,4 +443,36 @@ export function fetchAnalytics(): Promise<AnalyticsOverview> {
 
 export function fetchRecipients(): Promise<Recipient[]> {
   return requestJson<Recipient[]>('/recipients')
+}
+
+export function createRecipient(input: {
+  name: string
+  zone_id: string | null
+  phone_e164: string
+  language: string
+  channel: Recipient['channel']
+}): Promise<Recipient> {
+  return requestJson<Recipient>('/recipients', { method: 'POST', body: input })
+}
+
+export function updateRecipient(
+  recipientId: string,
+  input: Partial<{
+    name: string
+    phone_e164: string
+    language: string
+    channel: Recipient['channel']
+    active: boolean
+  }>,
+): Promise<Recipient> {
+  return requestJson<Recipient>(`/recipients/${recipientId}`, {
+    method: 'PATCH',
+    body: input,
+  })
+}
+
+export function deleteRecipient(recipientId: string): Promise<Recipient> {
+  return requestJson<Recipient>(`/recipients/${recipientId}`, {
+    method: 'DELETE',
+  })
 }

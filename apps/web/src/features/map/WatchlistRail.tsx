@@ -99,7 +99,7 @@ export function WatchlistRail({
       data-tour={TOUR_ANCHORS.mapWatchlist}
       /* Narrower below 1280px so the rail plus the zone card do not squeeze
          the map into a sliver on a 1280×720 laptop. */
-      className="pointer-events-auto absolute top-3 bottom-14 left-3 z-map-ui flex w-[16rem] max-w-[84vw] flex-col overflow-hidden rounded-lg border border-line bg-surface/95 shadow-panel backdrop-blur-sm xl:w-[19.5rem]"
+      className="pointer-events-auto absolute top-3 bottom-14 left-3 z-map-ui flex w-[16rem] max-w-[84vw] flex-col overflow-hidden rounded-bento border border-line bg-surface/92 shadow-panel backdrop-blur-xl xl:w-[19.5rem]"
     >
       <div className="shrink-0 border-b border-line px-3.5 pt-3 pb-2.5">
         {isLoading ? (
@@ -162,7 +162,7 @@ export function WatchlistRail({
                         onMouseEnter={() => onHover(zone.zone_id)}
                         onMouseLeave={() => onHover(null)}
                         className={cx(
-                          'group flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-left',
+                          'group flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left',
                           'transition-colors duration-[120ms] ease-standard',
                           selected
                             ? 'bg-accent-soft'

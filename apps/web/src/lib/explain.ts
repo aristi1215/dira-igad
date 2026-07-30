@@ -1,3 +1,14 @@
+import {
+  Bug,
+  Mountain,
+  MountainSnow,
+  Sun,
+  Thermometer,
+  Waves,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
+
 import type { OperationalBand } from './types'
 
 /** Human-readable metadata for every model feature (SHAP driver). */
@@ -190,6 +201,16 @@ export const HAZARD_META: Record<string, HazardMeta> = {
       'Pre-position road-clearing equipment',
     ],
   },
+}
+
+export const HAZARD_ICONS: Record<string, LucideIcon> = {
+  drought: Sun,
+  flood: Waves,
+  heat: Thermometer,
+  locust: Bug,
+  volcanic: Mountain,
+  earthquake: Zap,
+  landslide: MountainSnow,
 }
 
 export function hazardMeta(hazardType: string): HazardMeta {

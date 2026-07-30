@@ -14,7 +14,7 @@ import {
 } from '../lib/format'
 import {
   BandChip,
-  Card,
+  BentoCard,
   DataTable,
   EmptyState,
   ErrorNote,
@@ -28,6 +28,7 @@ import {
   StatRow,
   StatusChip,
   Tabs,
+  DateStamp,
   type Column,
 } from '../components/ui'
 import type { OperationalBand, SituationFeatureProperties } from '../lib/types'
@@ -169,7 +170,7 @@ export function SituationsScreen() {
     },
     {
       key: 'corroboration',
-      header: 'Corroboration',
+      header: 'What people report',
       align: 'right',
       render: (situation) => (
         <span className="font-mono tabular-nums">{fmtRisk(situation.corroboration)}</span>
@@ -213,7 +214,7 @@ export function SituationsScreen() {
       key: 'cycle',
       header: 'Cycle',
       render: (situation) => (
-        <span className="font-mono text-2xs text-faint">{situation.cycle ?? '—'}</span>
+        <DateStamp>{situation.cycle ?? '—'}</DateStamp>
       ),
       sortBy: (situation) => situation.cycle ?? '',
       secondary: true,
@@ -225,7 +226,7 @@ export function SituationsScreen() {
       <PageHeader
         eyebrow="Situation registry"
         title="Situations"
-        description="Model risk is the pure forecast; the band is that score combined with corroboration under the written rule."
+        description="Model risk is the pure forecast; the band is that score combined with supporting evidence under the written rule."
       />
 
       <StatRow className="mb-5">
@@ -300,7 +301,7 @@ export function SituationsScreen() {
 
       {situationsQuery.isError ? <ErrorNote error={situationsQuery.error} /> : null}
 
-      <Card padded={false}>
+      <BentoCard span={6} tone="inverse" padded={false} title="Situation registry">
         <DataTable
           columns={columns}
           rows={filtered}
@@ -315,7 +316,7 @@ export function SituationsScreen() {
             </EmptyState>
           }
         />
-      </Card>
+      </BentoCard>
 
       {needsAlert.length > 0 ? (
         <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">

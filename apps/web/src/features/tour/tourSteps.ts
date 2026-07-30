@@ -31,7 +31,7 @@ export type TourStep = {
  *
  * The old "forecast window" slide is gone: that fact now lives permanently in
  * the zone card's caption, so it needs no lecture. Wording follows the tone of
- * ScoreExplainer and BAND_GUIDANCE — plain, specific, no jargon.
+ * ScoreFlow and BAND_GUIDANCE — plain, specific, no jargon.
  */
 export const TOUR_STEPS: TourStep[] = [
   {
@@ -121,7 +121,7 @@ export const TOUR_STEPS: TourStep[] = [
   },
 ]
 
-export const TOUR_STORAGE_KEY = 'dira-tour-v2'
+export const TOUR_STORAGE_KEY = 'dira-tour-v3'
 
 export type TourProgress = {
   v: number
@@ -145,7 +145,7 @@ export function writeTourProgress(progress: Omit<TourProgress, 'v' | 'ts'>): voi
   try {
     localStorage.setItem(
       TOUR_STORAGE_KEY,
-      JSON.stringify({ v: 2, ts: Date.now(), ...progress } satisfies TourProgress),
+      JSON.stringify({ v: 3, ts: Date.now(), ...progress } satisfies TourProgress),
     )
   } catch {
     // Storage can be unavailable (private mode); the tour still works.

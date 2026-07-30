@@ -1,7 +1,7 @@
 export { SignalsList } from './SignalsList'
 export { SignalDetailModal } from './SignalDetailModal'
 export { FieldReportModal } from './FieldReportModal'
-export { ScoreExplainer } from './ScoreExplainer'
+export { ScoreFlow } from './ScoreFlow'
 export { ShapDrivers } from './ShapDrivers'
 export { HazardBulletins, HazardDetailModal } from './HazardBulletins'
 export { EvidenceBoard } from './EvidenceBoard'

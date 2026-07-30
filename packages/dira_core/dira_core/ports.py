@@ -89,14 +89,44 @@ class LanguageModel(Protocol):
     def complete_json(self, prompt: str, *, system: str | None = None) -> dict[str, Any]: ...
 
 
+@dataclass(frozen=True)
+class ToolCall:
+    name: str
+    arguments: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ToolTurn:
+    text: str
+    tool_calls: tuple[ToolCall, ...]
+
+
+@runtime_checkable
+class ToolCallingLanguageModel(Protocol):
+    def complete_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        *,
+        system: str | None = None,
+    ) -> ToolTurn: ...
+
+
 @runtime_checkable
 class EmbeddingModel(Protocol):
+    dimensions: int
+
     def embed(self, texts: list[str]) -> list[list[float]]: ...
 
 
 @runtime_checkable
 class VoiceChannel(Protocol):
     def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef: ...
+
+
+@runtime_checkable
+class SmsChannel(Protocol):
+    def send(self, to_e164: str, body: str, idempotency_key: str) -> str: ...
 
 
 @runtime_checkable
