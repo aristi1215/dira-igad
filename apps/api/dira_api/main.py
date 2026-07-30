@@ -22,6 +22,7 @@ from dira_llm import (
     get_embedding_model,
     get_language_model,
 )
+from dira_llm.openai_adapter import OpenAIAdapter
 from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
@@ -112,6 +113,14 @@ def _settings() -> Settings:
 
 def _language_model() -> Any:
     settings = _settings()
+    if settings.openai_api_key:
+        try:
+            return OpenAIAdapter(
+                api_key=settings.openai_api_key,
+                model=settings.openai_model,
+            )
+        except Exception:
+            logger.exception("OpenAI advisor adapter unavailable; using configured fallback")
     return get_language_model(
         openai_api_key=settings.openai_api_key,
         anthropic_api_key=settings.anthropic_api_key,
@@ -649,7 +658,16 @@ ADVISOR_SYSTEM = (
     "You are the Dira situation-room advisor for a governmental early-warning team "
     "in the IGAD region. Answer using only the structured context provided. Give "
     "practical, do-no-harm preparedness guidance. Never name actors, ethnicities, "
-    "clans, or communities. Keep answers under 180 words."
+    "clans, or communities. Keep answers under 180 words.\n\n"
+    "You have safe, operator-gated proposal tools: propose_verify_field_report, "
+    "propose_alert_draft, and propose_dispatch. When the operator asks you to alert, "
+    "call, text, message, or dispatch to one or more phone numbers, DO call "
+    "propose_dispatch with the situation_id, the chosen channel (voice, sms, or both), "
+    "and the phone_numbers they gave (E.164, e.g. +254712345678) — this only prepares a "
+    "proposal for the operator to review and confirm. You never approve, dispatch, call, "
+    "or send anything yourself; a named human must confirm in the panel. Prefer preparing "
+    "a proposal over declining when an action is requested, then briefly explain what you "
+    "prepared and that it awaits their confirmation."
 )
 
 
@@ -668,6 +686,7 @@ def _advisor_gather(
     with conn.cursor() as cur:
         if body.situation_id:
             tools.append("read_situation")
+            context["situation_id"] = str(body.situation_id)
             cur.execute(
                 """
                 SELECT zone_id, zone_name, operational_band, model_risk, corroboration,

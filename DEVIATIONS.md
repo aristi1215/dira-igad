@@ -190,3 +190,21 @@ deliveries for the existing dispatch worker.
 
 **Why:** This refines the earlier red line without weakening the human gate: only a named human
 can confirm and dispatch, while the advisor remains unable to dispatch server-side.
+
+## D-027 — Advisor LLM realness is decoupled from `DATA_MODE` in the API
+
+**Spec/convention said:** `DATA_MODE=seeded` is deterministic and network-free — `get_language_model()`
+returns `CannedResponseAdapter` unless `DATA_MODE=live`.
+
+**What we did:** The API's `_language_model()` (used by the advisor and alert drafting) now uses the
+real `OpenAIAdapter` whenever `OPENAI_API_KEY` is configured, independent of `DATA_MODE`. The canned
+tool-less adapter cannot emit the `propose_dispatch`/`propose_alert_draft` tool calls the panel needs,
+so the advisor proposal feature requires a real tool-calling model. With no key configured the API
+still falls back to canned, so the keyless "demo insurance" path stays network-free — and the seeded
+**pipeline** (`make demo`) is untouched because it calls the factory directly, preserving cycle
+determinism. Tests run without a key, so they remain deterministic and canned.
+
+**Why:** The user asked for a genuinely LLM-driven propose-a-call/SMS flow. Flipping the whole app to
+`DATA_MODE=live` to get a real LLM would also swap every data adapter to external sources; decoupling
+LLM realness from data realness keeps seeded data while letting the operator run a real advisor by
+providing only an OpenAI key.
