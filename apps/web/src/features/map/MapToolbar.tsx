@@ -1,4 +1,4 @@
-import { Activity, Coins, Swords, TriangleAlert, Users, Wheat } from 'lucide-react'
+import { Activity, Flame, ShoppingBasket, Swords, Users, Wheat } from 'lucide-react'
 import { Tabs, type TabItem } from '../../components/ui'
 import type { MapOverlay } from '../../lib/types'
 import { TOUR_ANCHORS } from '../tour/tourAnchors'
@@ -8,8 +8,8 @@ const OVERLAYS: TabItem<MapOverlay>[] = [
   { id: 'ipc', label: 'Food', icon: Wheat },
   { id: 'displacement', label: 'Displaced', icon: Users },
   { id: 'incidents', label: 'Incidents', icon: Swords },
-  { id: 'hazards', label: 'Hazards', icon: TriangleAlert },
-  { id: 'markets', label: 'Markets', icon: Coins },
+  { id: 'hazards', label: 'Hazards', icon: Flame },
+  { id: 'markets', label: 'Markets', icon: ShoppingBasket },
 ]
 
 /**

@@ -5,10 +5,19 @@ import { motion } from 'motion/react'
 import {
   Brain,
   ClipboardCheck,
+  Activity,
+  Flame,
   ExternalLink,
+  FileCheck2,
+  HeartPulse,
   Megaphone,
   Newspaper,
+  ShoppingBasket,
   Sigma,
+  Users,
+  UsersRound,
+  Waves,
+  Wheat,
   X,
 } from 'lucide-react'
 import {
@@ -19,16 +28,18 @@ import {
   fmtForecastWindow,
   fmtRisk,
   fmtRiskScore,
+  IPC_LABELS,
 } from '../../lib/format'
 import { BAND_TICKS, parseCombination } from '../../lib/explain'
 import type {
+  MapOverlay,
   OperationalBand,
   SituationDetail,
   SituationFeatureProperties,
   ZoneSummary,
   ZoneTrendPoint,
 } from '../../lib/types'
-import { BandChip, Button, IconButton, IpcChip, Meter, Sparkline } from '../../components/ui'
+import { BandChip, Button, DateStamp, IconButton, IpcChip, Meter, Sparkline } from '../../components/ui'
 import { cx } from '../../lib/cx'
 import { Term } from '../../components/ui/Term'
 import { ScoreFlow } from '../situations'
@@ -76,6 +87,9 @@ function toAssessment(situation: SituationFeatureProperties): Assessment | null 
 export function ZoneCard({
   zone,
   situation,
+  overlay,
+  incidents180d,
+  fatalities180d,
   trend = [],
   onClose,
   onPrepareAlert,
@@ -83,6 +97,9 @@ export function ZoneCard({
 }: {
   zone: ZoneSummary
   situation: SituationFeatureProperties | null
+  overlay: MapOverlay
+  incidents180d?: number | null
+  fatalities180d?: number | null
   /** Recent cycles for this zone, oldest first. Empty when unavailable. */
   trend?: ZoneTrendPoint[]
   onClose: () => void
@@ -95,6 +112,58 @@ export function ZoneCard({
   const band: OperationalBand | 'none' = zone.operational_band ?? 'none'
   const urgent = band === 'high' || band === 'very_high'
   const assessment = situation ? toAssessment(situation) : null
+
+  const overlayBrief = (() => {
+    switch (overlay) {
+      case 'ipc':
+        return {
+          icon: Wheat,
+          text:
+            zone.ipc_phase == null
+              ? 'No food-security classification is available for this zone.'
+              : `IPC phase ${zone.ipc_phase} · ${IPC_LABELS[zone.ipc_phase] ?? 'classified'}${
+                  zone.pop_phase3_plus != null
+                    ? ` · ${fmtCompact(zone.pop_phase3_plus)} people in phase 3+`
+                    : ''
+                }.`,
+        }
+      case 'displacement':
+        return {
+          icon: Users,
+          text: `${fmtCompact(zone.idps)} people displaced${
+            zone.refugees != null ? ` · ${fmtCompact(zone.refugees)} refugees` : ''
+          }.`,
+        }
+      case 'incidents':
+        return {
+          icon: Activity,
+          text: `${incidents180d ?? 0} recorded conflict incidents in the last 180 days${
+            fatalities180d != null ? ` · ${fatalities180d} fatalities` : ''
+          }.`,
+        }
+      case 'hazards':
+        return {
+          icon: Flame,
+          text: `${zone.active_hazards ?? 0} active hazard bulletin${
+            zone.active_hazards === 1 ? '' : 's'
+          }${zone.active_health_alerts ? ` · ${zone.active_health_alerts} health alert${zone.active_health_alerts === 1 ? '' : 's'}` : ''}.`,
+        }
+      case 'markets':
+        return {
+          icon: ShoppingBasket,
+          text:
+            zone.staple_pct_vs_3m_avg == null
+              ? 'No recent staple price is available.'
+              : `${zone.staple_commodity ?? 'Staple'} prices are ${
+                  zone.staple_pct_vs_3m_avg > 0 ? '+' : ''
+                }${Math.round(zone.staple_pct_vs_3m_avg)}% versus the 3-month average.`,
+        }
+      case 'pressure':
+      default:
+        return null
+    }
+  })()
+  const OverlayIcon = overlayBrief?.icon
 
   const breakdown =
     situation?.combination_rule && situation.model_risk != null && situation.corroboration != null
@@ -129,7 +198,7 @@ export function ZoneCard({
             className="grid gap-4 border-l-[3px] px-4 py-3 lg:grid-cols-2"
             style={{
               borderLeftColor: BAND_COLORS[band],
-              background: `color-mix(in srgb, ${BAND_COLORS[band]} 8%, white)`,
+              background: `color-mix(in srgb, ${BAND_COLORS[band]} 8%, var(--color-surface))`,
             }}
           >
             <div className="mb-1.5 flex items-center gap-2">
@@ -139,6 +208,37 @@ export function ZoneCard({
             <p className="col-span-2 text-[15px] leading-snug font-medium text-ink">
               {BAND_GUIDANCE[band]}
             </p>
+            {band === 'none' ? (
+              <p className="col-span-2 text-xs leading-relaxed text-muted">
+                No active assessment this cycle — not enough corroborating signal to open a
+                situation here. The zone is still monitored.
+              </p>
+            ) : null}
+
+            {overlayBrief ? (
+              <div className="col-span-2 rounded-md border border-line bg-surface/70 px-3 py-2.5">
+                <div className="flex items-start gap-2">
+                  {OverlayIcon ? (
+                    <OverlayIcon size={15} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-muted" />
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="text-xs leading-relaxed text-muted">{overlayBrief.text}</p>
+                    <p className="mt-1 text-2xs font-medium text-ink">
+                      Conflict pressure remains the main read for this zone <span aria-hidden>→</span>
+                    </p>
+                    {overlay === 'hazards' ? (
+                      <button
+                        type="button"
+                        onClick={() => void navigate(`/zones/${zone.zone_id}`)}
+                        className="mt-1 text-2xs font-medium text-accent hover:text-accent-hover"
+                      >
+                        Open hazard details
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             {/* 2. How much — and, just as importantly, which way. */}
             <div className="flex items-end justify-between gap-3">
@@ -174,14 +274,17 @@ export function ZoneCard({
               className="col-span-2 mt-1.5"
               label={`Conflict pressure for ${zone.zone_name}`}
             />
-            <p className="col-span-2 text-2xs text-faint">
+            <DateStamp
+              className="col-span-2"
+              title="Forecast window"
+            >
               Conflict pressure ·{' '}
               {fmtForecastWindow(
                 situation?.window_start,
                 situation?.window_end,
                 situation?.horizon_dekads,
               ).toLowerCase()}
-            </p>
+            </DateStamp>
           </div>
 
           {/* 3. Why — evidence the map already had but never showed. */}
@@ -244,10 +347,11 @@ export function ZoneCard({
             was already travelling in the /zones payload.
           */}
           <div className="grid grid-cols-3 gap-px bg-line">
-            <ExposureCell label="People" value={fmtCompact(zone.population)} />
-            <ExposureCell label="Displaced" value={fmtCompact(zone.idps)} />
-            <ExposureCell label="Refugees" value={fmtCompact(zone.refugees)} />
+            <ExposureCell icon={UsersRound} label="People" value={fmtCompact(zone.population)} />
+            <ExposureCell icon={Users} label="Displaced" value={fmtCompact(zone.idps)} />
+            <ExposureCell icon={UsersRound} label="Refugees" value={fmtCompact(zone.refugees)} />
             <ExposureCell
+              icon={Wheat}
               label="Pastoralist"
               value={
                 zone.pastoralist_share == null
@@ -255,17 +359,19 @@ export function ZoneCard({
                   : `${Math.round(zone.pastoralist_share * 100)}%`
               }
             />
-            <ExposureCell label="Water points" value={fmtCompact(zone.water_points)} />
-            <ExposureCell label="Markets" value={fmtCompact(zone.markets)} />
+            <ExposureCell icon={Waves} label="Water points" value={fmtCompact(zone.water_points)} />
+            <ExposureCell icon={ShoppingBasket} label="Markets" value={fmtCompact(zone.markets)} />
             <ExposureCell
+              icon={HeartPulse}
               label="Health alerts"
               value={String(zone.active_health_alerts ?? 0)}
             />
             <ExposureCell
+              icon={FileCheck2}
               label="Verified reports"
               value={String(zone.verified_field_reports_recent ?? 0)}
             />
-            <ExposureCell label="Hazards" value={String(zone.active_hazards ?? 0)} />
+            <ExposureCell icon={Flame} label="Hazards" value={String(zone.active_hazards ?? 0)} />
           </div>
 
           {/*
@@ -384,10 +490,21 @@ function EvidenceRow({
   )
 }
 
-function ExposureCell({ label, value }: { label: string; value: string }) {
+function ExposureCell({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Users
+  label: string
+  value: string
+}) {
   return (
     <div className="bg-surface px-4 py-2.5">
-      <span className="block text-md font-semibold tabular-nums text-ink">{value}</span>
+      <span className="flex items-center gap-1.5 text-md font-semibold tabular-nums text-ink">
+        <Icon size={13} strokeWidth={1.75} aria-hidden className="text-faint" />
+        {value}
+      </span>
       <span className="block text-2xs text-faint">{label}</span>
     </div>
   )

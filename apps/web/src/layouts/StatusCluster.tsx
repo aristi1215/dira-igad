@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Activity, Database, Radio, RefreshCw } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { T } from '../lib/motion'
+import { DateStamp } from '../components/ui'
 
 /**
  * "Cycle 2026-D21 · SEEDED · Live" used to be three bare chips — precise, and
@@ -76,9 +77,9 @@ export function StatusCluster({
         {cycle ? (
           <>
             <span aria-hidden className="h-3 w-px bg-line" />
-            <span className="font-mono font-medium tracking-[0.02em] tabular-nums text-ink">
+            <DateStamp className="text-ink">
               {cycle}
-            </span>
+            </DateStamp>
           </>
         ) : null}
         {dataMode ? (

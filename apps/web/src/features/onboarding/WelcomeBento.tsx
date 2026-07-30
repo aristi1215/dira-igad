@@ -202,6 +202,10 @@ function DataSources() {
           </span>
         ))}
       </div>
+      <p className="mt-auto pt-3 text-xs leading-relaxed text-muted">
+        Conflict pressure is Dira&apos;s forecast. News and alerts help corroborate it; food,
+        displacement, hazards, markets and health are external context, not model output.
+      </p>
     </Tile>
   )
 }

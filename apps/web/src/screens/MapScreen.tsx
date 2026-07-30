@@ -108,6 +108,10 @@ export function MapScreen() {
       )?.properties ?? null
     )
   }, [selectedZoneId, situationsQuery.data])
+  const selectedIndicator = useMemo(
+    () => indicatorsQuery.data?.features.find((feature) => feature.properties.zone_id === selectedZoneId),
+    [selectedZoneId, indicatorsQuery.data],
+  )
 
   const prepareAlertMutation = useMutation({
     mutationFn: (situationId: string) => prepareAlert(situationId),
@@ -171,6 +175,9 @@ export function MapScreen() {
           key={selectedZone.zone_id}
           zone={selectedZone}
           situation={selectedSituation}
+          overlay={overlay}
+          incidents180d={selectedIndicator?.properties.incidents_180d}
+          fatalities180d={selectedIndicator?.properties.fatalities_180d}
           trend={trendsQuery.data?.[selectedZone.zone_id]}
           onClose={() => selectZone(null)}
           onPrepareAlert={(situationId) => prepareAlertMutation.mutate(situationId)}

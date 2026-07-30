@@ -4,6 +4,7 @@ import { ArrowRight, Megaphone } from 'lucide-react'
 import { BAND_LABELS, BAND_MAP_COLORS, BAND_ORDER, fmtCompact } from '../../lib/format'
 import type { OperationalBand, ZoneSummary } from '../../lib/types'
 import { cx } from '../../lib/cx'
+import { DateStamp } from '../../components/ui'
 
 /**
  * The bottom edge of the map.
@@ -106,9 +107,9 @@ export function MapStatusStrip({
 
       <Divider />
       {cycle ? (
-        <span className="shrink-0 font-mono text-2xs tabular-nums text-faint">
+        <DateStamp className="shrink-0">
           Cycle {cycle}
-        </span>
+        </DateStamp>
       ) : null}
 
       {pendingAlerts > 0 ? (

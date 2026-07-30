@@ -169,6 +169,10 @@ export function MapLegend({
           />
           Badge = open situation · green once acknowledged
         </p>
+        <p className="mt-1 text-2xs leading-relaxed text-muted">
+          <span aria-hidden className="mr-1.5 inline-block size-2 rounded-full bg-band-none align-middle" />
+          Grey zones have no active assessment this cycle; they remain monitored.
+        </p>
       </LegendShell>
     )
   }

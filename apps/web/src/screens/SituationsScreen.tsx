@@ -28,6 +28,7 @@ import {
   StatRow,
   StatusChip,
   Tabs,
+  DateStamp,
   type Column,
 } from '../components/ui'
 import type { OperationalBand, SituationFeatureProperties } from '../lib/types'
@@ -213,7 +214,7 @@ export function SituationsScreen() {
       key: 'cycle',
       header: 'Cycle',
       render: (situation) => (
-        <span className="font-mono text-2xs text-faint">{situation.cycle ?? '—'}</span>
+        <DateStamp>{situation.cycle ?? '—'}</DateStamp>
       ),
       sortBy: (situation) => situation.cycle ?? '',
       secondary: true,

@@ -26,6 +26,7 @@ import {
   Stat,
   StatRow,
   StatusChip,
+  DateStamp,
   type Column,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
@@ -97,7 +98,7 @@ export function ZoneDossierScreen() {
       key: 'week',
       header: 'Week',
       width: '6rem',
-      render: (row) => <span className="font-mono text-2xs text-muted">{fmtDate(row.week_start)}</span>,
+      render: (row) => <DateStamp>{fmtDate(row.week_start)}</DateStamp>,
       sortBy: (row) => row.week_start,
     },
     {

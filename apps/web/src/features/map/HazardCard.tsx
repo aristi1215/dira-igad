@@ -4,7 +4,7 @@ import type { HazardProperties } from '../../lib/types'
 import { hazardMeta, HAZARD_ICONS, HAZARD_SEVERITY_META } from '../../lib/explain'
 import { fmtDate } from '../../lib/format'
 import { placeNearPoint, type Placement } from '../../lib/anchor'
-import { IconButton, StatusChip } from '../../components/ui'
+import { DateStamp, IconButton, StatusChip } from '../../components/ui'
 
 export function HazardCard({
   hazard,
@@ -63,9 +63,9 @@ export function HazardCard({
         {hazard.detail ? <p className="text-sm leading-relaxed text-muted">{hazard.detail}</p> : null}
         <div className="border-t border-line pt-3">
           <p className="text-eyebrow text-faint">Validity</p>
-          <p className="mt-1 text-xs text-muted">
+          <DateStamp className="mt-1">
             {fmtDate(hazard.valid_from)} → {hazard.valid_to ? fmtDate(hazard.valid_to) : 'open-ended'}
-          </p>
+          </DateStamp>
         </div>
         {meta.actions.length > 0 ? (
           <div className="border-t border-line pt-3">
