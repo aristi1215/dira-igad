@@ -103,6 +103,8 @@ export function SourcesScreen() {
       render: (source) =>
         source.mode === 'live' ? (
           <StatusChip tone="success">Live</StatusChip>
+        ) : source.mode === 'unavailable' ? (
+          <StatusChip tone="warning">Not live · honesty</StatusChip>
         ) : source.live_capable ? (
           <StatusChip tone="info">Demo · can go live</StatusChip>
         ) : (
@@ -256,9 +258,15 @@ export function SourcesScreen() {
               label="Mode"
               value={data.data_mode === 'live' ? 'Live' : 'Demo'}
               detail={
-                data.data_mode === 'live'
-                  ? 'reading real endpoints'
-                  : 'fixed fixtures, identical every run'
+                data.database
+                  ? `DB ${data.database}${
+                      data.data_mode === 'live'
+                        ? ' · real endpoints'
+                        : ' · fixed fixtures'
+                    }`
+                  : data.data_mode === 'live'
+                    ? 'reading real endpoints'
+                    : 'fixed fixtures, identical every run'
               }
             />
           </StatRow>

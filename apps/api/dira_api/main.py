@@ -620,7 +620,7 @@ def zone_signals(zone_id: str) -> list[dict[str, Any]]:
                 SELECT DISTINCT ON (ns.document_id)
                        ns.id, ns.zone_id, ns.signal_type, ns.confidence, ns.status,
                        ns.excerpt, ns.cycle, ns.created_at, nd.title, nd.source,
-                       nd.published_at, nd.available_at, nd.external_id,
+                       nd.published_at, nd.available_at, nd.external_id, nd.url,
                        left(nd.body, 700) AS body_excerpt
                 FROM news_signals ns
                 LEFT JOIN news_documents nd ON nd.id = ns.document_id

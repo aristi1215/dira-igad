@@ -46,6 +46,12 @@ Dira is a fully implemented modular monorepo (not a scaffold — see `CLAUDE.md`
   secrets (OpenAI/Anthropic, ACLED, HDX, Twilio, TTS) are optional in seeded mode.
 - Default `DATABASE_URL` in `.env.example` points at host port `55432` (Compose maps it there to avoid
   clashing with a local Postgres on 5432–5434).
+- **Dual databases** on the same Compose Postgres: `dira` (seeded) and `dira_live` (live).
+  Set `DATABASE_URL_SEEDED` / `DATABASE_URL_LIVE`; `DATA_MODE` resolves which one API/worker use.
+  Flip mode and restart services — modes never share climate/news/ACLED state.
+  - `make seed` → seeded DB only (fixtures + demo).
+  - `make live-bootstrap` → migrate `dira_live` + reference tables (zones/adjacency/exposure).
+  - `make live-sync` / `make backfill-climate` → refresh live DB only (`EE_PROJECT` for GEE NDVI/CHIRPS).
 
 ### Live integrations (brief)
 

@@ -22,6 +22,7 @@ from dira_data.db import (
     load_zone_geoms_geojson,
     load_zones,
 )
+from dira_data.db_url import resolve_database_url
 from dira_data.rasters import ChirpsHttpAdapter, chirps_dekad_url
 from dira_data.tiles import render_placeholder_tile
 
@@ -36,6 +37,7 @@ __all__ = [
     "connect",
     "get_conflict_source",
     "get_hazard_source",
+    "resolve_database_url",
     "load_acled_events",
     "load_adjacency",
     "load_adjacency_by_zone",

@@ -38,10 +38,15 @@ export function CommandBar({
         // canvas instead of being drawn onto it.
       )}
     >
-      <div className="flex shrink-0 items-center gap-2.5" data-tour={TOUR_ANCHORS.brand}>
-        <BrandMark size={21} className="text-accent" />
-        <span className="text-xl leading-none font-semibold tracking-[-0.02em] text-ink">
-          Dira
+      <div className="flex shrink-0 items-baseline gap-2" data-tour={TOUR_ANCHORS.brand}>
+        <span className="flex items-center gap-2">
+          <BrandMark size={21} className="text-accent" />
+          <span className="text-xl leading-none font-semibold tracking-[-0.02em] text-ink">
+            Dira
+          </span>
+        </span>
+        <span className="hidden text-2xs font-semibold tracking-[0.08em] text-accent uppercase sm:inline">
+          The Next Horizon
         </span>
         <span aria-hidden className="hidden h-5 w-px bg-line lg:block" />
         <span className="text-eyebrow hidden text-faint uppercase lg:inline">

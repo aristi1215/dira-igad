@@ -332,8 +332,25 @@ def upsert_recipients(cur: psycopg.Cursor[Any], recipients: list[dict[str, Any]]
         )
 
 
-def main() -> int:
-    database_url = os.environ.get("DATABASE_URL")
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    from dira_data.db_url import resolve_database_url
+
+    parser = argparse.ArgumentParser(description="Bootstrap Dira reference + optional fixtures")
+    parser.add_argument(
+        "--reference-only",
+        action="store_true",
+        help="Load zones/adjacency/exposure/recipients only (for dira_live).",
+    )
+    parser.add_argument(
+        "--database-url",
+        default=None,
+        help="Override DATABASE_URL (defaults to mode-resolved URL).",
+    )
+    args = parser.parse_args(argv)
+
+    database_url = args.database_url or resolve_database_url()
     if not database_url:
         print("[bootstrap] DATABASE_URL is required.")
         return 2
@@ -344,12 +361,6 @@ def main() -> int:
     zones_geojson["features"].extend(load_json("igad/geojson/zones.geojson")["features"])
     exposure = load_json("mandera/exposure/exposure.json")
     exposure.update(load_json("igad/exposure/exposure.json"))
-    acled_events = load_json("mandera/acled/events.json")
-    acled_events.extend(load_json("igad/acled/events.json"))
-    climate_rows = load_json("mandera/climate/climate.json")
-    climate_rows.extend(load_json("igad/climate/climate.json"))
-    articles = load_json("news/corpus/articles.json")
-    articles.extend(load_json("igad/news_articles.json"))
     recipients = load_json("mandera/recipients.json")
     recipients.extend(load_json("igad/recipients.json"))
 
@@ -359,10 +370,27 @@ def main() -> int:
             zone_ids = upsert_zones(cur, zones_geojson)
             adjacency_count = recompute_adjacency(cur, zone_ids)
             upsert_exposure(cur, exposure)
+            upsert_recipients(cur, recipients)
+            if args.reference_only:
+                print("[bootstrap] Reference tables loaded (no climate/news/ACLED fixtures).")
+                print(f"[bootstrap] database={database_url.rsplit('/', 1)[-1]}")
+                print(
+                    f"[bootstrap] clusters={len(clusters)} "
+                    f"zones={len(zones_geojson['features'])} "
+                    f"adjacency_edges={adjacency_count} "
+                    f"exposures={len(exposure)} recipients={len(recipients)}"
+                )
+                return 0
+
+            acled_events = load_json("mandera/acled/events.json")
+            acled_events.extend(load_json("igad/acled/events.json"))
+            climate_rows = load_json("mandera/climate/climate.json")
+            climate_rows.extend(load_json("igad/climate/climate.json"))
+            articles = load_json("news/corpus/articles.json")
+            articles.extend(load_json("igad/news_articles.json"))
             null_event_count = upsert_acled_events(cur, acled_events)
             upsert_climate(cur, climate_rows)
             upsert_news_documents(cur, articles)
-            upsert_recipients(cur, recipients)
             info_counts = refresh_information_layer(cur, load_information_fixtures(SEEDED))
 
     print("[bootstrap] Seeded Mandera + IGAD fixtures loaded.")

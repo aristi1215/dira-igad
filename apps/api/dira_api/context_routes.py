@@ -204,7 +204,7 @@ def zone_profile(zone_id: str) -> dict[str, Any]:
                 """
                 SELECT ns.id, ns.signal_type, ns.confidence, ns.status, ns.excerpt, ns.cycle,
                        ns.created_at, nd.title, nd.source, nd.published_at, nd.available_at,
-                       nd.external_id, left(nd.body, 700) AS body_excerpt
+                       nd.external_id, nd.url, left(nd.body, 700) AS body_excerpt
                 FROM news_signals ns
                 LEFT JOIN news_documents nd ON nd.id = ns.document_id
                 WHERE ns.zone_id = %s
@@ -647,14 +647,14 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "news",
-        "name": "GDELT DOC 2.0 + ReliefWeb — Horn of Africa news (E3 signals)",
+        "name": "ReliefWeb + GDELT — Horn of Africa news (E3 signals)",
         "category": "Unstructured · media",
         "live_endpoint": (
-            "GDELT DOC 2.0 ArtList (key-free) + "
-            "ReliefWeb API reports overlay (configured)"
+            "ReliefWeb API reports (primary, appname) + "
+            "GDELT DOC 2.0 ArtList overlay (key-free)"
         ),
-        "licence": "GDELT open; ReliefWeb open (appname configured)",
-        "cadence": "Continuous (15-min GDELT refresh window)",
+        "licence": "ReliefWeb open (appname configured); GDELT open",
+        "cadence": "Continuous (ReliefWeb + 15-min GDELT window)",
         "count_sql": "SELECT count(*), max(available_at) FROM news_documents",
     },
     {
@@ -706,11 +706,11 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "fao_locust",
-        "name": "FAO DLIS — desert locust bulletins",
+        "name": "FAO DLIS — desert locust (no live connector; seeded illustrative only)",
         "category": "Hazards",
-        "live_endpoint": "FAO Locust Hub (no clean key-free JSON — seeded)",
-        "licence": "FAO open data",
-        "cadence": "Monthly + flash updates",
+        "live_endpoint": "No live FAO Locust Hub JSON connected — seeded illustrative records only",
+        "licence": "Illustrative seed data; not a live FAO feed",
+        "cadence": "Monthly + flash updates (when seeded)",
         "count_sql": (
             "SELECT count(*), max(available_at) FROM hazard_bulletins "
             "WHERE hazard_type = 'locust'"
@@ -730,11 +730,11 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "usgs_geological",
-        "name": "USGS — geological hazard bulletins",
+        "name": "USGS geological hazards (no live connector; seeded illustrative only)",
         "category": "Hazards",
-        "live_endpoint": None,
-        "licence": "USGS public domain",
-        "cadence": "Event-driven",
+        "live_endpoint": "No live USGS feed connected — seeded illustrative records only",
+        "licence": "Illustrative seed data; not a live USGS feed",
+        "cadence": "Event-driven (when seeded)",
         "count_sql": (
             "SELECT count(*), max(available_at) FROM hazard_bulletins "
             "WHERE hazard_type IN ('volcanic', 'earthquake', 'landslide')"
@@ -742,11 +742,11 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "field_reports",
-        "name": "CEWARN field monitors — incident & situation reports",
+        "name": "CEWARN field monitors — in-app reports (not an external live ingest)",
         "category": "Primary reporting",
-        "live_endpoint": "In-app POST /field-reports (this system)",
-        "licence": "CEWARN internal",
-        "cadence": "Continuous",
+        "live_endpoint": "In-app POST /field-reports only — no external CEWARN API pull",
+        "licence": "CEWARN internal / operator-entered",
+        "cadence": "Continuous (operator)",
         "count_sql": "SELECT count(*), max(available_at) FROM field_reports",
     },
     {
@@ -772,6 +772,7 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
 LIVE_CAPABLE = {
     "acled",
     "chirps",
+    "modis_ndvi",
     "news",
     "ipc",
     "dtm",
@@ -779,6 +780,15 @@ LIVE_CAPABLE = {
     "wfp_prices",
     "worldbank",
     "glofas",
+}
+
+# Connected neither as a live HTTP adapter nor as a live-mode substitute.
+# In live deployments these stay honest: seeded illustrative rows or in-app only.
+UNAVAILABLE_LIVE = {
+    "who_ewars",
+    "fao_locust",
+    "usgs_geological",
+    "field_reports",
 }
 
 
@@ -800,9 +810,12 @@ def data_sources() -> dict[str, Any]:
                     values = list(row.values()) if hasattr(row, "values") else list(row)
                     count = int(values[0]) if values and values[0] is not None else 0
                     freshest = values[1].isoformat() if len(values) > 1 and values[1] else None
-                mode = (
-                    "live" if (data_mode == "live" and src["key"] in LIVE_CAPABLE) else "seeded"
-                )
+                if data_mode == "live" and src["key"] in LIVE_CAPABLE:
+                    mode = "live"
+                elif data_mode == "live" and src["key"] in UNAVAILABLE_LIVE:
+                    mode = "unavailable"
+                else:
+                    mode = "seeded"
                 out.append(
                     {
                         "key": src["key"],
@@ -819,6 +832,7 @@ def data_sources() -> dict[str, Any]:
                 )
     return {
         "data_mode": data_mode,
+        "database": settings.database_url.rsplit("/", 1)[-1],
         "bitemporal_note": (
             "Every observation stores both the period it describes and the moment it "
             "became available (available_at). Each assessment only reads data whose "

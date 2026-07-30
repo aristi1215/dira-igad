@@ -56,6 +56,7 @@ export function SignalsList({ zoneId, zoneName }: SignalsListProps) {
                 {[signal.source, signal.published_at ? fmtDate(signal.published_at) : null]
                   .filter(Boolean)
                   .join(' · ') || 'Source pending'}
+                {signal.url ? ' · has source link' : ''}
                 {' · click for full context'}
               </small>
             </button>

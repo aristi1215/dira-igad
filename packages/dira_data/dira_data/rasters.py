@@ -10,6 +10,7 @@ from __future__ import annotations
 import gzip
 import logging
 import os
+import time
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -102,14 +103,32 @@ class ChirpsHttpAdapter:
             return dest
         url = chirps_dekad_url(dekad_start)
         logger.info("Downloading CHIRPS dekadal raster %s", url)
-        with httpx.Client(timeout=180.0, follow_redirects=True) as client:
-            response = client.get(url)
-            response.raise_for_status()
-            payload = response.content
-        if url.endswith(".gz"):
-            payload = gzip.decompress(payload)
-        dest.write_bytes(payload)
-        return dest
+        last_exc: Exception | None = None
+        for attempt in range(1, 3):
+            try:
+                with httpx.Client(timeout=120.0, follow_redirects=True) as client:
+                    response = client.get(url)
+                    response.raise_for_status()
+                    payload = response.content
+                if url.endswith(".gz"):
+                    payload = gzip.decompress(payload)
+                dest.write_bytes(payload)
+                return dest
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                if dest.exists():
+                    dest.unlink(missing_ok=True)
+                sleep_s = min(2**attempt, 8)
+                logger.warning(
+                    "CHIRPS download attempt %s/2 failed for %s: %s — retry in %ss",
+                    attempt,
+                    dekad_start,
+                    exc,
+                    sleep_s,
+                )
+                time.sleep(sleep_s)
+        assert last_exc is not None
+        raise last_exc
 
     def _zonal_means(self, tif_path: Path, zone_ids: list[str]) -> dict[str, float]:
         import numpy as np

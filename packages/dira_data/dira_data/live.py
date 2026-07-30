@@ -317,16 +317,22 @@ class GdeltNewsAdapter:
                 "title": title[:500],
                 "body": body[:8000],
                 "source": f"GDELT/{domain}",
+                "url": url,
                 "published_at": published,
                 "available_at": _now_iso(),
+                "provenance": {
+                    "provider": "gdelt",
+                    "domain": domain,
+                    "sourcecountry": country or None,
+                },
             })
         return articles
 
 
 class ReliefWebNewsAdapter:
-    """Optional ReliefWeb overlay (requires RELIEFWEB_APPNAME).
+    """Primary live news source (clean humanitarian reports + stable URLs).
 
-    Kept as an additive source; GDELT is the primary live news feed.
+    Requires RELIEFWEB_APPNAME. GDELT is the secondary overlay.
     """
 
     BASE = "https://api.reliefweb.int/v2/reports"
@@ -341,7 +347,9 @@ class ReliefWebNewsAdapter:
     def available(self) -> bool:
         return bool(self.appname)
 
-    def fetch_articles(self, query: str, limit: int = 25) -> list[dict[str, Any]]:
+    def fetch_articles(
+        self, query: str = "drought OR conflict OR displacement OR flood", limit: int = 40
+    ) -> list[dict[str, Any]]:
         import httpx
 
         body = {
@@ -367,13 +375,23 @@ class ReliefWebNewsAdapter:
                 continue
             created = str(fields.get("date", {}).get("created") or _now_iso())
             sources = fields.get("source") or []
+            raw_url = fields.get("url")
+            if isinstance(raw_url, dict):
+                url = str(raw_url.get("href") or raw_url.get("url") or "").strip() or None
+            else:
+                url = str(raw_url or "").strip() or None
             articles.append({
                 "id": f"reliefweb-{item.get('id')}",
                 "title": fields.get("title") or "(untitled)",
                 "body": body_text[:8000],
                 "source": (sources[0].get("name") if sources else "ReliefWeb"),
+                "url": url,
                 "published_at": created,
                 "available_at": _now_iso(),
+                "provenance": {
+                    "provider": "reliefweb",
+                    "reliefweb_id": item.get("id"),
+                },
             })
         return articles
 
@@ -475,6 +493,7 @@ class GdacsHazardAdapter:
                     "valid_from": valid_from,
                     "valid_to": valid_to,
                     "source": "gdacs_live",
+                    "url": str(report_url) if report_url else None,
                     "available_at": _now_iso(),
                 })
         return events
@@ -497,6 +516,7 @@ class GdacsHazardAdapter:
                     "valid_from": event["valid_from"],
                     "valid_to": event.get("valid_to"),
                     "source": event["source"],
+                    "url": event.get("url"),
                     "available_at": event["available_at"],
                     "external_key": f"{zone_id}:{event['event_key']}",
                 })
@@ -518,17 +538,39 @@ def _stable_slug(url: str) -> str:
 
 
 def _insert_news_articles(cur: Any, articles: list[dict[str, Any]]) -> int:
+    import json
+
     inserted = 0
     for a in articles:
+        provenance = a.get("provenance") or {}
         cur.execute(
             """
             INSERT INTO news_documents (
-              external_id, title, body, source, published_at, available_at
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (external_id) DO NOTHING
+              external_id, title, body, source, url, provenance,
+              published_at, available_at
+            ) VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+            ON CONFLICT (external_id) DO UPDATE SET
+              title = EXCLUDED.title,
+              body = EXCLUDED.body,
+              source = EXCLUDED.source,
+              url = COALESCE(EXCLUDED.url, news_documents.url),
+              provenance = CASE
+                WHEN EXCLUDED.provenance = '{}'::jsonb THEN news_documents.provenance
+                ELSE EXCLUDED.provenance
+              END,
+              published_at = EXCLUDED.published_at,
+              available_at = EXCLUDED.available_at
             """,
-            (a["id"], a["title"], a["body"], a["source"],
-             a["published_at"], a["available_at"]),
+            (
+                a["id"],
+                a["title"],
+                a["body"],
+                a["source"],
+                a.get("url"),
+                json.dumps(provenance),
+                a["published_at"],
+                a["available_at"],
+            ),
         )
         inserted += 1
     return inserted
@@ -584,24 +626,23 @@ def refresh_information_layer_live(cur: Any) -> dict[str, int]:
     else:
         logger.info("No zone_admin_map.json entries — HAPI overlay skipped")
 
-    # Primary live news: GDELT (key-free).
-    gdelt = GdeltNewsAdapter()
-    try:
-        articles = gdelt.fetch_articles()
-        counts["news"] = _insert_news_articles(cur, articles)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("GDELT refresh degraded: %s", exc)
-
-    # Optional additive ReliefWeb overlay.
+    # Primary live news: ReliefWeb (clean reports + URLs). GDELT is secondary.
     reliefweb = ReliefWebNewsAdapter()
     if reliefweb.available():
         try:
-            rw_articles = reliefweb.fetch_articles(
-                "drought OR displacement OR pastoralist conflict OR flood"
-            )
+            rw_articles = reliefweb.fetch_articles()
             counts["news"] += _insert_news_articles(cur, rw_articles)
         except Exception as exc:  # noqa: BLE001
             logger.warning("ReliefWeb refresh degraded: %s", exc)
+    else:
+        logger.info("RELIEFWEB_APPNAME unset — ReliefWeb skipped")
+
+    gdelt = GdeltNewsAdapter()
+    try:
+        articles = gdelt.fetch_articles()
+        counts["news"] += _insert_news_articles(cur, articles)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("GDELT refresh degraded: %s", exc)
 
     # Live hazard bulletins: GDACS flood/drought → IGAD zones.
     gdacs = GdacsHazardAdapter()

@@ -82,11 +82,14 @@ packages/dira_dispatch   MockDispatcher (seeded), legacy AT adapter; Twilio repl
 
 ### `DATA_MODE=seeded|live`
 
-Swaps every data/LLM/dispatch adapter at once. **Seeded is deterministic and network-free** — LLM
-calls use `CannedResponseAdapter`, conflict/hazard data comes from `data/seeded/`, dispatch uses
+Swaps every data/LLM/dispatch adapter at once **and** which Postgres database is used
+(`DATABASE_URL_SEEDED` → `dira`, `DATABASE_URL_LIVE` → `dira_live` on the same Compose
+instance). **Seeded is deterministic and network-free** — LLM calls use
+`CannedResponseAdapter`, conflict/hazard data comes from `data/seeded/`, dispatch uses
 `MockDispatcher`. The demo (`make demo`) always runs seeded; running the same `--cycle` twice must
 produce identical final state (`stage_e3` fully re-derives that cycle's `news_signals` each run; E4–E7
-upserts are idempotent per zone×cycle).
+upserts are idempotent per zone×cycle). Live ops: `make live-bootstrap`, `make live-sync`,
+`make backfill-climate` (needs `EE_PROJECT`); never share climate/news state with seeded.
 
 ### Pipeline (`apps/worker/dira_worker/pipeline.py`), stages E1–E7
 

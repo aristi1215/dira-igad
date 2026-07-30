@@ -70,18 +70,18 @@ export function SignalDetailModal({
         <DetailRow label="Available to system">
           {fmtDateTime(signal.available_at)}
         </DetailRow>
-        {signal.external_id ? (
-          <DetailRow label="Source">
-            {maybeLink(signal.external_id)}
-          </DetailRow>
-        ) : (
-          <DetailRow label="Source">
+        <DetailRow label="Source document">
+          {signal.url ? (
+            maybeLink(signal.url)
+          ) : signal.external_id && /^https?:\/\//.test(signal.external_id) ? (
+            maybeLink(signal.external_id)
+          ) : (
             <span className="inline-flex items-center gap-1.5 text-muted">
               <Link2 size={14} strokeWidth={1.75} aria-hidden />
-              No public link for this item
+              {signal.external_id ?? 'No public link for this item'}
             </span>
-          </DetailRow>
-        )}
+          )}
+        </DetailRow>
         <DetailRow label="Extracted">{fmtDateTime(signal.created_at)}</DetailRow>
       </div>
 

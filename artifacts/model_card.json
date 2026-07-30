@@ -21,124 +21,124 @@
     "month_cos"
   ],
   "feature_notes_policy": "ACLED notes are excluded from FEATURE_NAMES and artifacts.",
-  "rows": 264,
-  "train_rows": 132,
-  "test_rows": 66,
+  "rows": 11462,
+  "train_rows": 9086,
+  "test_rows": 2310,
   "temporal_split": "80/20 by cycle with embargo (train label windows never cross the split)",
   "metrics": {
-    "brier": 0.30300125560822494,
-    "mae_incidents": 0.6512812065195978,
+    "brier": 0.22168656561458258,
+    "mae_incidents": 1.4725248921169625,
     "transparent_index": {
-      "brier": 0.28748047892359474,
-      "mae_incidents": 1.3391852424086992
+      "brier": 0.26048241363751173,
+      "mae_incidents": 2.135209059026804
     },
     "lightgbm": {
-      "brier": 0.30300125560822494,
-      "mae_incidents": 0.6512812065195978
+      "brier": 0.22168656561458258,
+      "mae_incidents": 1.4725248921169625
     },
     "baselines": {
       "persistence": {
-        "brier": 0.5,
-        "mae_incidents": 0.8333333333333334
+        "brier": 0.3510822510822511,
+        "mae_incidents": 1.7428571428571429
       },
       "climatology": {
-        "brier": 0.3090872008934331,
-        "mae_incidents": 0.6971432077346094
+        "brier": 0.25611224561160933,
+        "mae_incidents": 2.1547028902991734
       },
       "cast_aggregate": {
-        "brier": 0.4166666666666667,
-        "mae_incidents": 0.7878787878787878
+        "brier": 0.2903679653679654,
+        "mae_incidents": 1.5612554112554113
       }
     }
   },
   "evaluation_runs": [
     {
       "split_fraction": 0.6,
-      "train_rows": 88,
-      "test_rows": 110,
+      "train_rows": 6798,
+      "test_rows": 4598,
       "test_cycles": [
-        "2026-01-11",
-        "2026-02-21"
+        "2020-09-01",
+        "2026-06-11"
       ],
       "transparent_index": {
-        "brier": 0.28125059795919477,
-        "mae_incidents": 1.341929518062367
+        "brier": 0.2546566323876853,
+        "mae_incidents": 2.3025965689958423
       },
       "lightgbm": {
-        "brier": 0.2578820846508224
+        "brier": 0.2001248146046563
       },
       "baselines": {
         "persistence": {
-          "brier": 0.4818181818181818,
-          "mae_incidents": 0.7363636363636363
+          "brier": 0.3092648977816442,
+          "mae_incidents": 1.7940408873423228
         },
         "climatology": {
-          "brier": 0.30289632201341243,
-          "mae_incidents": 0.6522891553203964
+          "brier": 0.24942824907589525,
+          "mae_incidents": 2.324523598078268
         },
         "cast_aggregate": {
-          "brier": 0.41363636363636364,
-          "mae_incidents": 0.7454545454545455
+          "brier": 0.25152240104393214,
+          "mae_incidents": 1.5574162679425838
         }
       }
     },
     {
       "split_fraction": 0.7,
-      "train_rows": 110,
-      "test_rows": 88,
+      "train_rows": 7942,
+      "test_rows": 3454,
       "test_cycles": [
-        "2026-01-21",
-        "2026-02-21"
+        "2022-02-11",
+        "2026-06-11"
       ],
       "transparent_index": {
-        "brier": 0.2827550706212479,
-        "mae_incidents": 1.3383959468775428
+        "brier": 0.2564344219896276,
+        "mae_incidents": 2.324664828498231
       },
       "lightgbm": {
-        "brier": 0.29017974037280664
+        "brier": 0.2085706980471607
       },
       "baselines": {
         "persistence": {
-          "brier": 0.48863636363636365,
-          "mae_incidents": 0.7727272727272727
+          "brier": 0.322524609148813,
+          "mae_incidents": 1.870005790387956
         },
         "climatology": {
-          "brier": 0.30547573049316107,
-          "mae_incidents": 0.6641844020819534
+          "brier": 0.2514165999514656,
+          "mae_incidents": 2.3412544015543855
         },
         "cast_aggregate": {
-          "brier": 0.4289772727272727,
-          "mae_incidents": 0.7556818181818182
+          "brier": 0.2620150550086856,
+          "mae_incidents": 1.640706427330631
         }
       }
     },
     {
       "split_fraction": 0.8,
-      "train_rows": 132,
-      "test_rows": 66,
+      "train_rows": 9086,
+      "test_rows": 2310,
       "test_cycles": [
-        "2026-02-01",
-        "2026-02-21"
+        "2023-07-21",
+        "2026-06-11"
       ],
       "transparent_index": {
-        "brier": 0.28748047892359474,
-        "mae_incidents": 1.3391852424086992
+        "brier": 0.26048241363751173,
+        "mae_incidents": 2.135209059026804
       },
       "lightgbm": {
-        "brier": 0.30300125560822494
+        "brier": 0.22168656561458258
       },
       "baselines": {
         "persistence": {
-          "brier": 0.5,
-          "mae_incidents": 0.8333333333333334
+          "brier": 0.3510822510822511,
+          "mae_incidents": 1.7428571428571429
         },
         "climatology": {
-          "brier": 0.3090872008934331,
-          "mae_incidents": 0.6971432077346094
+          "brier": 0.25611224561160933,
+          "mae_incidents": 2.1547028902991734
         },
         "cast_aggregate": {
-          "brier": 0.4166666666666667,
-          "mae_incidents": 0.7878787878787878
+          "brier": 0.2903679653679654,
+          "mae_incidents": 1.5612554112554113
         }
       }
     }
@@ -146,66 +146,67 @@
   "performance_breakdown": {
     "best_zones": [
       [
-        "moyale_border",
-        0.03099253761685752
+        "jubaland_coast",
+        0.07925466948089224
       ],
       [
-        "gambella_lowlands",
-        0.03189257464503716
+        "mandera_et_west",
+        0.08131331164204193
       ],
       [
-        "blue_nile_escarpment",
-        0.13948451922096847
+        "mandera_so_north",
+        0.09582411534803506
       ]
     ],
     "worst_zones": [
       [
-        "marsabit_frontier",
-        0.6876092090041356
+        "karamoja_cluster",
+        0.3221859001783103
       ],
       [
-        "afar_coast",
-        0.5890061634787891
+        "blue_nile_south",
+        0.31899197820707414
       ],
       [
-        "jubaland_inland",
-        0.41764633143875335
+        "gambella_lowlands",
+        0.29958026653257547
       ]
     ],
     "best_cycles": [
       [
-        "2026-02-01",
-        0.26267522547753397
+        "2026-05-21",
+        0.06482841452707147
       ],
       [
-        "2026-02-21",
-        0.31806676881819784
+        "2026-05-11",
+        0.06588797021268498
       ],
       [
-        "2026-02-11",
-        0.3282617725289429
+        "2026-06-01",
+        0.06653143627038559
       ]
     ],
     "worst_cycles": [
       [
-        "2026-02-11",
-        0.3282617725289429
-      ],
-      [
-        "2026-02-21",
-        0.31806676881819784
-      ],
-      [
         "2026-02-01",
-        0.26267522547753397
+        0.4006536924682091
+      ],
+      [
+        "2025-08-21",
+        0.39240522291006813
+      ],
+      [
+        "2025-07-21",
+        0.3560164942338187
       ]
     ],
     "note": "Brier per zone/cycle on held-out test dekads; lower is better. The model performs best in zones with stable seasonal patterns and worst around sudden regime shifts with no climate precursor."
   },
   "fallback_reason": null,
   "limitations": [
-    "Trained on the seeded Mandera history unless live ACLED data is ingested first; seeded metrics describe fixture skill, not field accuracy.",
-    "Short history (dekadal, single region) limits LightGBM; the transparent index remains the honest default when there is no lift (DEVIATIONS D-009).",
+    "Trained on multi-year CHIRPS + MODIS NDVI + ACLED for the 22 IGAD boxes (11462 feature rows). Live climate still uses synthetic footprints outside Mandera (D-011); metrics are not field accuracy.",
+    "ACLED Research embargos recent event-level data (~12 months); recent labels may be thin.",
+    "LightGBM activates only with honest lift over every baseline (DEVIATIONS D-009); otherwise TransparentIndex stays active.",
     "Does not predict the exact day of conflict, actor identity, or guarantee that violence will occur \u2014 it estimates pressure over the forecast window."
   ]
 }

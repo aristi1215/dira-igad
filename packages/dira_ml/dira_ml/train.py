@@ -162,10 +162,20 @@ def train(
         "performance_breakdown": breakdown,
         "fallback_reason": fallback_reason,
         "limitations": [
-            "Trained on the seeded Mandera history unless live ACLED data is ingested first; "
-            "seeded metrics describe fixture skill, not field accuracy.",
-            "Short history (dekadal, single region) limits LightGBM; the transparent index "
-            "remains the honest default when there is no lift (DEVIATIONS D-009).",
+            (
+                "Trained on multi-year CHIRPS + MODIS NDVI + ACLED for the 22 IGAD boxes "
+                f"({len(rows)} feature rows). Live climate still uses synthetic footprints "
+                "outside Mandera (D-011); metrics are not field accuracy."
+                if len(rows) >= 1000
+                else (
+                    "Trained on the seeded Mandera history unless live ACLED data is ingested "
+                    "first; seeded metrics describe fixture skill, not field accuracy."
+                )
+            ),
+            "ACLED Research embargos recent event-level data (~12 months); "
+            "recent labels may be thin.",
+            "LightGBM activates only with honest lift over every baseline (DEVIATIONS D-009); "
+            "otherwise TransparentIndex stays active.",
             "Does not predict the exact day of conflict, actor identity, or guarantee "
             "that violence will occur — it estimates pressure over the forecast window.",
         ],

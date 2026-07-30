@@ -138,19 +138,20 @@ def upsert_hazard_bulletins(cur: Any, rows: list[dict[str, Any]]) -> None:
             """
             INSERT INTO hazard_bulletins (
               id, zone_id, hazard_type, severity, headline, detail,
-              valid_from, valid_to, source, available_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+              valid_from, valid_to, source, url, available_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE
             SET severity = EXCLUDED.severity,
                 detail = EXCLUDED.detail,
                 valid_to = EXCLUDED.valid_to,
                 source = EXCLUDED.source,
+                url = COALESCE(EXCLUDED.url, hazard_bulletins.url),
                 available_at = EXCLUDED.available_at
             """,
             (
                 bulletin_id, r["zone_id"], r["hazard_type"], r["severity"], r["headline"],
                 r.get("detail"), r["valid_from"], r.get("valid_to"),
-                r.get("source", "seeded_bulletin"), r["available_at"],
+                r.get("source", "seeded_bulletin"), r.get("url"), r["available_at"],
             ),
         )
 

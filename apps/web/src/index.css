@@ -86,30 +86,35 @@
    */
   --font-mono: var(--font-sans);
 
-  /* Replaces the old ad-hoc font sizes scattered through the application. */
-  --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 1rem;
-  --text-xs: 0.75rem;
-  --text-xs--line-height: 1.125rem;
-  --text-sm: 0.8125rem;
-  --text-sm--line-height: 1.25rem;
-  --text-base: 0.875rem;
-  --text-base--line-height: 1.375rem;
-  --text-md: 0.9375rem;
-  --text-md--line-height: 1.5625rem;
-  --text-lg: 1.0625rem;
-  --text-lg--line-height: 1.5rem;
-  --text-xl: 1.375rem;
-  --text-xl--line-height: 1.75rem;
+  /*
+   * Replaces the old ad-hoc font sizes scattered through the application.
+   * Bumped one notch across the board (~1-2px per step) for legibility —
+   * change it here, once, rather than hunting individual `text-*` call
+   * sites across the app.
+   */
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1.125rem;
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.375rem;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.5rem;
+  --text-md: 1rem;
+  --text-md--line-height: 1.625rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 1.875rem;
   --text-xl--letter-spacing: -0.015em;
-  --text-2xl: 1.75rem;
-  --text-2xl--line-height: 2.125rem;
+  --text-2xl: 1.875rem;
+  --text-2xl--line-height: 2.25rem;
   --text-2xl--letter-spacing: -0.02em;
-  --text-3xl: 2.5rem;
-  --text-3xl--line-height: 2.75rem;
+  --text-3xl: 2.75rem;
+  --text-3xl--line-height: 3rem;
   --text-3xl--letter-spacing: -0.022em;
-  --text-4xl: 3.25rem;
-  --text-4xl--line-height: 3.5rem;
+  --text-4xl: 3.5rem;
+  --text-4xl--line-height: 3.75rem;
   --text-4xl--letter-spacing: -0.024em;
 
   /*
@@ -117,13 +122,13 @@
    * site is one class rather than four. Tailwind v4 reads the `--text-*--*`
    * companions off the same token.
    */
-  --text-eyebrow: 0.6875rem;
-  --text-eyebrow--line-height: 1rem;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.125rem;
   --text-eyebrow--letter-spacing: 0.06em;
   --text-eyebrow--font-weight: 600;
 
   /* Numbers only. Paired with `tabular-nums` at the call site. */
-  --text-metric: 2rem;
+  --text-metric: 2.25rem;
   --text-metric--line-height: 1;
   --text-metric--letter-spacing: -0.02em;
 

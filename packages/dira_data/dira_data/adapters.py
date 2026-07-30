@@ -217,10 +217,20 @@ def get_hazard_source(
                 "uv pip install 'rasterio>=1.4'  (or uv sync --extra rasters --package dira-data)"
             )
             return SeededRasterAdapter(os.environ.get("SEEDED_DATA_DIR", DEFAULT_SEED_DIR))
+        from dira_data.ndvi_gee import (
+            CombinedClimateAdapter,
+            FallbackRainAdapter,
+            GeeChirpsAdapter,
+            GeeNdviAdapter,
+        )
         from dira_data.rasters import ChirpsHttpAdapter
 
-        adapter = ChirpsHttpAdapter(zone_geoms_geojson=zone_geoms_geojson)
-        return adapter
+        rain = FallbackRainAdapter(
+            ChirpsHttpAdapter(zone_geoms_geojson=zone_geoms_geojson),
+            GeeChirpsAdapter(zone_geoms_geojson=zone_geoms_geojson),
+        )
+        ndvi = GeeNdviAdapter(zone_geoms_geojson=zone_geoms_geojson)
+        return CombinedClimateAdapter(rain, ndvi)
     raise ValueError(f"Unsupported DATA_MODE for hazard source: {mode!r}")
 
 

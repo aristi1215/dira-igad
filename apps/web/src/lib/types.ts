@@ -153,6 +153,7 @@ export type ZoneSignal = {
   published_at: string | null
   available_at?: string | null
   external_id?: string | null
+  url?: string | null
   body_excerpt?: string | null
 }
 
@@ -530,7 +531,7 @@ export type DataSource = {
   key: string
   name: string
   category: string
-  mode: 'live' | 'seeded'
+  mode: 'live' | 'seeded' | 'unavailable'
   live_capable: boolean
   live_endpoint: string
   licence: string
@@ -541,6 +542,7 @@ export type DataSource = {
 
 export type SourcesResponse = {
   data_mode: string
+  database?: string
   bitemporal_note: string
   sources: DataSource[]
 }
