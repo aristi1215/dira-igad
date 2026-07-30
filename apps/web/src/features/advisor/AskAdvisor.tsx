@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { useLocation } from 'react-router-dom'
 import {
   Check,
   CornerDownLeft,
@@ -79,6 +80,9 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
   const [error, setError] = useState<string | null>(null)
   const { selectedZoneId } = useSelectedZone()
   const logRef = useRef<HTMLDivElement>(null)
+  const controllerRef = useRef<AbortController | null>(null)
+  const location = useLocation()
+  const routeRef = useRef(location.pathname)
 
   const turns = useAdvisorStore((state) => state.turns)
   const conversationId = useAdvisorStore((state) => state.conversationId)
@@ -96,6 +100,9 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
     setError(null)
     setActiveTools([])
     setPending(true)
+    controllerRef.current?.abort()
+    const controller = new AbortController()
+    controllerRef.current = controller
     addTurn({ role: 'user', text: trimmed })
     // The assistant turn is created empty and filled by the deltas, so the
     // answer grows in place instead of appearing all at once at the end.
@@ -104,6 +111,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
     void streamAdvisor(trimmed, situationId, {
       zoneId: selectedZoneId,
       conversationId,
+      signal: controller.signal,
       onTool: (name) => setActiveTools((current) => [...current, name]),
       onConversation: setConversationId,
       onDelta: (text) => appendToLast(text),
@@ -117,7 +125,12 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
         setPending(false)
         setActiveTools([])
       },
-    }).catch(() => {
+    }).catch((streamError: unknown) => {
+      if (streamError instanceof DOMException && streamError.name === 'AbortError') {
+        setPending(false)
+        setActiveTools([])
+        return
+      }
       setError('The advisor could not answer. Try again.')
       setPending(false)
       setActiveTools([])
@@ -141,6 +154,18 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
     const seed = consumeSeed()
     if (seed) askRef.current(seed)
   }, [consumeSeed])
+
+  useEffect(() => {
+    if (routeRef.current !== location.pathname) {
+      controllerRef.current?.abort()
+      controllerRef.current = null
+      setPending(false)
+      setActiveTools([])
+      routeRef.current = location.pathname
+    }
+  }, [location.pathname])
+
+  useEffect(() => () => controllerRef.current?.abort(), [])
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' })
@@ -225,10 +250,10 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
             <div
               key={`${turn.role}-${index}`}
               className={cx(
-                'rounded-md text-sm',
+                'text-sm',
                 turn.role === 'user'
-                  ? 'ml-6 bg-accent-soft px-3 py-2.5 text-ink'
-                  : 'border border-line bg-surface',
+                  ? 'ml-auto max-w-[88%] rounded-2xl bg-accent-soft px-3 py-2.5 text-ink'
+                  : 'rounded-none bg-transparent',
               )}
             >
               {turn.role === 'assistant' ? (
@@ -304,27 +329,23 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
           ask(question)
         }}
       >
-        <textarea
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault()
-              ask(question)
+        <div className="relative rounded-xl border border-line-strong bg-surface transition-colors duration-[120ms] focus-within:border-accent focus-within:ring-2 focus-within:ring-accent-ring">
+          <textarea
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                ask(question)
+              }
+            }}
+            placeholder={
+              zone ? `Ask about ${zone.zone_name}…` : 'Ask about regional priorities…'
             }
-          }}
-          placeholder={
-            zone ? `Ask about ${zone.zone_name}…` : 'Ask about regional priorities…'
-          }
-          rows={2}
-          aria-label="Your question"
-          className="w-full resize-none rounded-sm border border-line-strong bg-surface px-2.5 py-2 text-sm text-ink transition-colors duration-[120ms] placeholder:text-faint hover:border-faint focus:border-accent focus:ring-2 focus:ring-accent-ring focus:outline-none"
-        />
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="flex items-center gap-1 text-2xs text-faint">
-            <Radar size={11} strokeWidth={1.75} aria-hidden />
-            Read-only · cannot approve or dispatch
-          </span>
+            rows={2}
+            aria-label="Your question"
+            className="w-full resize-none rounded-xl bg-transparent px-3 py-2.5 pr-14 text-sm text-ink placeholder:text-faint focus:outline-none"
+          />
           <Button
             type="submit"
             variant="primary"
@@ -332,9 +353,17 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
             loading={pending}
             disabled={question.trim().length === 0}
             icon={pending ? undefined : CornerDownLeft}
+            className="absolute right-2 bottom-2"
+            aria-label={pending ? 'Thinking' : 'Ask'}
           >
-            {pending ? 'Thinking…' : 'Ask'}
+            <span className="sr-only">{pending ? 'Thinking…' : 'Ask'}</span>
           </Button>
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1 text-2xs text-faint">
+            <Radar size={11} strokeWidth={1.75} aria-hidden />
+            Read-only · cannot approve or dispatch
+          </span>
         </div>
         {error ? (
           <Callout tone="danger" className="mt-2">

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'motion/react'
-import { AskAdvisor, useAdvisorStore } from '../features/advisor'
+import { AdvisorDock, useAdvisorStore } from '../features/advisor'
 import { GuidedTour } from '../features/tour'
 import { readTourProgress } from '../features/tour/tourSteps'
 import { WelcomeBento } from '../features/onboarding/WelcomeBento'
@@ -11,7 +11,6 @@ import { apiUrl, fetchMapSituations, fetchSources, fetchZones, queryKeys } from 
 import { applySseEvent, parseDiraSseEvent } from '../lib/ssePatch'
 import { useSelectedZone } from '../features/map/useSelectedZone'
 import { ROUTE_TRANSITION } from '../lib/motion'
-import { Sheet } from '../components/ui'
 import { CommandBar } from './CommandBar'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navItems'
 import { PressureRibbon } from './PressureRibbon'
@@ -33,7 +32,6 @@ export function AppLayout() {
    */
   const advisorOpen = useAdvisorStore((state) => state.open)
   const toggleAdvisor = useAdvisorStore((state) => state.toggleAdvisor)
-  const closeAdvisor = useAdvisorStore((state) => state.closeAdvisor)
   // Selection lives in the URL now, so the advisor stays grounded in whatever
   // zone the map is showing without a parallel copy in the store.
   const { selectedZoneId, selectedSituationId } = useSelectedZone()
@@ -123,7 +121,6 @@ export function AppLayout() {
     const routes = [...PRIMARY_NAV, ...SECONDARY_NAV]
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return
       const target = event.target as HTMLElement | null
       // Never steal a keystroke from a field the user is typing into.
       if (
@@ -132,6 +129,18 @@ export function AppLayout() {
       ) {
         return
       }
+
+      if (
+        event.key.toLowerCase() === 'k' &&
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey
+      ) {
+        event.preventDefault()
+        toggleAdvisor()
+        return
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey) return
 
       if (event.key === '?') {
         chordRef.current = null
@@ -162,7 +171,7 @@ export function AppLayout() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [navigate])
+  }, [navigate, toggleAdvisor])
 
   const latestCycle = useMemo(() => {
     const cycles = (mapQuery.data?.features ?? [])
@@ -213,20 +222,11 @@ export function AppLayout() {
         )}
       </main>
 
-      <Sheet
-        open={advisorOpen}
-        onClose={closeAdvisor}
-        title="Ask Dira"
-        subtitle="Grounded and read-only — it can never approve or dispatch."
-        width="30rem"
-      >
-        <AskAdvisor
-          situationId={selectedSituationId}
-          zone={
-            zonesQuery.data?.find((zone) => zone.zone_id === selectedZoneId) ?? null
-          }
-        />
-      </Sheet>
+      <AdvisorDock
+        mapRoute={isMapRoute}
+        situationId={selectedSituationId}
+        zone={zonesQuery.data?.find((zone) => zone.zone_id === selectedZoneId) ?? null}
+      />
 
       {welcomeOpen ? (
         <WelcomeBento
