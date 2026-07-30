@@ -17,6 +17,7 @@ import {
   DataTable,
   EmptyState,
   ErrorNote,
+  Eyebrow,
   Field,
   IpcChip,
   Meter,
@@ -204,9 +205,9 @@ export function ZonesScreen() {
       */}
       <div className="mb-4 flex flex-wrap items-end gap-x-4 gap-y-3 rounded-lg border border-line bg-surface px-3 py-2.5">
         <div className="min-w-[18rem] flex-1">
-          <span className="font-condensed mb-1.5 block text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+          <Eyebrow className="mb-1.5 block">
             Where the region stands
-          </span>
+          </Eyebrow>
           <BandDistributionBar
             counts={bandCounts}
             selected={bandFilter}

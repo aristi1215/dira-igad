@@ -138,7 +138,7 @@ function DeliveryFunnel({
         <span className="font-mono text-lg font-semibold tabular-nums text-ink">
           {rate(delivered)}
         </span>
-        <span className="font-condensed text-2xs tracking-[0.09em] text-faint uppercase">
+        <span className="text-eyebrow text-faint uppercase">
           delivered
         </span>
       </span>
@@ -146,7 +146,7 @@ function DeliveryFunnel({
         <span className="font-mono text-lg font-semibold tabular-nums text-ink">
           {rate(acked)}
         </span>
-        <span className="font-condensed text-2xs tracking-[0.09em] text-faint uppercase">
+        <span className="text-eyebrow text-faint uppercase">
           acknowledged
         </span>
       </span>
@@ -419,7 +419,7 @@ export function DispatchScreen() {
             const Icon = column.icon
             return (
               <section key={column.status} className="min-w-0 bg-surface p-3">
-                <h3 className="font-condensed mb-2 flex items-center gap-1.5 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                <h3 className="mb-2 flex items-center gap-1.5 text-eyebrow text-faint uppercase">
                   <Icon size={13} strokeWidth={1.75} aria-hidden className={column.tint} />
                   {column.label}
                   <span className="ml-auto font-mono text-sm font-semibold tabular-nums text-ink">
@@ -473,7 +473,7 @@ export function DispatchScreen() {
 
         {emptyColumns.length > 0 ? (
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line bg-surface-2 px-3 py-2 text-2xs text-faint">
-            <span className="font-condensed font-semibold tracking-[0.09em] uppercase">
+            <span className="text-eyebrow font-semibold uppercase">
               Empty
             </span>
             {emptyColumns.map((column) => (
@@ -520,7 +520,7 @@ export function DispatchScreen() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="font-condensed mb-2 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+            <h3 className="mb-2 text-eyebrow text-faint uppercase">
               Recipient roster
             </h3>
             {recipientsQuery.isError ? <ErrorNote error={recipientsQuery.error} /> : null}

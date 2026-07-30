@@ -134,7 +134,7 @@ function Column({
     <section className="flex min-w-0 flex-col">
       <header className="flex items-center gap-2 border-b border-line px-3 py-2">
         <Icon size={13} strokeWidth={1.75} aria-hidden className="shrink-0 text-faint" />
-        <h3 className="font-condensed flex-1 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+        <h3 className="flex-1 text-eyebrow text-faint uppercase">
           {title}
         </h3>
         <span

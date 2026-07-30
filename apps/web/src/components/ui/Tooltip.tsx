@@ -70,7 +70,7 @@ export function Tooltip({
                 left: placement?.left ?? -9999,
                 visibility: placement ? 'visible' : 'hidden',
               }}
-              className="pointer-events-none fixed z-tooltip max-w-[22rem] rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-muted shadow-md"
+              className="pointer-events-none fixed z-tooltip max-w-[22rem] rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs text-muted shadow-panel"
             >
               {content}
             </motion.div>

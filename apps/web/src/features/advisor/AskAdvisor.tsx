@@ -163,7 +163,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
         {zone ? (
           <div className="flex items-center justify-between gap-2">
             <span className="min-w-0">
-              <span className="font-condensed block truncate text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+              <span className="block truncate text-eyebrow text-faint uppercase">
                 Grounded in
               </span>
               <span className="block truncate text-sm font-medium text-ink">
@@ -194,7 +194,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
       <div ref={logRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {turns.length === 0 && !pending ? (
           <div className="flex flex-col gap-2">
-            <p className="font-condensed text-2xs font-semibold tracking-[0.09em] text-faint uppercase">
+            <p className="text-eyebrow text-faint uppercase">
               Try asking
             </p>
             {suggestions.map((suggestion) => (
@@ -356,7 +356,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
 function Citations({ citations }: { citations: AdvisorCitation[] }) {
   return (
     <div className="mt-2.5 border-t border-line pt-2.5">
-      <p className="font-condensed mb-1.5 text-2xs font-semibold tracking-[0.09em] text-faint uppercase">
+      <p className="mb-1.5 text-eyebrow text-faint uppercase">
         Sources
       </p>
       <ul className="flex flex-col gap-1">

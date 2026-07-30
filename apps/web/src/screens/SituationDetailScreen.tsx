@@ -184,7 +184,7 @@ export function SituationDetailScreen() {
             The one sentence on this page that is a judgement rather than a
             measurement, so it is the one sentence set in the serif.
           */}
-          <p className="font-display max-w-[54ch] text-xl leading-snug font-semibold text-ink">
+          <p className="font-sans max-w-[54ch] text-xl leading-snug font-semibold tracking-[-0.02em] text-ink">
             {BAND_GUIDANCE[band]}
           </p>
           {latest?.explanation ? (

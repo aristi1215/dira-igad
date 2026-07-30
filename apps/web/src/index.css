@@ -28,26 +28,22 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 @theme {
-  /* --- Surfaces and ink (IBM Carbon gray ramp) --- */
-  --color-canvas: #f4f4f4;
+  /* --- Surfaces and ink --- */
+  --color-canvas: #f5f5f7;
   --color-surface: #ffffff;
-  --color-surface-2: #fafafa;
-  --color-surface-3: #f1f3f5;
-  --color-line: #e8e8e8;
-  --color-line-strong: #c6c6c6;
-  --color-ink: #161616;
-  --color-muted: #525252;
-  /* Raised from #8d8d8d — that was ~3.0:1 on white and failed AA wherever
-     it carried body text (stat labels, map rail sublabels, captions). */
-  --color-faint: #6f6f6f;
+  --color-surface-2: #fbfbfd;
+  --color-surface-3: #f0f0f3;
+  --color-line: #e5e5ea;
+  --color-line-strong: #c7c7cc;
+  --color-ink: #0a0a0a;
+  --color-muted: #3a3a3c;
+  --color-faint: #6e6e73;
 
-  --color-accent: #0f62fe;
-  --color-accent-hover: #0043ce;
-  --color-accent-soft: #edf5ff;
-  --color-accent-ring: #d0e2ff;
-  /* Carbon blue 80. Reserved for chrome that must read as structural rather
-     than interactive — the active nav label, the brand mark, section rules. */
-  --color-accent-deep: #002d9c;
+  --color-accent: #0071e3;
+  --color-accent-hover: #0058b0;
+  --color-accent-soft: #eaf2fe;
+  --color-accent-ring: #cfe3fb;
+  --color-accent-deep: #003d82;
 
   /* --- Operational bands. Mirrored in lib/format.ts (BAND_COLORS);
          guarded by src/lib/tokens.test.ts. --- */
@@ -78,46 +74,35 @@
   --color-info-bg: #edf5ff;
   --color-info-fg: #0043ce;
 
-  /*
-   * --- Type ---
-   *
-   * Four roles, deliberately kept inside the IBM Plex family:
-   *   condensed  structure — titles, section heads, column heads, eyebrows.
-   *              Tracked caps read as instrument labelling, not prose.
-   *   sans       interface — body copy, controls, everything unremarkable.
-   *   mono       quantity  — every number, id, cycle, coordinate, timestamp.
-   *   display    editorial — the one sentence per view that carries judgement.
-   *
-   * The app runs at a 14px base and stays there; density is the point. The
-   * hierarchy comes from range (11px tracked caps against a 28px mono metric
-   * against a 17px serif sentence), never from inflating body copy.
-   */
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  --font-condensed: 'IBM Plex Sans Condensed', 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
-  --font-display: 'Source Serif 4', Georgia, serif;
+  /* --- Type --- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* Replaces the 17 ad-hoc font sizes that were scattered through App.css. */
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
   --text-xs: 0.75rem;
-  --text-xs--line-height: 1.0625rem;
+  --text-xs--line-height: 1.125rem;
   --text-sm: 0.8125rem;
-  --text-sm--line-height: 1.1875rem;
-  --text-base: 0.875rem;
-  --text-base--line-height: 1.375rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base:0.875rem;
+  --text-base--line-height:1.5rem;
   --text-md: 0.9375rem;
-  --text-md--line-height: 1.4375rem;
+  --text-md--line-height: 1.5625rem;
   --text-lg: 1.0625rem;
   --text-lg--line-height: 1.5rem;
-  --text-xl: 1.25rem;
-  --text-xl--line-height: 1.625rem;
-  --text-2xl: 1.5rem;
-  --text-2xl--line-height: 1.875rem;
-  --text-3xl: 2rem;
-  --text-3xl--line-height: 2.375rem;
-  --text-4xl: 2.75rem;
-  --text-4xl--line-height: 3rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.75rem;
+  --text-xl--letter-spacing: -0.015em;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.125rem;
+  --text-2xl--letter-spacing: -0.02em;
+  --text-3xl: 2.5rem;
+  --text-3xl--line-height: 2.75rem;
+  --text-3xl--letter-spacing: -0.022em;
+  --text-4xl: 3.25rem;
+  --text-4xl--line-height: 3.5rem;
+  --text-4xl--letter-spacing: -0.024em;
 
   /*
    * Three semantic steps that carry their own tracking and weight, so a call
@@ -126,32 +111,34 @@
    */
   --text-eyebrow: 0.6875rem;
   --text-eyebrow--line-height: 1rem;
-  --text-eyebrow--letter-spacing: 0.12em;
+  --text-eyebrow--letter-spacing: 0.06em;
   --text-eyebrow--font-weight: 600;
 
   /* Numbers only. Paired with font-mono + tabular-nums at the call site. */
-  --text-metric: 1.75rem;
+  --text-metric: 2rem;
   --text-metric--line-height: 1;
-  --text-metric--letter-spacing: -0.015em;
+  --text-metric--letter-spacing: -0.02em;
 
   /* --- Radii --- */
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-bento: 20px;
 
   /* --- Elevation --- */
-  --shadow-sm: 0 1px 2px rgba(22, 22, 22, 0.06);
-  --shadow-md: 0 2px 8px rgba(22, 22, 22, 0.08);
-  --shadow-lg: 0 8px 32px rgba(22, 22, 22, 0.14);
-  --shadow-panel: 0 1px 2px rgba(22, 22, 22, 0.05), 0 8px 24px rgba(22, 22, 22, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.10);
+  --shadow-panel: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 8px 28px rgba(0, 0, 0, 0.08);
+  --shadow-bento: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px -8px rgba(0, 0, 0, 0.10);
 
   /* --- Motion. Mirrored in lib/motion.ts for `motion` props. --- */
-  --ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
-  --ease-entrance: cubic-bezier(0, 0, 0.38, 0.9);
-  --ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-indeterminate: indeterminate 1.15s var(--ease-standard) infinite;
@@ -316,6 +303,7 @@
     margin: 0;
     min-height: 100vh;
     font-size: 14px;
+    font-feature-settings: 'tnum' 1, 'cv05' 1, 'ss01' 1;
   }
 
   h1,

@@ -111,7 +111,7 @@ export function ZoneCard({
       >
         <header className="flex shrink-0 items-start justify-between gap-2 border-b border-line px-4 py-3">
           <div className="min-w-0">
-            <h2 className="font-condensed truncate text-lg leading-tight font-bold tracking-[0.02em] text-ink uppercase">
+            <h2 className="truncate text-lg leading-tight font-semibold tracking-[-0.01em] text-ink">
               {zone.zone_name}
             </h2>
             <p className="mt-0.5 truncate text-2xs text-faint">
@@ -157,7 +157,7 @@ export function ZoneCard({
                     height={22}
                     color={BAND_COLORS[band]}
                   />
-                  <span className="font-condensed text-2xs tracking-[0.07em] text-faint uppercase">
+                  <span className="text-eyebrow text-faint uppercase">
                     Last {trend.length} cycles
                   </span>
                 </span>
@@ -186,7 +186,7 @@ export function ZoneCard({
           {situation ? (
             <div className="group border-b border-line px-4 py-3">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="font-condensed text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                <p className="text-eyebrow text-faint uppercase">
                   Why
                 </p>
                 <AskAboutButton

@@ -12,6 +12,7 @@ import {
 import {
   Card,
   ErrorNote,
+  Eyebrow,
   PageHeader,
   Screen,
   SkeletonCard,
@@ -155,9 +156,9 @@ export function AnalyticsScreen() {
               className="lg:col-span-7"
             >
               <div className="mb-4 border-b border-line pb-3">
-                <span className="font-condensed mb-1.5 block text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                <Eyebrow className="mb-1.5 block">
                   Zones by risk band, this cycle
-                </span>
+                </Eyebrow>
                 <BandDistributionBar counts={bandCounts} />
               </div>
               <HBarList

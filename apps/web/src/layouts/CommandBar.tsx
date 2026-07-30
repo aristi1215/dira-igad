@@ -37,7 +37,7 @@ export function CommandBar({
     >
       <div className="flex shrink-0 items-center gap-2.5" data-tour={TOUR_ANCHORS.brand}>
         <BrandMark size={21} className="text-accent" />
-        <span className="font-condensed text-xl leading-none font-bold tracking-[0.08em] text-ink">
+        <span className="text-xl leading-none font-semibold tracking-[-0.02em] text-ink">
           DIRA
         </span>
         <span aria-hidden className="hidden h-5 w-px bg-line lg:block" />

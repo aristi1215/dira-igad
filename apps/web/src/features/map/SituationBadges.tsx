@@ -290,7 +290,7 @@ function Badge({
           >
             <span aria-hidden className="w-[3px] shrink-0" style={{ background: color }} />
             <span className="flex flex-col gap-0.5 px-2 py-1.5 text-left">
-              <span className="font-condensed max-w-[9rem] truncate text-2xs leading-none font-semibold tracking-[0.07em] text-muted uppercase">
+              <span className="max-w-[9rem] truncate text-eyebrow leading-none text-faint uppercase">
                 {entry.zoneName}
               </span>
               <span className="flex items-center gap-1.5">

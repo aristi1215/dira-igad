@@ -260,7 +260,7 @@ export function ZoneDossierScreen() {
           {climateData.length > 0 ? (
             <div className="grid gap-5 lg:grid-cols-2">
               <div>
-                <h3 className="font-condensed mb-1 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                <h3 className="mb-1 text-eyebrow text-faint uppercase">
                   Rainfall · mm per 10 days
                 </h3>
                 <TimeSeriesChart
@@ -274,7 +274,7 @@ export function ZoneDossierScreen() {
                 />
               </div>
               <div>
-                <h3 className="font-condensed mb-1 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                <h3 className="mb-1 text-eyebrow text-faint uppercase">
                   Vegetation · NDVI mean
                 </h3>
                 <TimeSeriesChart
@@ -297,7 +297,7 @@ export function ZoneDossierScreen() {
         <Card title="Conflict and displacement" subtitle="Monthly totals and snapshot counts">
           <div className="grid gap-5 lg:grid-cols-2">
             <div>
-              <h3 className="font-condensed mb-1 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+              <h3 className="mb-1 text-eyebrow text-faint uppercase">
                 Incidents · monthly
               </h3>
               {profile.incidents_monthly.length > 0 ? (
@@ -316,7 +316,7 @@ export function ZoneDossierScreen() {
               )}
             </div>
             <div>
-              <h3 className="font-condensed mb-1 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+              <h3 className="mb-1 text-eyebrow text-faint uppercase">
                 Displacement · snapshots
               </h3>
               {displacementData.length > 0 ? (

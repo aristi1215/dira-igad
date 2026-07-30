@@ -20,7 +20,8 @@ export { Sheet } from './Sheet'
 export { Meter, ScoreMeter } from './Meter'
 export { Stat, StatTile, StatRow, MetricDelta } from './Stat'
 export { Sparkline } from './Sparkline'
-export { Card, PageHeader, SectionHeader, Section, Screen } from './Card'
+export { Card, PageHeader, SectionHeader, Section, Screen, Eyebrow } from './Card'
+export { BentoGrid, BentoCard, type BentoSpan, type BentoTone, type BentoCardProps } from './Bento'
 export { BandChip, BandDot, IpcChip, StatusChip, type StatusTone } from './Chips'
 export {
   Callout,

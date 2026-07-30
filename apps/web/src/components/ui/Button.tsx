@@ -18,8 +18,8 @@ const VARIANT: Record<ButtonVariant, string> = {
 }
 
 const SIZE: Record<ButtonSize, string> = {
-  sm: 'h-7 px-2.5 text-xs gap-1.5 rounded-sm',
-  md: 'h-8.5 px-3.5 text-sm gap-2 rounded-sm',
+  sm: 'h-7 px-2.5 text-xs gap-1.5 rounded-full',
+  md: 'h-8.5 px-3.5 text-sm gap-2 rounded-full',
 }
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -56,7 +56,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={disabled || loading}
       className={cx(
         'inline-flex items-center justify-center font-medium whitespace-nowrap',
-        'transition-colors duration-[120ms] ease-standard',
+        'transition-[transform,background-color] duration-150 ease-standard',
+        variant === 'primary' && 'active:scale-[0.98]',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANT[variant],
         SIZE[size],
@@ -96,7 +97,7 @@ export const IconButton = forwardRef<
       aria-label={label}
       title={label}
       className={cx(
-        'inline-flex items-center justify-center rounded-sm',
+        'inline-flex items-center justify-center rounded-md',
         'transition-colors duration-[120ms] ease-standard',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANT[variant],

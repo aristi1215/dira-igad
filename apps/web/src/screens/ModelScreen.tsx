@@ -171,7 +171,7 @@ export function ModelScreen() {
           <Card className="group mb-5">
             <div className="grid items-start gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
               <div className="min-w-0">
-                <p className="font-display max-w-[46ch] text-2xl leading-snug font-semibold text-ink">
+                <p className="font-sans max-w-[46ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-ink">
                   {card.predicts}
                 </p>
                 <p className="mt-2.5 max-w-[58ch] text-sm leading-relaxed text-muted">
@@ -326,7 +326,7 @@ export function ModelScreen() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {featureGroups.map(([group, features]) => (
                 <div key={group} className="rounded-md border border-line bg-surface-2 p-3">
-                  <h3 className="font-condensed mb-2 flex items-baseline gap-1.5 text-2xs font-semibold tracking-[0.09em] text-muted uppercase">
+                  <h3 className="mb-2 flex items-baseline gap-1.5 text-eyebrow text-faint uppercase">
                     {titleCase(group)}
                     <span className="font-mono tabular-nums text-line-strong">
                       {features.length}

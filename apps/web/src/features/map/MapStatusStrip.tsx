@@ -77,7 +77,7 @@ export function MapStatusStrip({
 
       {/* The distribution, at a width that makes the proportions readable. */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="font-condensed shrink-0 text-2xs font-semibold tracking-[0.09em] text-faint uppercase">
+        <span className="shrink-0 text-eyebrow text-faint uppercase">
           Distribution
         </span>
         <div className="flex h-2.5 min-w-0 flex-1 overflow-hidden rounded-full">
@@ -141,7 +141,7 @@ function Readout({
 }) {
   return (
     <span className="flex shrink-0 items-baseline gap-1.5">
-      <span className="font-condensed text-2xs font-semibold tracking-[0.09em] text-faint uppercase">
+      <span className="text-eyebrow text-faint uppercase">
         {label}
       </span>
       <span className="font-mono text-sm font-semibold tabular-nums text-ink">{value}</span>
