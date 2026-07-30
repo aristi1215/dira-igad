@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { LayoutGrid, Megaphone, Sigma } from 'lucide-react'
+import { LayoutGrid, Megaphone } from 'lucide-react'
 import {
   fetchAllAlerts,
   fetchFieldReports,
@@ -16,10 +16,8 @@ import {
   CHART,
   fmtDateTime,
   fmtForecastWindow,
-  fmtRisk,
   titleCase,
 } from '../lib/format'
-import { BAND_TICKS } from '../lib/explain'
 import {
   BandChip,
   Button,
@@ -27,14 +25,13 @@ import {
   BentoGrid,
   EmptyState,
   ErrorNote,
-  Meter,
   PageHeader,
   Screen,
   ScreenSkeleton,
   StatusChip,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
-import { EvidenceBoard, ScoreExplainer, ShapDrivers } from '../features/situations'
+import { EvidenceBoard, ScoreFlow, ShapDrivers } from '../features/situations'
 import { AskAboutButton } from '../features/advisor'
 import { TOUR_ANCHORS } from '../features/tour/tourAnchors'
 
@@ -42,7 +39,6 @@ export function SituationDetailScreen() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [showScoreExplainer, setShowScoreExplainer] = useState(false)
 
   const detailQuery = useQuery({
     queryKey: queryKeys.situationDetail(id),
@@ -184,10 +180,7 @@ export function SituationDetailScreen() {
 
       <BentoCard span={2} rowSpan={2} eyebrow="Score flow" title="Two scores, one decision">
         <div data-tour={TOUR_ANCHORS.twoScore} className="flex flex-col gap-4">
-          <ScoreLine name="Model risk" hint="Climate and conflict history only" value={latest?.model_risk} color={CHART.cat1} track="var(--color-accent-ring)" showTicks />
-          <ScoreLine name="Corroboration" hint="News and verified field reports" value={latest?.corroboration} color={CHART.cat2} track="var(--color-accent-ring)" />
-          <p className="rounded-md border border-line bg-surface-2 px-2.5 py-2 font-mono text-2xs leading-relaxed break-words text-muted">{latest?.combination_rule ?? '—'}</p>
-          {latest ? <Button size="sm" icon={Sigma} onClick={() => setShowScoreExplainer(true)}>How?</Button> : null}
+          {latest ? <ScoreFlow assessment={latest} /> : <EmptyState>No assessment recorded yet.</EmptyState>}
         </div>
       </BentoCard>
 
@@ -219,7 +212,7 @@ export function SituationDetailScreen() {
                   { key: 'model_risk', label: 'Model risk', kind: 'line', color: CHART.cat1 },
                   {
                     key: 'corroboration',
-                    label: 'Corroboration',
+                    label: 'Supporting evidence',
                     kind: 'line',
                     color: CHART.cat2,
                   },
@@ -263,7 +256,7 @@ export function SituationDetailScreen() {
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
             {Object.entries(latest.exposure_snapshot).map(([key, value]) => <div key={key} className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5"><dt className="text-xs text-muted">{titleCase(key)}</dt><dd className="text-sm font-medium tabular-nums text-ink">{value == null ? '—' : typeof value === 'number' ? Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2) : String(value)}</dd></div>)}
           </dl>
-        ) : <EmptyState>No snapshot stored.</EmptyState>}
+        ) : <EmptyState>No point-in-time record stored.</EmptyState>}
       </BentoCard>
       </BentoGrid>
 
@@ -353,48 +346,11 @@ export function SituationDetailScreen() {
               ))}
             </dl>
           ) : (
-            <EmptyState>No snapshot stored.</EmptyState>
+            <EmptyState>No point-in-time record stored.</EmptyState>
           )}
         </Card>
       </div> */}
 
-      {showScoreExplainer && latest ? (
-        <ScoreExplainer assessment={latest} onClose={() => setShowScoreExplainer(false)} />
-      ) : null}
     </Screen>
-  )
-}
-
-function ScoreLine({
-  name,
-  hint,
-  value,
-  color,
-  track,
-  showTicks = false,
-}: {
-  name: string
-  hint: string
-  value: number | null | undefined
-  color: string
-  track: string
-  showTicks?: boolean
-}) {
-  return (
-    <div>
-      <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className="text-sm font-medium text-ink">{name}</span>
-        <span className="text-sm font-semibold tabular-nums text-ink">{fmtRisk(value)}</span>
-      </div>
-      <Meter
-        value={value}
-        color={color}
-        track={track}
-        ticks={showTicks ? BAND_TICKS : undefined}
-        height="md"
-        label={name}
-      />
-      <p className="mt-1 text-2xs text-faint">{hint}</p>
-    </div>
   )
 }

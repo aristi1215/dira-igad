@@ -280,7 +280,7 @@ export function ZonesScreen() {
       {totalUnverified > 0 ? (
         <Callout tone="warning" className="mb-4">
           {totalUnverified} recent field report{totalUnverified === 1 ? '' : 's'} awaiting
-          verification. Until verified they contribute exactly zero corroboration.
+          verification. Until verified they contribute exactly zero to the combined score.
         </Callout>
       ) : null}
 

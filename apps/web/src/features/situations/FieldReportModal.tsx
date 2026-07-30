@@ -12,11 +12,11 @@ const STATUS_TONE = {
 
 const STATUS_MEANING: Record<FieldReport['status'], string> = {
   verified:
-    'A named duty officer vouched for this report — it contributes to field corroboration on the next assessment cycle.',
+    'A named duty officer vouched for this report — it contributes to field evidence on the next assessment cycle.',
   unverified:
-    'Awaiting human verification. Unverified reports contribute exactly 0 to corroboration — a raw report alone never moves the operational band.',
+    'Awaiting human verification. Unverified reports contribute exactly 0 to the combined score — a raw report alone never moves the operational band.',
   dismissed:
-    'Reviewed and dismissed by a named officer. Dismissed reports contribute exactly 0 to corroboration.',
+    'Reviewed and dismissed by a named officer. Dismissed reports contribute exactly 0 to the combined score.',
 }
 
 const SEVERITY_LABELS: Record<number, string> = {
@@ -87,7 +87,7 @@ export function FieldReportModal({
         <p>{STATUS_MEANING[report.status]}</p>
         {report.status === 'verified' ? (
           <p>
-            Verified reports set the field corroboration channel by a written
+            Verified reports set the field evidence channel by a written
             rule: base 0.35 for any verified report, +0.15 per severity step of
             the worst report, +0.05 per extra report (max 3), capped at 0.90. The
             channel is merged with news as <code>max(news, field)</code> and

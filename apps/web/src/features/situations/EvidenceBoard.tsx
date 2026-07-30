@@ -13,6 +13,7 @@ import { hazardMeta, HAZARD_ICONS, HAZARD_SEVERITY_META } from '../../lib/explai
 import type { FieldReport, HazardBulletin, ZoneSignal } from '../../lib/types'
 import { Meter, Skeleton, StatusChip, Tabs } from '../../components/ui'
 import { cx } from '../../lib/cx'
+import { Term } from '../../components/ui/Term'
 import { SignalDetailModal } from './SignalDetailModal'
 import { FieldReportModal } from './FieldReportModal'
 import { HazardDetailModal } from './HazardBulletins'
@@ -168,7 +169,7 @@ function SignalsColumn({
   const [selected, setSelected] = useState<ZoneSignal | null>(null)
 
   return (
-    <Column title="News signals" count={signals.length} icon={Newspaper}>
+    <Column title="Reports in the news" count={signals.length} icon={Newspaper}>
       {loading ? (
         <div className="flex flex-col gap-2">
           {[0, 1, 2].map((row) => (
@@ -176,7 +177,9 @@ function SignalsColumn({
           ))}
         </div>
       ) : signals.length === 0 ? (
-        <NoneYet>No news signals extracted for this zone this cycle.</NoneYet>
+        <NoneYet>
+          No <Term term="signal">reports</Term> in the news were extracted for this zone this cycle.
+        </NoneYet>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {signals.slice(0, 12).map((signal) => (
@@ -255,7 +258,7 @@ function ReportsColumn({
     <Column title="Verified field reports" count={reports.length} icon={ClipboardCheck}>
       {reports.length === 0 ? (
         <NoneYet>
-          None verified. Unverified reports contribute exactly zero corroboration until
+          None verified. Unverified reports contribute exactly zero to the combined score until
           someone verifies them.
         </NoneYet>
       ) : (

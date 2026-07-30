@@ -169,7 +169,7 @@ export function SituationsScreen() {
     },
     {
       key: 'corroboration',
-      header: 'Corroboration',
+      header: 'What people report',
       align: 'right',
       render: (situation) => (
         <span className="font-mono tabular-nums">{fmtRisk(situation.corroboration)}</span>
@@ -225,7 +225,7 @@ export function SituationsScreen() {
       <PageHeader
         eyebrow="Situation registry"
         title="Situations"
-        description="Model risk is the pure forecast; the band is that score combined with corroboration under the written rule."
+        description="Model risk is the pure forecast; the band is that score combined with supporting evidence under the written rule."
       />
 
       <StatRow className="mb-5">

@@ -37,7 +37,7 @@ const REPORTER_ROLES = ['field_monitor', 'peace_committee', 'drm_officer', 'chie
 
 /**
  * Field reports and their verification gate. Verification is a human decision:
- * an unverified or dismissed report contributes exactly zero corroboration, so
+ * an unverified or dismissed report contributes exactly zero to the combined score, so
  * the status is the most prominent thing on each row.
  */
 export function ZoneFieldReports({
@@ -109,7 +109,7 @@ export function ZoneFieldReports({
       {unverified.length > 0 ? (
         <Callout tone="warning" className="mb-4">
           {unverified.length} report{unverified.length === 1 ? '' : 's'} awaiting
-          verification. Until verified they contribute exactly zero corroboration.
+          verification. Until verified they contribute exactly zero to the combined score.
         </Callout>
       ) : null}
 

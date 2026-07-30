@@ -178,7 +178,7 @@ export function AnalyticsScreen() {
                   valueAt={(row, column) => rainfall.lookup.get(`${row}|${column}`) ?? null}
                   maxValue={rainfall.maxValue}
                   columnFormatter={fmtMonth}
-                  title="Rainfall by cluster and dekad"
+                  title="Rainfall by cluster and 10-day period"
                 />
               ) : null}
               <p className="mt-3 flex items-center gap-2 text-2xs text-faint">

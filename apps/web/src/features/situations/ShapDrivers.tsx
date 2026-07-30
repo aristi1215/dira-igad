@@ -4,7 +4,7 @@ import { featureMeta } from '../../lib/explain'
 import type { ShapBreakdown } from '../../lib/types'
 
 /**
- * Signed SHAP attribution list: bars diverge from a shared zero line so
+ * Signed model attribution list: bars diverge from a shared zero line so
  * risk-raising (+) and risk-lowering (−) drivers read at a glance.
  */
 export function ShapDrivers({ shap }: { shap: ShapBreakdown }) {
@@ -74,7 +74,7 @@ export function ShapDrivers({ shap }: { shap: ShapBreakdown }) {
         })}
       </ul>
       <p className="shap-footnote">
-        TreeSHAP attributions explain <em>this prediction</em>: each value is the
+        These attributions explain <em>this prediction</em>: each value is the
         feature’s contribution (in probability points) relative to the model’s
         average output. They describe what the model relied on — not causal proof
         of what will drive events on the ground. The % column is each feature’s

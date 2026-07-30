@@ -258,7 +258,7 @@ export function ZoneDossierScreen() {
           span={4}
           tone="inverse"
           title="Climate"
-          subtitle="Rain and vegetation over the same dekads — never on a shared axis"
+          subtitle="Rain and vegetation over the same 10-day periods — never on a shared axis"
         >
           {climateData.length > 0 ? (
             <div className="grid gap-5 lg:grid-cols-2">
@@ -297,7 +297,7 @@ export function ZoneDossierScreen() {
       </section>
 
       <section id="conflict" className="mb-5 scroll-mt-16">
-        <Card title="Conflict and displacement" subtitle="Monthly totals and snapshot counts">
+        <Card title="Conflict and displacement" subtitle="Monthly totals and point-in-time counts">
           <div className="grid gap-5 lg:grid-cols-2">
             <div>
               <h3 className="mb-1 text-eyebrow text-faint uppercase">
@@ -320,7 +320,7 @@ export function ZoneDossierScreen() {
             </div>
             <div>
               <h3 className="mb-1 text-eyebrow text-faint uppercase">
-                Displacement · snapshots
+                Displacement · records at that time
               </h3>
               {displacementData.length > 0 ? (
                 <TimeSeriesChart
@@ -334,7 +334,7 @@ export function ZoneDossierScreen() {
                   ]}
                 />
               ) : (
-                <EmptyState>No displacement snapshots.</EmptyState>
+                <EmptyState>No displacement records.</EmptyState>
               )}
             </div>
           </div>
@@ -354,8 +354,8 @@ export function ZoneDossierScreen() {
           </Card>
 
           <Card
-            title="News signals"
-            subtitle="Media monitoring feeding the corroboration channel"
+            title="Reports in the news"
+            subtitle="Media monitoring that supports the combined score"
           >
             <SignalsList zoneId={id} zoneName={profile.zone.name} />
           </Card>

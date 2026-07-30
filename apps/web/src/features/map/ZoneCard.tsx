@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { Modal } from '../../components/Modal'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import {
@@ -29,7 +30,8 @@ import type {
 } from '../../lib/types'
 import { BandChip, Button, IconButton, IpcChip, Meter, Sparkline } from '../../components/ui'
 import { cx } from '../../lib/cx'
-import { ScoreExplainer } from '../situations'
+import { Term } from '../../components/ui/Term'
+import { ScoreFlow } from '../situations'
 import { AskAboutButton } from '../advisor'
 import { T } from '../../lib/motion'
 import { TOUR_ANCHORS } from '../tour/tourAnchors'
@@ -37,7 +39,7 @@ import { TOUR_ANCHORS } from '../tour/tourAnchors'
 type Assessment = SituationDetail['assessments'][number]
 
 /**
- * The map already carries every field ScoreExplainer needs, so the card can
+ * The map already carries every field ScoreFlow needs, so the card can
  * open the same explanation the situation screen uses rather than restating
  * the arithmetic in new words.
  */
@@ -202,7 +204,7 @@ export function ZoneCard({
                 />
                 <EvidenceRow
                   icon={Newspaper}
-                  label="Corroboration"
+                  label={<Term term="corroboration">What people are reporting</Term>}
                   value={
                     breakdown?.newsCorroboration != null
                       ? `${fmtRisk(situation.corroboration)} · news`
@@ -351,7 +353,14 @@ export function ZoneCard({
       </motion.section>
 
       {explaining && assessment ? (
-        <ScoreExplainer assessment={assessment} onClose={() => setExplaining(false)} />
+        <Modal
+          eyebrow={`Assessment cycle ${assessment.cycle}`}
+          title="How this assessment was worked out"
+          onClose={() => setExplaining(false)}
+          wide
+        >
+          <ScoreFlow assessment={assessment} />
+        </Modal>
       ) : null}
     </>
   )
@@ -363,7 +372,7 @@ function EvidenceRow({
   value,
 }: {
   icon: typeof Brain
-  label: string
+  label: ReactNode
   value: string
 }) {
   return (

@@ -23,6 +23,7 @@ import {
 import { HBarList } from '../components/charts'
 import { AskAboutButton } from '../features/advisor'
 import type { ModelCard as ModelCardType } from '../lib/types'
+import { glossaryEntry } from '../lib/glossary'
 
 /** The shape is declared inline on ModelCard; name it once for the table. */
 type EvaluationRun = NonNullable<ModelCardType['evaluation_runs']>[number]
@@ -238,7 +239,7 @@ export function ModelScreen() {
               title="Compared with simpler methods"
               subtitle="Brier score on held-out future periods — shorter is better"
               actions={
-                <InfoHint content="Brier score measures how far probability forecasts land from what actually happened. 0 means perfect; 0.25 is what you get by always guessing 50%." />
+                <InfoHint content={`Brier score measures how far probability forecasts land from what actually happened. ${glossaryEntry('snapshot')?.explanation ?? ''} 0 means perfect; 0.25 is what you get by always guessing 50%.`} />
               }
             >
               <HBarList

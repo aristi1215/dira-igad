@@ -178,7 +178,7 @@ function EventDetailModal({
         <h3>How this feeds the zone’s risk</h3>
         <p>
           Observed events enter the model through the incident-count features
-          (this dekad, previous dekad), the incident <em>trend</em>, and the
+          (this 10-day period, previous 10-day period), the incident <em>trend</em>, and the
           neighbouring-zone mean.{' '}
           {event.inWindow ? (
             <>
@@ -196,8 +196,8 @@ function EventDetailModal({
             </>
           )}{' '}
           No single event deterministically sets the forecast — the model reads
-          the pattern, and its reliance on each feature is shown in the SHAP
-          drivers of the situation view.
+          the pattern, and its reliance on each feature is shown in the
+          what pushed the score in the situation view.
         </p>
       </div>
     </Modal>

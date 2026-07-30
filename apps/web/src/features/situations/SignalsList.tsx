@@ -22,10 +22,10 @@ export function SignalsList({ zoneId, zoneName }: SignalsListProps) {
   const signals = signalsQuery.data ?? []
 
   return (
-    <div className="signals-panel" aria-label="News signals">
-      {signalsQuery.isLoading ? <p className="loading-note">Loading signals…</p> : null}
+    <div className="signals-panel" aria-label="Reports in the news">
+      {signalsQuery.isLoading ? <p className="loading-note">Loading reports…</p> : null}
       {!signalsQuery.isLoading && signals.length === 0 ? (
-        <p className="empty-state">No news signals for this zone.</p>
+        <p className="empty-state">No reports in the news for this zone.</p>
       ) : null}
       <ul className="signals-list">
         {signals.slice(0, 6).map((signal) => (

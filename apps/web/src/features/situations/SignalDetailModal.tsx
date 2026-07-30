@@ -26,7 +26,7 @@ export function SignalDetailModal({
 }) {
   return (
     <Modal
-      eyebrow="News signal · corroboration channel"
+      eyebrow="Report in the news · supporting evidence"
       title={signal.title ?? titleCase(signal.signal_type)}
       onClose={onClose}
       wide
@@ -79,11 +79,11 @@ export function SignalDetailModal({
       <div className="detail-section detail-note">
         <h3>How this affects the risk score</h3>
         <p>
-          News signals feed the <strong>corroboration channel only</strong> — they
-          never enter the quantitative model. The strongest signal confidence in
-          the zone sets the news corroboration value, which is merged with
+          Reports in the news provide <strong>supporting evidence only</strong> — they
+          never enter the quantitative model. The strongest report confidence in
+          the zone sets the news evidence value, which is merged with
           verified field reports as <code>max(news, field)</code> and then
-          weighted at 30% in the operational score. A signal alone can never move
+          weighted at 30% in the combined score. A report alone can never move
           the band by more than that written rule allows.
         </p>
       </div>
