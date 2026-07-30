@@ -66,10 +66,10 @@ export function CoachMark({
         left: placement?.left ?? -9999,
         visibility: placement ? 'visible' : 'hidden',
       }}
-      className="fixed z-tour rounded-lg border border-line bg-surface p-4 shadow-lg"
+      className="fixed z-tour min-w-[320px] rounded-bento border border-line bg-surface p-5 shadow-lg"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-2xs font-semibold tracking-[0.06em] text-accent uppercase">
+        <span className="text-eyebrow text-accent">
           {step.chapter}
         </span>
         <span className="text-2xs text-faint tabular-nums">
@@ -77,15 +77,15 @@ export function CoachMark({
         </span>
       </div>
 
-      <h2 className="text-md leading-snug font-semibold text-ink">{step.title}</h2>
-      <p className="mt-1.5 text-sm leading-relaxed text-muted">{step.body}</p>
+      <h2 className="text-xl leading-snug font-semibold tracking-[-0.02em] text-ink">{step.title}</h2>
+      <p className="mt-2 text-md leading-relaxed text-muted">{step.body}</p>
 
       {step.interactive ? (
         <p className="mt-2 text-2xs text-accent">You can click it — the tour will wait.</p>
       ) : null}
 
       {/* Progress rail doubles as a way back to any step already seen. */}
-      <div className="mt-3.5 mb-3 flex gap-1" role="tablist" aria-label="Tour progress">
+      <div className="mt-4 mb-3 flex gap-1" role="tablist" aria-label="Tour progress">
         {Array.from({ length: total }, (_, position) => (
           <button
             key={position}

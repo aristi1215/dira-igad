@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from 'motion/react'
 import { AskAdvisor, useAdvisorStore } from '../features/advisor'
 import { GuidedTour } from '../features/tour'
 import { readTourProgress } from '../features/tour/tourSteps'
+import { WelcomeBento } from '../features/onboarding/WelcomeBento'
+import { readWelcomeDismissed, writeWelcomeDismissed } from '../features/onboarding/storage'
 import { apiUrl, fetchMapSituations, fetchSources, fetchZones, queryKeys } from '../lib/api'
 import { applySseEvent, parseDiraSseEvent } from '../lib/ssePatch'
 import { useSelectedZone } from '../features/map/useSelectedZone'
@@ -43,7 +45,12 @@ export function AppLayout() {
    */
   const [progress] = useState(() => readTourProgress())
   const forcedByUrl = new URLSearchParams(location.search).get('tour') === '1'
-  const [tourOpen, setTourOpen] = useState(() => forcedByUrl || progress == null)
+  const [welcomeOpen, setWelcomeOpen] = useState(
+    () => !forcedByUrl && !readWelcomeDismissed(),
+  )
+  const [tourOpen, setTourOpen] = useState(
+    () => forcedByUrl || (!readWelcomeDismissed() ? false : progress == null),
+  )
   const [tourStart, setTourStart] = useState(() => progress?.lastIndex ?? 0)
   const tourResumable = progress != null && !progress.completed && progress.lastIndex > 0
 
@@ -129,6 +136,7 @@ export function AppLayout() {
       if (event.key === '?') {
         chordRef.current = null
         setTourStart(0)
+        setWelcomeOpen(false)
         setTourOpen(true)
         return
       }
@@ -174,6 +182,7 @@ export function AppLayout() {
         advisorOpen={advisorOpen}
         onToggleAdvisor={toggleAdvisor}
         onOpenTour={() => {
+          setWelcomeOpen(false)
           setTourStart(tourResumable ? (progress?.lastIndex ?? 0) : 0)
           setTourOpen(true)
         }}
@@ -218,6 +227,21 @@ export function AppLayout() {
           }
         />
       </Sheet>
+
+      {welcomeOpen ? (
+        <WelcomeBento
+          onTakeLook={() => {
+            writeWelcomeDismissed()
+            setWelcomeOpen(false)
+            setTourStart(0)
+            setTourOpen(true)
+          }}
+          onSkip={() => {
+            writeWelcomeDismissed()
+            setWelcomeOpen(false)
+          }}
+        />
+      ) : null}
 
       {tourOpen ? (
         <GuidedTour startAt={tourStart} onClose={() => setTourOpen(false)} />
