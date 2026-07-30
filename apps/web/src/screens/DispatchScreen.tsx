@@ -33,7 +33,6 @@ import {
 import { BAND_MAP_COLORS, fmtDateTime, titleCase } from '../lib/format'
 import {
   Button,
-  BentoCard,
   Callout,
   Card,
   DataTable,
@@ -462,9 +461,11 @@ export function DispatchScreen() {
         description="This screen turns a drafted situation alert into voice calls or SMS only after a named human approves it. Nobody — including the AI advisor — can dispatch without that approval; once approved, the room queues every active recipient for the zone in one transaction."
       />
 
-      <BentoCard span={2} tone="inverse" eyebrow="Dispatch status" title="Human-gated delivery">
-        <p className="text-sm text-muted">Every alert waits for a named approver before any call is queued.</p>
-      </BentoCard>
+      {/*
+        A lone "Human-gated delivery" tile used to sit here, outside any grid —
+        so its span class did nothing — saying what the page description above
+        and the human-gate card below both already say.
+      */}
       <StatRow className="mb-5">
         <Stat
           label="Waiting on you"

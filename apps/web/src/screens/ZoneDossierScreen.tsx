@@ -13,7 +13,6 @@ import {
 } from '../lib/format'
 import {
   Button,
-  BentoCard,
   Card,
   DataTable,
   EmptyState,
@@ -210,11 +209,13 @@ export function ZoneDossierScreen() {
         sat 600px apart in reading order. Sharing one frame and one x-axis is
         both denser and the correct comparison — they are the same drought,
         measured twice.
+
+        A plain Card, like the four sections around it: this was the only one
+        that got the bento treatment, with a `span={4}` that had no grid parent
+        and a dark hero tone that put two light-themed charts on a black plate.
       */}
       <section id="climate" className="mb-5 scroll-mt-16">
-        <BentoCard
-          span={4}
-          tone="inverse"
+        <Card
           title="Climate"
           subtitle="Rain and vegetation over the same 10-day periods — never on a shared axis"
         >
@@ -274,7 +275,7 @@ export function ZoneDossierScreen() {
           ) : (
             <EmptyState>No climate series.</EmptyState>
           )}
-        </BentoCard>
+        </Card>
       </section>
 
       <section id="conflict" className="mb-5 scroll-mt-16">

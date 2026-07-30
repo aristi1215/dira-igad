@@ -13,21 +13,21 @@ export function EconomyPanel({ focusCountry }: EconomyPanelProps) {
     staleTime: 10 * 60 * 1000,
   })
 
+  /*
+   * Bare content, no card chrome and no heading of its own — the caller
+   * supplies both. It used to render its own bordered panel with its own
+   * title, inside a BentoCard that had a title too, which read as a card
+   * nested in a card under two competing headings.
+   */
   const data = economyQuery.data
   if (economyQuery.isLoading) {
-    return (
-      <section className="rounded-bento border border-line bg-surface p-5 shadow-bento">
-        <p className="text-eyebrow text-faint">Country economy</p>
-        <p className="text-muted">Loading indicators...</p>
-      </section>
-    )
+    return <p className="text-sm text-muted">Loading indicators…</p>
   }
   if (!data) {
     return (
-      <section className="rounded-bento border border-line bg-surface p-5 shadow-bento">
-        <p className="text-eyebrow text-faint">Country economy</p>
-        <p className="my-2 rounded-md bg-err-bg px-3 py-2 text-sm text-err-fg">Economy indicators are unavailable.</p>
-      </section>
+      <p className="rounded-md bg-err-bg px-3 py-2 text-sm text-err-fg">
+        Economy indicators are unavailable.
+      </p>
     )
   }
 
@@ -37,13 +37,7 @@ export function EconomyPanel({ focusCountry }: EconomyPanelProps) {
   )
 
   return (
-    <section className="rounded-bento border border-line bg-surface p-5 shadow-bento" aria-label="IGAD economy">
-      <div className="mb-4">
-        <div>
-          <p className="text-eyebrow text-faint">IGAD economies</p>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Country indicators</h2>
-        </div>
-      </div>
+    <div aria-label="IGAD economy">
       <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3">
         {entries.map(([iso2, country]) => (
           <CountryCard
@@ -55,8 +49,8 @@ export function EconomyPanel({ focusCountry }: EconomyPanelProps) {
           />
         ))}
       </div>
-      <small className="mt-2 block text-xs text-muted">{data.source}</small>
-    </section>
+      <p className="mt-3 text-xs text-faint">{data.source}</p>
+    </div>
   )
 }
 
@@ -81,35 +75,55 @@ function CountryCard({
         <strong className="text-sm text-ink">{country.name}</strong>
         <span className="rounded border border-line-strong px-1.5 py-0.5 tabular-nums text-[0.7rem] text-muted">{iso2}</span>
       </header>
-      <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+      <dl className="mt-3 grid grid-cols-2 gap-x-2 gap-y-2.5 text-xs">
         <div>
-          <dt className="text-muted">GDP</dt>
+          <dt className="text-faint">GDP</dt>
           <dd className="tabular-nums text-ink">{gdp != null ? `$${gdp.toFixed(1)}B` : '—'}</dd>
         </div>
         <div>
-          <dt>Growth</dt>
-          <dd className={growth != null && growth < 0 ? 'tabular-nums text-err-fg' : 'tabular-nums text-ok-fg'}>
+          <dt className="text-faint">Growth</dt>
+          <dd
+            className={
+              growth != null && growth < 0
+                ? 'tabular-nums text-err-fg'
+                : 'tabular-nums text-ok-fg'
+            }
+          >
             {growth != null ? `${growth.toFixed(1)}%` : '—'}
           </dd>
         </div>
         <div>
-          <dt>Inflation</dt>
-          <dd className={inflation != null && inflation > 15 ? 'tabular-nums text-err-fg' : 'tabular-nums text-ink'}>
+          <dt className="text-faint">Inflation</dt>
+          <dd
+            className={
+              inflation != null && inflation > 15
+                ? 'tabular-nums text-err-fg'
+                : 'tabular-nums text-ink'
+            }
+          >
             {inflation != null ? `${inflation.toFixed(1)}%` : '—'}
           </dd>
         </div>
         <div>
-          <dt>Population</dt>
-          <dd className="tabular-nums text-ink">{population != null ? `${population.toFixed(1)}M` : '—'}</dd>
+          <dt className="text-faint">Population</dt>
+          <dd className="tabular-nums text-ink">
+            {population != null ? `${population.toFixed(1)}M` : '—'}
+          </dd>
         </div>
       </dl>
       <Sparkline values={country.gdp_growth_pct} years={years} />
+      {/*
+        Both of these were inline `<small>`s, so they ran straight into each
+        other: "0.2M people food-insecurePort-services economy;…".
+      */}
       {country.food_insecure_m != null ? (
-        <small className="text-xs text-warn-fg">
+        <p className="mt-2 text-xs font-medium text-warn-fg">
           {country.food_insecure_m}M people food-insecure
-        </small>
+        </p>
       ) : null}
-      {country.note ? <small className="text-xs text-muted">{country.note}</small> : null}
+      {country.note ? (
+        <p className="mt-1.5 text-xs leading-relaxed text-muted">{country.note}</p>
+      ) : null}
     </article>
   )
 }

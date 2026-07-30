@@ -11,11 +11,19 @@ import { SkeletonText } from './Skeleton'
 
 export type CalloutTone = 'info' | 'warning' | 'danger' | 'success'
 
-const CALLOUT: Record<CalloutTone, { box: string; icon: LucideIcon; iconColor: string }> = {
-  info: { box: 'border-l-accent bg-info-bg', icon: Info, iconColor: 'text-info-fg' },
-  warning: { box: 'border-l-band-elevated bg-warn-bg', icon: TriangleAlert, iconColor: 'text-warn-fg' },
-  danger: { box: 'border-l-band-high bg-err-bg', icon: CircleAlert, iconColor: 'text-err-fg' },
-  success: { box: 'border-l-band-ack bg-ok-bg', icon: CircleCheck, iconColor: 'text-ok-fg' },
+/*
+ * Each tone pairs its own background with its own ink. The body used to be
+ * `text-muted`, which reads against the *page*, not against the callout — so
+ * inside a `.tone-inverse` plate (where `--color-muted` becomes a light grey)
+ * the text landed on pale green and disappeared. The bg/fg status tokens are
+ * designed as a pair and flip together, so pairing them is correct in both
+ * themes and inside any plate.
+ */
+const CALLOUT: Record<CalloutTone, { box: string; icon: LucideIcon; ink: string }> = {
+  info: { box: 'border-l-accent bg-info-bg', icon: Info, ink: 'text-info-fg' },
+  warning: { box: 'border-l-band-elevated bg-warn-bg', icon: TriangleAlert, ink: 'text-warn-fg' },
+  danger: { box: 'border-l-band-high bg-err-bg', icon: CircleAlert, ink: 'text-err-fg' },
+  success: { box: 'border-l-band-ack bg-ok-bg', icon: CircleCheck, ink: 'text-ok-fg' },
 }
 
 export function Callout({
@@ -40,14 +48,15 @@ export function Callout({
       className={cx(
         'flex items-start gap-3 rounded-md border border-line border-l-[3px] px-3.5 py-3',
         config.box,
+        config.ink,
         className,
       )}
     >
-      <Icon size={16} strokeWidth={1.75} aria-hidden className={cx('mt-0.5 shrink-0', config.iconColor)} />
+      <Icon size={16} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
-        {title ? <p className="text-sm font-semibold text-ink">{title}</p> : null}
+        {title ? <p className="text-sm font-semibold">{title}</p> : null}
         {children ? (
-          <div className={cx('text-sm text-muted', title && 'mt-0.5')}>{children}</div>
+          <div className={cx('text-sm', title && 'mt-0.5')}>{children}</div>
         ) : null}
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}

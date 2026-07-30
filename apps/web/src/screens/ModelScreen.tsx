@@ -12,6 +12,7 @@ import {
   DataTable,
   EmptyState,
   ErrorNote,
+  Eyebrow,
   InfoHint,
   PageHeader,
   Screen,
@@ -166,48 +167,44 @@ export function ModelScreen() {
       ) : (
         <>
           {/*
-            One plain claim, up top — and set in the serif, because this is a
-            statement of what the system asserts rather than a readout. It sits
-            beside its caveat instead of above it, which also closes the 40% of
-            blank card the single paragraph used to leave.
+            One plain claim, up top, with its caveat beside it rather than
+            below. Full width: the claim and the caveat are a two-column split,
+            and at span=2 that split had ~180px per column, which set the
+            headline one word to a line.
+
+            The horizon and training-row counts that used to sit here as their
+            own tiles are in the StatRow immediately below — they were the same
+            two numbers twice, a card's width apart.
           */}
           <BentoGrid className="mb-5">
-          <BentoCard span={2} tone="inverse" eyebrow="The forecast" title="What it predicts">
-            <div className="grid items-start gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-              <div className="min-w-0">
-                <p className="max-w-[46ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-ink">
-                  {card.predicts}
-                </p>
-                <p className="mt-2.5 max-w-[58ch] text-sm leading-relaxed text-muted">
-                  It looks about {card.horizon_days} days ahead and is checked only against
-                  periods it never saw during training.
-                </p>
+            <BentoCard span={6} tone="inverse" eyebrow="The forecast" title="What it predicts">
+              <div className="grid items-start gap-x-10 gap-y-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+                <div className="min-w-0">
+                  <p className="max-w-[42ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-ink">
+                    {card.predicts}
+                  </p>
+                  <p className="mt-3 max-w-[58ch] text-sm leading-relaxed text-muted">
+                    It looks about {card.horizon_days} days ahead and is checked only against
+                    periods it never saw during training.
+                  </p>
+                </div>
+                <div className="flex min-w-0 flex-col items-start gap-3">
+                  <Callout
+                    tone={beatsBaselines ? 'success' : 'warning'}
+                    icon={beatsBaselines ? CircleCheck : TriangleAlert}
+                    className="w-full"
+                  >
+                    {beatsBaselines
+                      ? 'On periods it never saw, it scores better than every naive baseline we tested it against.'
+                      : 'It does not beat every baseline, so the transparent index is preferred.'}
+                    {card.fallback_reason ? ` ${card.fallback_reason}` : ''}
+                  </Callout>
+                  <AskAboutButton
+                    question="In plain language, what does this model predict, and what should I not use it for?"
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <Callout
-                  tone={beatsBaselines ? 'success' : 'warning'}
-                  icon={beatsBaselines ? CircleCheck : TriangleAlert}
-                >
-                  {beatsBaselines
-                    ? 'On periods it never saw, it scores better than every naive baseline we tested it against.'
-                    : 'It does not beat every baseline, so the transparent index is preferred.'}
-                  {card.fallback_reason ? ` ${card.fallback_reason}` : ''}
-                </Callout>
-                <AskAboutButton
-                  question="In plain language, what does this model predict, and what should I not use it for?"
-                  className="self-end"
-                />
-              </div>
-            </div>
-          </BentoCard>
-          <BentoCard span={2} eyebrow="Horizon" title={`${card.horizon_days} days`}>
-            <p className="text-3xl font-semibold tabular-nums">~{card.horizon_days}</p>
-            <p className="mt-2 text-sm text-muted">{card.horizon_dekads} ten-day periods ahead</p>
-          </BentoCard>
-          <BentoCard span={2} eyebrow="Training" title="How it was trained">
-            <p className="text-3xl font-semibold tabular-nums">{card.train_rows}</p>
-            <p className="mt-2 text-sm text-muted">rows used for training</p>
-          </BentoCard>
+            </BentoCard>
           </BentoGrid>
 
           <StatRow className="mb-5">
@@ -280,8 +277,8 @@ export function ModelScreen() {
               {card.performance_breakdown ? (
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <h3 className="mb-2 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
-                      Most accurate zones
+                    <h3 className="mb-2">
+                      <Eyebrow>Most accurate zones</Eyebrow>
                     </h3>
                     <HBarList
                       items={card.performance_breakdown.best_zones.map(([zone, error]) => ({
@@ -294,8 +291,8 @@ export function ModelScreen() {
                     />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
-                      Least accurate zones
+                    <h3 className="mb-2">
+                      <Eyebrow>Least accurate zones</Eyebrow>
                     </h3>
                     <HBarList
                       items={card.performance_breakdown.worst_zones.map(([zone, error]) => ({

@@ -6,7 +6,6 @@ import { fmtNumber, titleCase } from '../lib/format'
 import {
   Callout,
   BentoCard,
-  BentoGrid,
   DataTable,
   ErrorNote,
   Field,
@@ -16,6 +15,7 @@ import {
   Select,
   SkeletonCard,
   Stat,
+  StatRow,
   StatusChip,
   type Column,
 } from '../components/ui'
@@ -212,7 +212,12 @@ export function SourcesScreen() {
 
       {data ? (
         <>
-          <BentoGrid className="mb-5">
+          {/*
+            StatRow, not BentoGrid: `Stat` renders its own card chrome and
+            carries no span, so inside a six-column bento each tile claimed one
+            implicit column and the row stopped two columns short of the page.
+          */}
+          <StatRow className="mb-5">
             <Stat label="Feeds" value={sources.length} detail="Distinct inputs" />
             <Stat
               label="Reading live"
@@ -234,7 +239,7 @@ export function SourcesScreen() {
                   : 'Fixed fixtures, identical every run'
               }
             />
-          </BentoGrid>
+          </StatRow>
 
           <Callout tone="info" className="mb-5" icon={Radio}>
             <span className="flex flex-wrap items-center gap-1.5">

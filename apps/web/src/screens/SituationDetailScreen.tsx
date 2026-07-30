@@ -36,6 +36,21 @@ import { TimeSeriesChart } from '../components/charts'
 import { EvidenceBoard, ScoreFlow, ShapDrivers } from '../features/situations'
 import { AskAboutButton } from '../features/advisor'
 import { TOUR_ANCHORS } from '../features/tour/tourAnchors'
+import type { StatusTone } from '../components/ui'
+
+/** Where each alert state sits on the status scale. */
+const ALERT_TONE: Record<string, StatusTone> = {
+  pending_approval: 'warning',
+  failed: 'error',
+  draft: 'neutral',
+}
+
+/** One exposure figure, as stored on the frozen snapshot. */
+function fmtExposure(value: unknown): string {
+  if (value == null) return '—'
+  if (typeof value !== 'number') return String(value)
+  return Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2)
+}
 
 export function SituationDetailScreen() {
   const { id = '' } = useParams()
@@ -140,58 +155,71 @@ export function SituationDetailScreen() {
       ) : null}
 
       {/*
-        The headline answer, before any numbers.
-
-        The verdict and the two scores that produced it now sit side by side.
-        Stacked, the banner's right third was permanently blank while the
-        scores that justify it were three cards further down the page.
+        The headline answer, before any numbers, with the two scores that
+        produced it beside rather than below it — stacked, the verdict's right
+        third was permanently blank while its justification sat three cards
+        down the page.
       */}
       <BentoGrid>
-      <BentoCard span={4} tone="inverse" eyebrow="Current assessment" title={BAND_GUIDANCE[band]} subtitle={<DateStamp>Forecast window · {fmtForecastWindow(latest?.window_start, latest?.window_end, latest?.horizon_dekads)}</DateStamp>}>
-        <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <BandChip band={latest?.operational_band ?? null} />
-            <DateStamp>Cycle {latest?.cycle ?? '—'}</DateStamp>
+        <BentoCard
+          span={4}
+          tone="inverse"
+          eyebrow="Current assessment"
+          title={BAND_GUIDANCE[band]}
+          subtitle={
             <DateStamp>
+              Forecast window ·{' '}
               {fmtForecastWindow(
                 latest?.window_start,
                 latest?.window_end,
                 latest?.horizon_dekads,
               )}
             </DateStamp>
-            {quietCycles != null && quietCycles > 0 ? (
-              <StatusChip tone="info">
-                {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
-              </StatusChip>
+          }
+        >
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <BandChip band={latest?.operational_band ?? null} />
+              <DateStamp>Cycle {latest?.cycle ?? '—'}</DateStamp>
+              {quietCycles != null && quietCycles > 0 ? (
+                <StatusChip tone="info">
+                  {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
+                </StatusChip>
+              ) : null}
+              <AskAboutButton
+                question={`Explain the current assessment for ${zone?.zone_name ?? detail.situation.zone_id} in plain language, and what it means for the next 30 days.`}
+                className="ml-auto"
+              />
+            </div>
+            {latest?.explanation ? (
+              <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-muted">
+                {latest.explanation}
+              </p>
             ) : null}
-            <AskAboutButton
-              question={`Explain the current assessment for ${zone?.zone_name ?? detail.situation.zone_id} in plain language, and what it means for the next 30 days.`}
-              className="ml-auto"
-            />
           </div>
-          {/*
-            The one sentence on this page that is a judgement rather than a
-            measurement, so it is the one sentence set in the serif.
-          */}
-          {latest?.explanation ? (
-            <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-muted">
-              {latest.explanation}
-            </p>
-          ) : null}
-        </div>
-      </BentoCard>
+        </BentoCard>
 
-      <BentoCard span={2} rowSpan={2} eyebrow="Score flow" title="Two scores, one decision">
-        <div data-tour={TOUR_ANCHORS.twoScore} className="flex flex-col gap-4">
-          {latest ? <ScoreFlow assessment={latest} /> : <EmptyState>No assessment recorded yet.</EmptyState>}
-        </div>
-      </BentoCard>
+        <BentoCard
+          span={2}
+          rowSpan={2}
+          eyebrow="Score flow"
+          title="Two scores, one decision"
+        >
+          <div data-tour={TOUR_ANCHORS.twoScore} className="flex flex-col gap-4">
+            {latest ? (
+              <ScoreFlow assessment={latest} />
+            ) : (
+              <EmptyState>No assessment recorded yet.</EmptyState>
+            )}
+          </div>
+        </BentoCard>
 
-      {/*
-        Spans rather than equal halves. `lg:grid-cols-2` stretched both cards
-        to the taller one, so the drivers list dragged a column of whitespace
-        alongside it on every situation with few features.
-      */}
+        {/*
+          span=4, expressed through the prop. This carried an extra
+          `className="lg:col-span-7"`, which asked a six-column grid for seven
+          columns — the responsive variant beat the unprefixed base, and the
+          class was the last survivor of an earlier layout.
+        */}
         <BentoCard
           span={4}
           title={
@@ -201,7 +229,6 @@ export function SituationDetailScreen() {
             </span>
           }
           subtitle="Each input's contribution to this cycle's score"
-          className="lg:col-span-7"
           actions={
             <AskAboutButton question="Which drivers are pushing this zone's risk up, and what would have to change for it to fall?" />
           }
@@ -211,98 +238,48 @@ export function SituationDetailScreen() {
           </div>
         </BentoCard>
 
-          <BentoCard span={4} title="How it got here" subtitle="Both scores across every cycle">
-            {trajectory.length > 0 ? (
-              <TimeSeriesChart
-                data={trajectory}
-                xKey="cycle"
-                series={[
-                  { key: 'model_risk', label: 'Model risk', kind: 'line', color: CHART.cat1 },
-                  {
-                    key: 'corroboration',
-                    label: 'Supporting evidence',
-                    kind: 'line',
-                    color: CHART.cat2,
-                  },
-                ]}
-                yFormatter={(value) => value.toFixed(1)}
-                height={190}
-              />
-            ) : (
-              <EmptyState>No assessments recorded yet.</EmptyState>
-            )}
-          </BentoCard>
-
-      <BentoCard span={2} rowSpan={2} title="Evidence" subtitle="What supports this forecast" padded={false}
-        actions={<AskAboutButton question="Summarise the evidence for this situation and say where it is thin." />}>
-        <EvidenceBoard
-          zoneId={detail.situation.zone_id}
-          zoneName={zone?.zone_name}
-          reports={reportsQuery.data ?? []}
-          hazards={hazards}
-        />
-      </BentoCard>
-
-      <BentoCard span={4} title="Alert timeline" subtitle="Every alert drafted for this situation and where it stands">
-        {situationAlerts.length > 0 ? (
-          <ul className="flex flex-col gap-3">
-            {situationAlerts.map((alert) => (
-              <li key={alert.id} className="border-l-2 border-line pl-3">
-                <span className="flex flex-wrap items-center gap-2">
-                  <StatusChip tone={alert.status === 'pending_approval' ? 'warning' : alert.status === 'failed' ? 'error' : alert.status === 'draft' ? 'neutral' : 'success'}>{alert.status.replace('_', ' ')}</StatusChip>
-                  <span className="text-2xs text-faint">{alert.language.toUpperCase()} · {fmtDateTime(alert.created_at)}</span>
-                </span>
-                <p className="mt-1 text-sm text-muted">{alert.body_text.slice(0, 140)}{alert.body_text.length > 140 ? '…' : ''}</p>
-              </li>
-            ))}
-          </ul>
-        ) : <EmptyState title="No alerts yet">Use “Prepare alert” to draft one for the approval gate.</EmptyState>}
-      </BentoCard>
-
-      <BentoCard
-        span={2}
-        title="Exposure at assessment time"
-        subtitle={
-          latest?.created_at ? (
-            <DateStamp>Frozen on {fmtDateTime(latest.created_at)}</DateStamp>
+        <BentoCard span={4} title="How it got here" subtitle="Both scores across every cycle">
+          {trajectory.length > 0 ? (
+            <TimeSeriesChart
+              data={trajectory}
+              xKey="cycle"
+              series={[
+                { key: 'model_risk', label: 'Model risk', kind: 'line', color: CHART.cat1 },
+                {
+                  key: 'corroboration',
+                  label: 'Supporting evidence',
+                  kind: 'line',
+                  color: CHART.cat2,
+                },
+              ]}
+              yFormatter={(value) => value.toFixed(1)}
+              height={190}
+            />
           ) : (
-            'Frozen when the assessment ran'
-          )
-        }
-        actions={
-          <Button size="sm" variant="ghost" onClick={() => void navigate(`/zones/${detail.situation.zone_id}`)}>
-            See current zone state →
-          </Button>
-        }
-      >
-        {latest?.exposure_snapshot && Object.keys(latest.exposure_snapshot).length > 0 ? (
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-            {Object.entries(latest.exposure_snapshot).map(([key, value]) => <div key={key} className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5"><dt className="text-xs text-muted">{titleCase(key)}</dt><dd className="text-sm font-medium tabular-nums text-ink">{value == null ? '—' : typeof value === 'number' ? Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2) : String(value)}</dd></div>)}
-          </dl>
-        ) : <EmptyState>No point-in-time record stored.</EmptyState>}
-      </BentoCard>
-      </BentoGrid>
+            <EmptyState>No assessments recorded yet.</EmptyState>
+          )}
+        </BentoCard>
 
-      {/*
-      <Card
-        title="Evidence"
-        subtitle="Everything corroborating — or failing to corroborate — this forecast"
-        className="group mb-5"
-        padded={false}
-        actions={
-          <AskAboutButton question="Summarise the evidence for this situation and say where it is thin." />
-        }
-      >
-        <EvidenceBoard
-          zoneId={detail.situation.zone_id}
-          zoneName={zone?.zone_name}
-          reports={reportsQuery.data ?? []}
-          hazards={hazards}
-        />
-      </Card>
+        <BentoCard
+          span={2}
+          rowSpan={2}
+          title="Evidence"
+          subtitle="What supports this forecast"
+          padded={false}
+          actions={
+            <AskAboutButton question="Summarise the evidence for this situation and say where it is thin." />
+          }
+        >
+          <EvidenceBoard
+            zoneId={detail.situation.zone_id}
+            zoneName={zone?.zone_name}
+            reports={reportsQuery.data ?? []}
+            hazards={hazards}
+          />
+        </BentoCard>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Card
+        <BentoCard
+          span={4}
           title="Alert timeline"
           subtitle="Every alert drafted for this situation and where it stands"
         >
@@ -311,17 +288,7 @@ export function SituationDetailScreen() {
               {situationAlerts.map((alert) => (
                 <li key={alert.id} className="border-l-2 border-line pl-3">
                   <span className="flex flex-wrap items-center gap-2">
-                    <StatusChip
-                      tone={
-                        alert.status === 'pending_approval'
-                          ? 'warning'
-                          : alert.status === 'failed'
-                            ? 'error'
-                            : alert.status === 'draft'
-                              ? 'neutral'
-                              : 'success'
-                      }
-                    >
+                    <StatusChip tone={ALERT_TONE[alert.status] ?? 'success'}>
                       {alert.status.replace('_', ' ')}
                     </StatusChip>
                     <span className="text-2xs text-faint">
@@ -332,11 +299,6 @@ export function SituationDetailScreen() {
                     {alert.body_text.slice(0, 140)}
                     {alert.body_text.length > 140 ? '…' : ''}
                   </p>
-                  {alert.approved_by ? (
-                    <p className="mt-0.5 text-2xs text-faint">
-                      Approved by {alert.approved_by} · {fmtDateTime(alert.approved_at)}
-                    </p>
-                  ) : null}
                 </li>
               ))}
             </ul>
@@ -345,25 +307,39 @@ export function SituationDetailScreen() {
               Use “Prepare alert” to draft one for the approval gate.
             </EmptyState>
           )}
-        </Card>
+        </BentoCard>
 
-        <Card
+        <BentoCard
+          span={2}
           title="Exposure at assessment time"
-          subtitle="Frozen when the assessment ran — never edited afterwards"
+          subtitle={
+            latest?.created_at ? (
+              <DateStamp>Frozen on {fmtDateTime(latest.created_at)}</DateStamp>
+            ) : (
+              'Frozen when the assessment ran'
+            )
+          }
+          actions={
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void navigate(`/zones/${detail.situation.zone_id}`)}
+            >
+              See current zone state →
+            </Button>
+          }
         >
-          {latest?.exposure_snapshot && Object.keys(latest.exposure_snapshot).length > 0 ? (
+          {latest?.exposure_snapshot &&
+          Object.keys(latest.exposure_snapshot).length > 0 ? (
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
               {Object.entries(latest.exposure_snapshot).map(([key, value]) => (
-                <div key={key} className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5">
+                <div
+                  key={key}
+                  className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5"
+                >
                   <dt className="text-xs text-muted">{titleCase(key)}</dt>
                   <dd className="text-sm font-medium tabular-nums text-ink">
-                    {value == null
-                      ? '—'
-                      : typeof value === 'number'
-                        ? Number.isInteger(value)
-                          ? value.toLocaleString('en-US')
-                          : value.toFixed(2)
-                        : String(value)}
+                    {fmtExposure(value)}
                   </dd>
                 </div>
               ))}
@@ -371,9 +347,8 @@ export function SituationDetailScreen() {
           ) : (
             <EmptyState>No point-in-time record stored.</EmptyState>
           )}
-        </Card>
-      </div> */}
-
+        </BentoCard>
+      </BentoGrid>
     </Screen>
   )
 }

@@ -301,7 +301,12 @@ export function SituationsScreen() {
 
       {situationsQuery.isError ? <ErrorNote error={situationsQuery.error} /> : null}
 
-      <BentoCard span={6} tone="inverse" padded={false} title="Situation registry">
+      {/*
+        Not tone="inverse". The hero tone is a dark plate for the one thing on
+        a screen that should be read first; behind a full-width white table it
+        was just a black band under the caption.
+      */}
+      <BentoCard span={6} padded={false} title="Situation registry">
         <DataTable
           columns={columns}
           rows={filtered}

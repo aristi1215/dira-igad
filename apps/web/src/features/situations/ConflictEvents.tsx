@@ -82,8 +82,8 @@ export function ConflictEvents({
               <th>Date</th>
               <th>Type</th>
               <th>Actors</th>
-              <th className="num">Fatalities</th>
-              <th className="num">Feeds model</th>
+              <th className="text-right">Fatalities</th>
+              <th className="text-right">Feeds model</th>
               <th aria-label="Details" />
             </tr>
           </thead>
@@ -102,8 +102,8 @@ export function ConflictEvents({
                 <td className="text-muted">
                   {[event.actor1, event.actor2].filter(Boolean).join(' vs ') || '—'}
                 </td>
-                <td className="num">{event.fatalities}</td>
-                <td className="num">
+                <td className="text-right tabular-nums">{event.fatalities}</td>
+                <td className="text-right tabular-nums">
                   {event.inWindow ? (
                     <StatusChip tone="info">
                       {event.windowShare != null
