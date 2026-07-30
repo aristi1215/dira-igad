@@ -29,7 +29,7 @@ export function AdvisorDock({
             type="button"
             layoutId="advisor-dock"
             onClick={toggleAdvisor}
-            className={`pointer-events-auto fixed bottom-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-px ${
+            className={`pointer-events-auto fixed bottom-4 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-px ${
               mapRoute ? 'right-[28rem]' : 'right-4'
             }`}
             aria-label="Ask Dira"

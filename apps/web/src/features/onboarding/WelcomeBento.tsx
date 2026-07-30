@@ -85,12 +85,12 @@ function Tile({
     <section
       className={cx(
         'flex h-full min-h-40 flex-col overflow-hidden rounded-bento border border-line p-5',
-        inverse ? 'bg-ink text-white' : 'bg-surface shadow-panel',
+        inverse ? 'bg-surface-3 text-ink' : 'bg-surface shadow-panel',
         className,
       )}
     >
-      <p className={cx('text-eyebrow', inverse ? 'text-white/60' : 'text-faint')}>{eyebrow}</p>
-      <h2 className={cx('mt-1.5 text-lg font-semibold tracking-[-0.02em]', inverse ? 'text-white' : 'text-ink')}>
+      <p className={cx('text-eyebrow', inverse ? 'text-muted' : 'text-faint')}>{eyebrow}</p>
+      <h2 className={cx('mt-1.5 text-lg font-semibold tracking-[-0.02em]', inverse ? 'text-ink' : 'text-ink')}>
         {title}
       </h2>
       <div className="mt-3 flex min-h-0 flex-1 flex-col">{children}</div>
@@ -101,7 +101,7 @@ function Tile({
 function WhatDiraDoes() {
   return (
     <Tile eyebrow="What Dira does" title="Makes pressure visible" inverse>
-      <p className="max-w-[32ch] text-md leading-relaxed text-white/75">
+      <p className="max-w-[32ch] text-md leading-relaxed text-muted">
         Dira turns climate, conflict and local reports into a picture of where
         attention may be needed next.
       </p>

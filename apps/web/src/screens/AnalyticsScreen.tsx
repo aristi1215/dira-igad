@@ -110,8 +110,8 @@ export function AnalyticsScreen() {
 
             <BentoCard span={2} tone="inverse" eyebrow="Priority signal" title="Zones at risk">
               <p className="font-mono text-4xl font-semibold tabular-nums">{severeZones}</p>
-              <p className="mt-2 text-sm text-white/70">high or very high this cycle</p>
-              <p className="mt-5 text-xs text-white/60">
+              <p className="mt-2 text-sm text-muted">high or very high this cycle</p>
+              <p className="mt-5 text-xs text-faint">
                 {data.delivery_stats.needs_review > 0
                   ? `${data.delivery_stats.needs_review} deliveries need review`
                   : 'No delivery exceptions'}

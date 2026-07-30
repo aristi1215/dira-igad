@@ -14,6 +14,7 @@ import { ROUTE_TRANSITION } from '../lib/motion'
 import { CommandBar } from './CommandBar'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navItems'
 import { PressureRibbon } from './PressureRibbon'
+import { useThemeStore } from '../stores/theme'
 
 /**
  * Owns the chrome that outlives any single route: the command bar, the one
@@ -22,6 +23,7 @@ import { PressureRibbon } from './PressureRibbon'
  */
 export function AppLayout() {
   const queryClient = useQueryClient()
+  const theme = useThemeStore((state) => state.theme)
   const location = useLocation()
   const navigate = useNavigate()
   const [sseFailed, setSseFailed] = useState(false)
@@ -49,6 +51,9 @@ export function AppLayout() {
   const [tourOpen, setTourOpen] = useState(
     () => forcedByUrl || (!readWelcomeDismissed() ? false : progress == null),
   )
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
   const [tourStart, setTourStart] = useState(() => progress?.lastIndex ?? 0)
   const tourResumable = progress != null && !progress.completed && progress.lastIndex > 0
 

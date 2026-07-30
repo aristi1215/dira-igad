@@ -218,9 +218,9 @@ export function ZonesScreen() {
 
         <BentoCard span={2} tone="inverse" eyebrow="Priority signal" title="Needs attention now">
           <p className="font-mono text-4xl font-semibold tabular-nums">{attentionZones.length}</p>
-          <ul className="mt-4 flex flex-col gap-1 text-sm text-white/75">
+          <ul className="mt-4 flex flex-col gap-1 text-sm text-muted">
             {attentionZones.slice(0, 4).map((zone) => <li key={zone.zone_id}>{zone.zone_name}</li>)}
-            {attentionZones.length > 4 ? <li className="text-xs text-white/50">+{attentionZones.length - 4} more</li> : null}
+            {attentionZones.length > 4 ? <li className="text-xs text-faint">+{attentionZones.length - 4} more</li> : null}
           </ul>
         </BentoCard>
 

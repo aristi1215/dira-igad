@@ -36,7 +36,7 @@ export function Sheet({
             transition={T.fast}
             onClick={onClose}
             aria-hidden
-            className="fixed inset-0 z-drawer bg-ink/25"
+            className="fixed inset-0 z-drawer bg-surface/25"
           />
           <motion.aside
             ref={panelRef}

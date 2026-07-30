@@ -175,10 +175,10 @@ export function ModelScreen() {
           <BentoCard span={2} tone="inverse" eyebrow="The forecast" title="What it predicts">
             <div className="grid items-start gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
               <div className="min-w-0">
-                <p className="max-w-[46ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-white">
+                <p className="max-w-[46ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-ink">
                   {card.predicts}
                 </p>
-                <p className="mt-2.5 max-w-[58ch] text-sm leading-relaxed text-white/70">
+                <p className="mt-2.5 max-w-[58ch] text-sm leading-relaxed text-muted">
                   It looks about {card.horizon_days} days ahead and is checked only against
                   periods it never saw during training.
                 </p>

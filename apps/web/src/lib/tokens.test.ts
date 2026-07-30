@@ -11,6 +11,7 @@ import { BAND_COLORS, BAND_MAP_COLORS, IPC_COLORS } from './format'
  * tests are what stop the two drifting apart.
  */
 const css = readFileSync(fileURLToPath(new URL('../index.css', import.meta.url)), 'utf-8')
+const darkOverride = css.match(/html\.dark\s*\{([\s\S]*?)\n\}/)?.[1] ?? ''
 
 function themeToken(name: string): string | undefined {
   const match = css.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{3,8});`))
@@ -45,5 +46,11 @@ describe('design tokens match the JS palette', () => {
     // collapsing the map container — see the note in index.css.
     expect(css).toMatch(/@layer theme, base, vendor, components, utilities;/)
     expect(css).toMatch(/@import 'maplibre-gl\/dist\/maplibre-gl\.css' layer\(vendor\);/)
+  })
+
+  it('keeps risk and food-security palettes identical across themes', () => {
+    expect(darkOverride).not.toMatch(/--color-band-/)
+    expect(darkOverride).not.toMatch(/--color-band-very-high-map/)
+    expect(darkOverride).not.toMatch(/--color-ipc-/)
   })
 })

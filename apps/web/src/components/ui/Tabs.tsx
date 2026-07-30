@@ -77,7 +77,7 @@ export function Tabs<T extends string>({
               <span
                 className={cx(
                   'relative z-1 tabular-nums',
-                  active ? 'text-white/70' : 'text-faint',
+                  active ? 'text-accent-deep' : 'text-faint',
                 )}
               >
                 {item.count}

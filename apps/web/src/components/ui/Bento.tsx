@@ -22,7 +22,7 @@ const TONE: Record<BentoTone, string> = {
   default: 'bg-surface text-ink',
   quiet: 'bg-surface-2 text-ink',
   accent: 'border-accent bg-accent-soft text-ink',
-  inverse: 'border-ink bg-ink text-white',
+  inverse: 'border-line-strong bg-surface-3 text-ink',
 }
 
 export function BentoGrid({

@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { Compass, MessageSquareText } from 'lucide-react'
+import { Compass, Moon, MessageSquareText, Sun } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { T } from '../lib/motion'
-import { Button } from '../components/ui'
+import { Button, IconButton } from '../components/ui'
+import { useThemeStore } from '../stores/theme'
 import { StatusCluster } from './StatusCluster'
 import { BrandMark } from './BrandMark'
 import { PRIMARY_NAV, SECONDARY_NAV, type NavItem } from './navItems'
@@ -26,6 +27,9 @@ export function CommandBar({
   onOpenTour: () => void
   tourResumable: boolean
 }) {
+  const theme = useThemeStore((state) => state.theme)
+  const toggleTheme = useThemeStore((state) => state.toggleTheme)
+
   return (
     <header
       className={cx(
@@ -57,6 +61,12 @@ export function CommandBar({
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <StatusCluster cycle={cycle} dataMode={dataMode} degraded={degraded} />
+        <IconButton
+          icon={theme === 'dark' ? Sun : Moon}
+          label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          size="sm"
+          onClick={toggleTheme}
+        />
         <div className="relative">
           <Button variant="ghost" size="sm" icon={Compass} onClick={onOpenTour}>
             <span className="hidden sm:inline">Guide</span>

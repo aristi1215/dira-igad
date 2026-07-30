@@ -171,7 +171,7 @@ export function SituationDetailScreen() {
             measurement, so it is the one sentence set in the serif.
           */}
           {latest?.explanation ? (
-            <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-white/70">
+            <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-muted">
               {latest.explanation}
             </p>
           ) : null}

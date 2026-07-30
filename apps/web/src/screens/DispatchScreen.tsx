@@ -287,7 +287,7 @@ export function DispatchScreen() {
       />
 
       <BentoCard span={2} tone="inverse" eyebrow="Dispatch status" title="Human-gated delivery">
-        <p className="text-sm text-white/70">Every alert waits for a named approver before any call is queued.</p>
+        <p className="text-sm text-muted">Every alert waits for a named approver before any call is queued.</p>
       </BentoCard>
       <StatRow className="mb-5">
         <Stat
