@@ -41,28 +41,28 @@ export function FieldReportModal({
       onClose={onClose}
       wide
     >
-      <div className="detail-chips">
+      <div className="flex flex-wrap gap-1.5">
         <StatusChip tone={STATUS_TONE[report.status]}>{report.status}</StatusChip>
         <StatusChip tone={report.severity >= 3 ? 'error' : report.severity === 2 ? 'warning' : 'neutral'}>
           Severity {report.severity}/3
         </StatusChip>
       </div>
 
-      <p className="detail-lede">{reportCategoryMeta(report.category)}</p>
+      <p className="m-0 text-sm leading-relaxed text-ink">{reportCategoryMeta(report.category)}</p>
 
-      <div className="detail-section">
+      <div className="grid gap-1.5">
         <h3>Narrative</h3>
-        <blockquote className="detail-quote">“{report.narrative}”</blockquote>
+        <blockquote className="m-0 rounded-r-md border-l-[3px] border-accent bg-surface-2 px-3.5 py-2.5 text-sm leading-relaxed text-ink">“{report.narrative}”</blockquote>
       </div>
 
-      <div className="detail-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-x-4 gap-y-2">
         <DetailRow label="Zone">
           {zoneName ?? report.zone_name ?? report.zone_id ?? '—'}
         </DetailRow>
         <DetailRow label="Reporter">
           {titleCase(report.reporter_role)}
           {REPORTER_ROLE_META[report.reporter_role] ? (
-            <small className="muted-block">
+            <small className="mt-px block text-xs text-faint">
               {REPORTER_ROLE_META[report.reporter_role]}
             </small>
           ) : null}
@@ -77,12 +77,12 @@ export function FieldReportModal({
         <DetailRow label={report.status === 'dismissed' ? 'Dismissed by' : 'Verified by'}>
           {report.verified_by ?? '—'}
           {report.verified_at ? (
-            <small className="muted-block">{fmtDateTime(report.verified_at)}</small>
+            <small className="mt-px block text-xs text-faint">{fmtDateTime(report.verified_at)}</small>
           ) : null}
         </DetailRow>
       </div>
 
-      <div className="detail-section detail-note">
+      <div className="grid gap-1.5 rounded-lg border border-accent-ring bg-accent-soft px-3.5 py-3">
         <h3>How this affects the risk score</h3>
         <p>{STATUS_MEANING[report.status]}</p>
         {report.status === 'verified' ? (

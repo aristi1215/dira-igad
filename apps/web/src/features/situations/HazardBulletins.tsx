@@ -45,7 +45,7 @@ export function HazardBulletins({
 
   return (
     <>
-      <ul className="hazard-list">
+      <ul className="m-0 grid list-none gap-2 p-0">
         {sorted.map((bulletin) => {
           const meta = hazardMeta(bulletin.hazard_type)
           const severity = HAZARD_SEVERITY_META[bulletin.severity]
@@ -54,15 +54,15 @@ export function HazardBulletins({
             <li key={bulletin.id}>
               <button
                 type="button"
-                className="hazard-card"
+                className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-line border-l-4 bg-surface px-3 py-2.5 text-left transition-[background,box-shadow,transform] hover:-translate-y-px hover:bg-surface-2 hover:shadow-md"
                 style={{ borderLeftColor: meta.color }}
                 onClick={() => setSelected(bulletin)}
               >
-                <span className="hazard-icon" style={{ color: meta.color }}>
+                <span className="text-lg leading-none" style={{ color: meta.color }}>
                   <HazardIcon hazardType={bulletin.hazard_type} />
                 </span>
-                <span className="hazard-main">
-                  <span className="hazard-head">
+                <span className="grid min-w-0 gap-1">
+                  <span className="flex flex-wrap items-center gap-1.5">
                     <strong>{meta.label}</strong>
                     <StatusChip tone={severity?.tone ?? 'info'}>
                       {bulletin.severity}
@@ -73,14 +73,14 @@ export function HazardBulletins({
                       <StatusChip tone="neutral">expired</StatusChip>
                     )}
                   </span>
-                  <span className="hazard-headline">{bulletin.headline}</span>
-                  <small className="muted">
+                  <span className="text-sm leading-snug text-ink">{bulletin.headline}</span>
+                  <small className="text-muted">
                     {fmtDate(bulletin.valid_from)} →{' '}
                     {bulletin.valid_to ? fmtDate(bulletin.valid_to) : 'open-ended'} ·{' '}
                     {bulletin.source}
                   </small>
                 </span>
-                <span className="hazard-chevron" aria-hidden="true">
+                <span className="text-xl text-faint" aria-hidden="true">
                   ›
                 </span>
               </button>
@@ -118,7 +118,7 @@ export function HazardDetailModal({
       onClose={onClose}
       wide
     >
-      <div className="detail-chips">
+      <div className="flex flex-wrap gap-1.5">
         <StatusChip tone={severity?.tone ?? 'info'}>
           {severity?.label ?? bulletin.severity}
         </StatusChip>
@@ -127,21 +127,21 @@ export function HazardDetailModal({
         </StatusChip>
       </div>
 
-      <p className="detail-lede">{meta.description}</p>
+      <p className="m-0 text-sm leading-relaxed text-ink">{meta.description}</p>
       {severity ? (
-        <p className="detail-body">
+        <p className="m-0 text-sm leading-relaxed text-ink">
           <strong>{severity.label}:</strong> {severity.meaning}
         </p>
       ) : null}
 
       {bulletin.detail ? (
-        <div className="detail-section">
+        <div className="grid gap-1.5">
           <h3>Bulletin detail</h3>
-          <p className="detail-body">{bulletin.detail}</p>
+          <p className="m-0 text-sm leading-relaxed text-ink">{bulletin.detail}</p>
         </div>
       ) : null}
 
-      <div className="detail-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-x-4 gap-y-2">
         <DetailRow label="Affected zone">{zoneName ?? '—'}</DetailRow>
         <DetailRow label="Valid from">{fmtDate(bulletin.valid_from)}</DetailRow>
         <DetailRow label="Valid until">
@@ -154,9 +154,9 @@ export function HazardDetailModal({
       </div>
 
       {meta.actions.length > 0 ? (
-        <div className="detail-section detail-note">
+        <div className="grid gap-1.5 rounded-lg border border-accent-ring bg-accent-soft px-3.5 py-3">
           <h3>Recommended preparedness actions</h3>
-          <ul className="action-list">
+          <ul className="m-0 grid list-disc gap-1.5 pl-5 text-sm leading-relaxed">
             {meta.actions.map((action) => (
               <li key={action}>{action}</li>
             ))}

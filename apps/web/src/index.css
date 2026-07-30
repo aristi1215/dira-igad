@@ -2,7 +2,7 @@
  * Dira design system.
  *
  * Tailwind v4 is imported WITHOUT Preflight on purpose: Preflight resets
- * headings, buttons, lists and table borders, which would break App.css
+ * headings, buttons, lists and table borders, which would break the legacy
  * mid-migration. The consequence is that there is no default border color,
  * so always write `border border-line` — never a bare `border`.
  *
@@ -18,13 +18,6 @@
  * `absolute` and collapses the map container to zero height.
  */
 @import 'maplibre-gl/dist/maplibre-gl.css' layer(vendor);
-/*
- * Screens still on the old stylesheet. Imported here rather than from App.tsx
- * so it lands in `@layer components` — below Tailwind utilities, which lets a
- * migrated component's utility classes override leftover legacy rules instead
- * of losing to them. Retired section by section; deleted when empty.
- */
-@import './App.css' layer(components);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 @theme {
@@ -78,7 +71,7 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  /* Replaces the 17 ad-hoc font sizes that were scattered through App.css. */
+  /* Replaces the old ad-hoc font sizes scattered through the application. */
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
   --text-xs: 0.75rem;
@@ -212,56 +205,12 @@
 
 /*
  * Legacy bridge — re-points every pre-Tailwind token at its @theme
- * counterpart so App.css keeps working while screens migrate one at a time.
- * Deleted in Phase 7 together with App.css.
+ * counterpart for the pre-Tailwind token names.
  */
-:root {
-  color-scheme: light;
-
-  --bg: var(--color-canvas);
-  --surface: var(--color-surface);
-  --surface-2: var(--color-surface-2);
-  --border: var(--color-line);
-  --border-strong: var(--color-line-strong);
-  --ink: var(--color-ink);
-  --muted: var(--color-muted);
-  --faint: var(--color-faint);
-  /* Was undefined — .tour-card p referenced it and fell through to full black. */
-  --ink-secondary: var(--color-muted);
-  --accent: var(--color-accent);
-  --accent-hover: var(--color-accent-hover);
-  --accent-soft: var(--color-accent-soft);
-
-  --band-low: var(--color-band-low);
-  --band-watch: var(--color-band-watch);
-  --band-elevated: var(--color-band-elevated);
-  --band-high: var(--color-band-high);
-  --band-very-high: var(--color-band-very-high);
-  --band-none: var(--color-band-none);
-  --band-ack: var(--color-band-ack);
-
-  --ok-bg: var(--color-ok-bg);
-  --ok-fg: var(--color-ok-fg);
-  --err-bg: var(--color-err-bg);
-  --err-fg: var(--color-err-fg);
-  --warn-bg: var(--color-warn-bg);
-  --warn-fg: var(--color-warn-fg);
-  --info-bg: var(--color-info-bg);
-  --info-fg: var(--color-info-fg);
-
-  font-family: var(--font-sans);
-  line-height: 1.5;
-  color: var(--color-ink);
-  background: var(--color-canvas);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-}
-
 /*
  * Minimal reset, standing in for Preflight (which is disabled so it cannot
- * trample App.css mid-migration). It lives in `@layer base` so App.css
- * (`@layer components`) and Tailwind utilities both still win over it.
+ * trample application styling). It lives in `@layer base` so component
+ * styles and Tailwind utilities both still win over it.
  *
  * These are the specific UA defaults that show through on Tailwind-styled
  * markup: button chrome and list markers.
@@ -347,15 +296,6 @@
 }
 
 @layer components {
-  /* App.css predates the list reset above and expects UA markers here. */
-  .feed-list,
-  .drivers-list,
-  .red-lines,
-  .timeline {
-    list-style: revert;
-    padding-left: revert;
-  }
-
   /* Bring MapLibre's default controls in line with the rest of the chrome. */
   .maplibregl-ctrl-group {
     border: 1px solid var(--color-line);

@@ -61,8 +61,8 @@ export function ConflictEvents({
 
   return (
     <>
-      <div className="table-scroll">
-        <table className="data-table row-clickable">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm [&_th]:whitespace-nowrap [&_th]:border-b [&_th]:border-line-strong [&_th]:bg-surface-2 [&_th]:px-3.5 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted [&_td]:border-b [&_td]:border-line [&_td]:px-3.5 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-surface-2">
           <thead>
             <tr>
               <th>Date</th>
@@ -85,7 +85,7 @@ export function ConflictEvents({
               >
                 <td>{fmtDate(event.event_date)}</td>
                 <td>{event.event_type}</td>
-                <td className="muted">
+                <td className="text-muted">
                   {[event.actor1, event.actor2].filter(Boolean).join(' vs ') || '—'}
                 </td>
                 <td className="num">{event.fatalities}</td>
@@ -100,7 +100,7 @@ export function ConflictEvents({
                     <StatusChip tone="neutral">history only</StatusChip>
                   )}
                 </td>
-                <td className="row-chevron" aria-hidden="true">
+                <td className="text-right text-faint" aria-hidden="true">
                   ›
                 </td>
               </tr>
@@ -136,7 +136,7 @@ function EventDetailModal({
       onClose={onClose}
       wide
     >
-      <div className="detail-chips">
+      <div className="flex flex-wrap gap-1.5">
         <StatusChip tone={event.fatalities > 0 ? 'error' : 'neutral'}>
           {event.fatalities} fatalities
         </StatusChip>
@@ -148,10 +148,10 @@ function EventDetailModal({
       </div>
 
       {EVENT_TYPE_META[event.event_type] ? (
-        <p className="detail-lede">{EVENT_TYPE_META[event.event_type]}</p>
+      <p className="m-0 text-sm leading-relaxed text-ink">{EVENT_TYPE_META[event.event_type]}</p>
       ) : null}
 
-      <div className="detail-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-x-4 gap-y-2">
         <DetailRow label="Zone">{zoneName ?? '—'}</DetailRow>
         <DetailRow label="Event date">{fmtDate(event.event_date)}</DetailRow>
         <DetailRow label="Primary actor">{event.actor1 ?? '—'}</DetailRow>
@@ -168,13 +168,13 @@ function EventDetailModal({
       </div>
 
       {event.notes ? (
-        <div className="detail-section">
+      <div className="grid gap-1.5">
           <h3>Notes</h3>
-          <p className="detail-body">{event.notes}</p>
+        <p className="m-0 text-sm leading-relaxed text-ink">{event.notes}</p>
         </div>
       ) : null}
 
-      <div className="detail-section detail-note">
+      <div className="grid gap-1.5 rounded-lg border border-accent-ring bg-accent-soft px-3.5 py-3">
         <h3>How this feeds the zone’s risk</h3>
         <p>
           Observed events enter the model through the incident-count features

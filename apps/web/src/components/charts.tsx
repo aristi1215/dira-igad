@@ -116,13 +116,13 @@ function ChartTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null
   return (
-    <div className="chart-tooltip">
-      <p className="chart-tooltip-label">
+    <div className="rounded-md border border-line-strong bg-surface px-2.5 py-2 text-xs shadow-md">
+      <p className="mb-1 font-semibold">
         {xFormatter && label != null ? xFormatter(String(label)) : label}
       </p>
       {payload.map((entry) => (
-        <p key={entry.name} className="chart-tooltip-row">
-          <span className="chart-tooltip-dot" style={{ background: entry.color }} />
+        <p key={entry.name} className="my-0.5 flex items-center gap-1.5 text-muted">
+          <span className="inline-block size-2 rounded-full" style={{ background: entry.color }} />
           {entry.name}:{' '}
           <strong>
             {typeof entry.value === 'number' ? yFormatter(entry.value) : entry.value}
@@ -148,17 +148,17 @@ export function HBarList({
 }) {
   const max = Math.max(1, ...items.map((i) => i.value ?? 0))
   return (
-    <div className="hbar-list">
+    <div className="grid gap-2">
       {items.map((item) => (
-        <div key={item.key ?? item.label} className="hbar-row">
-          <span className="hbar-label">{item.label}</span>
-          <span className="hbar-track">
+        <div key={item.key ?? item.label} className="grid grid-cols-[minmax(6rem,9rem)_1fr_auto_auto] items-center gap-2.5 text-sm">
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-muted">{item.label}</span>
+          <span className="h-3.5 overflow-hidden rounded-r bg-surface-2">
             <span
-              className="hbar-fill"
+              className="block h-full rounded-r"
               style={{ width: `${((item.value ?? 0) / max) * 100}%`, background: color }}
             />
           </span>
-          <span className="hbar-value">
+          <span className="min-w-12 text-right font-mono font-semibold tabular-nums">
             {item.value == null ? '—' : formatter(item.value)}
           </span>
           {rightSlot ? rightSlot(item) : null}
@@ -192,17 +192,17 @@ export function HeatStrip({
     return ramp[Math.min(ramp.length - 1, Math.max(1, Math.round(t * (ramp.length - 1))))]
   }
   return (
-    <div className="heat-strip" role="table" aria-label={title}>
+    <div className="grid gap-[3px] text-xs" role="table" aria-label={title}>
       {rows.map((row) => (
-        <div key={row} className="heat-row" role="row">
-          <span className="heat-row-label">{row}</span>
-          <span className="heat-cells">
+        <div key={row} className="grid grid-cols-[minmax(7rem,10rem)_1fr] items-center gap-2.5" role="row">
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-muted">{row}</span>
+          <span className="flex gap-0.5">
             {columns.map((col) => {
               const value = valueAt(row, col)
               return (
                 <span
                   key={col}
-                  className="heat-cell"
+                  className="h-4 min-w-0 flex-1 rounded-sm"
                   style={{ background: cellColor(value) }}
                   title={`${row} · ${columnFormatter ? columnFormatter(col) : col}: ${
                     value == null ? 'no data' : `${value.toFixed(1)} mm`
@@ -213,9 +213,9 @@ export function HeatStrip({
           </span>
         </div>
       ))}
-      <div className="heat-row heat-axis" role="row">
-        <span className="heat-row-label" />
-        <span className="heat-cells heat-axis-labels">
+      <div className="grid grid-cols-[minmax(7rem,10rem)_1fr] items-center gap-2.5" role="row">
+        <span />
+        <span className="flex justify-between text-[0.72rem] text-faint">
           <span>{columnFormatter ? columnFormatter(columns[0]) : columns[0]}</span>
           <span>
             {columnFormatter

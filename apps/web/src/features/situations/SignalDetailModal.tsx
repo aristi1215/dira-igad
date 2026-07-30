@@ -31,18 +31,18 @@ export function SignalDetailModal({
       onClose={onClose}
       wide
     >
-      <div className="detail-chips">
+      <div className="flex flex-wrap gap-1.5">
         <StatusChip tone={signal.status === 'confirmed' ? 'success' : 'neutral'}>
           {signal.status}
         </StatusChip>
         <StatusChip tone="info">{titleCase(signal.signal_type)}</StatusChip>
       </div>
 
-      <p className="detail-lede">{signalTypeMeta(signal.signal_type)}</p>
+      <p className="m-0 text-sm leading-relaxed text-ink">{signalTypeMeta(signal.signal_type)}</p>
 
-      <div className="detail-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-x-4 gap-y-2">
         <DetailRow label="Extraction confidence">
-          <span className="score-inline">
+        <span className="inline-flex w-full items-center gap-2">
             <ScoreMeter value={signal.confidence} />
             <strong>{Math.round(signal.confidence * 100)}%</strong>
           </span>
@@ -63,20 +63,20 @@ export function SignalDetailModal({
       </div>
 
       {signal.excerpt ? (
-        <div className="detail-section">
+        <div className="grid gap-1.5">
           <h3>Supporting excerpt</h3>
-          <blockquote className="detail-quote">“{signal.excerpt}”</blockquote>
+          <blockquote className="m-0 rounded-r-md border-l-[3px] border-accent bg-surface-2 px-3.5 py-2.5 text-sm leading-relaxed text-ink">“{signal.excerpt}”</blockquote>
         </div>
       ) : null}
 
       {signal.body_excerpt ? (
-        <div className="detail-section">
+        <div className="grid gap-1.5">
           <h3>Source article (opening)</h3>
-          <p className="detail-body">{signal.body_excerpt}…</p>
+          <p className="m-0 text-sm leading-relaxed text-ink">{signal.body_excerpt}…</p>
         </div>
       ) : null}
 
-      <div className="detail-section detail-note">
+      <div className="grid gap-1.5 rounded-lg border border-accent-ring bg-accent-soft px-3.5 py-3">
         <h3>How this affects the risk score</h3>
         <p>
           Reports in the news provide <strong>supporting evidence only</strong> — they
