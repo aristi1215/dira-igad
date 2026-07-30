@@ -34,7 +34,7 @@ export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       // shadow-bento so content does not visibly gain elevation on arrival.
-      className={cx('rounded-bento border border-line bg-surface p-5 shadow-bento', className)}
+      className={cx('rounded-bento border border-line bg-surface p-4 shadow-bento', className)}
       role="status"
       aria-label="Loading"
     >
@@ -74,7 +74,7 @@ export function SkeletonRows({
 /** Full-screen fallback for React.lazy route boundaries. */
 export function ScreenSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-6 pt-8 pb-16 lg:px-10" role="status" aria-label="Loading">
+    <div className="mx-auto w-full max-w-[1240px] px-6 pt-6 pb-12 lg:px-10" role="status" aria-label="Loading">
       <Skeleton className="mb-2 h-3 w-24" />
       <Skeleton className="mb-6 h-7 w-64" />
       <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-3">

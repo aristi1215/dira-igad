@@ -8,6 +8,7 @@ import {
   BAND_MAP_COLORS,
   CHART,
   COUNTRY_NAMES,
+  fmtDate,
   fmtProbability,
   fmtRisk,
   titleCase,
@@ -214,7 +215,7 @@ export function SituationsScreen() {
       key: 'cycle',
       header: 'Cycle',
       render: (situation) => (
-        <DateStamp>{situation.cycle ?? '—'}</DateStamp>
+        <DateStamp>{fmtDate(situation.cycle)}</DateStamp>
       ),
       sortBy: (situation) => situation.cycle ?? '',
       secondary: true,

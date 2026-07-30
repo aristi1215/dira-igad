@@ -36,7 +36,7 @@ export function Card({
         />
       ) : null}
       {title || actions ? (
-        <div className="flex items-start justify-between gap-3 px-5 pt-5">
+        <div className="flex items-start justify-between gap-3 px-4 pt-4">
           <div className="min-w-0">
             {title ? (
               <h2 className="text-md leading-tight font-semibold tracking-[-0.01em] text-ink">
@@ -50,7 +50,7 @@ export function Card({
           ) : null}
         </div>
       ) : null}
-      <div className={cx('min-w-0 flex-1', padded && 'p-5')}>{children}</div>
+      <div className={cx('min-w-0 flex-1', padded && 'p-4')}>{children}</div>
     </section>
   )
 }
@@ -71,18 +71,23 @@ export function PageHeader({
   description?: string
   actions?: ReactNode
 }) {
+  /*
+   * Tighter than it was. At text-3xl with a text-md description and 24px of
+   * margin, the header ate the top fifth of every screen before a single
+   * figure appeared — on screens whose entire job is figures.
+   */
   return (
-    <header className="mb-6">
+    <header className="mb-5">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           {eyebrow ? (
             <Eyebrow className="text-accent-deep">{eyebrow}</Eyebrow>
           ) : null}
-          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.02em] text-ink">
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-[-0.02em] text-ink">
             {title}
           </h1>
           {description ? (
-            <p className="mt-2 max-w-[62ch] text-md text-faint">{description}</p>
+            <p className="mt-1.5 max-w-[76ch] text-sm leading-relaxed text-faint">{description}</p>
           ) : null}
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
@@ -169,7 +174,7 @@ export function Screen({
   width?: 'default' | 'wide' | 'reading'
 }) {
   return (
-    <div className={cx('mx-auto w-full px-6 pt-8 pb-16 lg:px-10', SCREEN_WIDTH[width], className)}>
+    <div className={cx('mx-auto w-full px-6 pt-6 pb-12 lg:px-10', SCREEN_WIDTH[width], className)}>
       {children}
     </div>
   )

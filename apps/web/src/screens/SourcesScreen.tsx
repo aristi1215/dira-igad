@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Radio, ShieldCheck } from 'lucide-react'
 import { fetchSources, queryKeys } from '../lib/api'
-import { fmtNumber, titleCase } from '../lib/format'
+import { fmtCompact, fmtDate, fmtNumber, titleCase } from '../lib/format'
 import {
   Callout,
   BentoCard,
   DataTable,
+  DateStamp,
   ErrorNote,
   Field,
   InfoHint,
@@ -53,11 +54,19 @@ export function SourcesScreen() {
   const sources = data?.sources ?? []
   const liveCount = sources.filter((source) => source.mode === 'live').length
   const liveCapable = sources.filter((source) => source.live_capable).length
-  const freshest = sources
-    .map((source) => source.freshest_available_at)
-    .filter((value): value is string => value != null)
-    .sort()
-    .at(-1)
+
+  /*
+   * Both ends of the freshness range, not just the newest. "Everything is 3
+   * days old" and "one feed is 3 days old and another is 40" are different
+   * situations, and only the second one is a problem — which is precisely the
+   * thing this screen exists to make visible.
+   */
+  const dated = sources
+    .filter((source) => source.freshest_available_at != null)
+    .sort((a, b) => (a.freshest_available_at ?? '').localeCompare(b.freshest_available_at ?? ''))
+  const freshest = dated.at(-1)?.freshest_available_at
+  const stalest = dated[0]
+  const totalRows = sources.reduce((sum, source) => sum + (source.rows ?? 0), 0)
 
   const visibleSources =
     categoryFilter === 'all'
@@ -103,11 +112,16 @@ export function SourcesScreen() {
     },
     {
       key: 'updated',
-      header: 'Updated',
-      width: '8rem',
+      header: 'Newest record',
+      width: '10rem',
+      // The date leads and the relative age follows it. "3d ago" alone cannot
+      // be checked against anything; the date can.
       render: (source) => (
-        <span className="tabular-nums text-2xs text-muted">
-          {freshness(source.freshest_available_at)}
+        <span className="flex flex-col">
+          <DateStamp icon={false}>{fmtDate(source.freshest_available_at)}</DateStamp>
+          <span className="tabular-nums text-2xs text-faint">
+            {freshness(source.freshest_available_at)}
+          </span>
         </span>
       ),
       // Sort by the real timestamp, not by the humanised string — otherwise
@@ -164,7 +178,7 @@ export function SourcesScreen() {
           empty half-cell in the bottom right — on the one card whose whole job
           is to look like the system means what it says.
         */}
-        <ul className="grid gap-x-6 gap-y-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid gap-x-6 gap-y-2.5 md:grid-cols-2 xl:grid-cols-3">
           {[
             {
               title: 'A human always approves',
@@ -217,26 +231,34 @@ export function SourcesScreen() {
             carries no span, so inside a six-column bento each tile claimed one
             implicit column and the row stopped two columns short of the page.
           */}
-          <StatRow className="mb-5">
-            <Stat label="Feeds" value={sources.length} detail="Distinct inputs" />
+          <StatRow className="mb-4">
+            <Stat label="Feeds" value={sources.length} detail={`across ${byCategory.length} categories`} />
             <Stat
               label="Reading live"
-              value={liveCount}
+              value={`${liveCount} / ${sources.length}`}
               detail={`${liveCapable} can go live`}
               accent={liveCount > 0 ? 'var(--color-band-ack)' : undefined}
             />
+            <Stat label="Records held" value={fmtCompact(totalRows)} detail="rows across all feeds" />
+            {/* Both ends of the freshness range: one stale feed is the finding. */}
             <Stat
-              label="Freshest record"
-              value={freshness(freshest ?? null)}
-              detail="Newest available_at across all feeds"
+              label="Newest record"
+              value={fmtDate(freshest)}
+              detail={freshness(freshest ?? null)}
+            />
+            <Stat
+              label="Oldest feed"
+              value={fmtDate(stalest?.freshest_available_at)}
+              detail={stalest ? `${freshness(stalest.freshest_available_at)} · ${stalest.name.split('—')[0].trim()}` : '—'}
+              accent="var(--color-band-watch)"
             />
             <Stat
               label="Mode"
               value={data.data_mode === 'live' ? 'Live' : 'Demo'}
               detail={
                 data.data_mode === 'live'
-                  ? 'Connectors reading real endpoints'
-                  : 'Fixed fixtures, identical every run'
+                  ? 'reading real endpoints'
+                  : 'fixed fixtures, identical every run'
               }
             />
           </StatRow>

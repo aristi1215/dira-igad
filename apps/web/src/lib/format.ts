@@ -178,6 +178,7 @@ export function fmtDateTime(value: string | null | undefined): string {
   return d.toLocaleString('en-GB', {
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   })
@@ -198,6 +199,55 @@ export function fmtForecastWindow(
   const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
   const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
   return `Next ~${days} days (${start.toLocaleDateString('en-GB', opts)} – ${end.toLocaleDateString('en-GB', opts)})`
+}
+
+/**
+ * The forecast window split into its parts, so the `ForecastWindow` component
+ * can set the dates themselves at display size and demote everything else.
+ *
+ * The single formatted string above buries the two dates that matter inside a
+ * parenthetical, which is why the window read as a caption rather than as the
+ * period the alert is actually about.
+ */
+export function forecastWindowParts(
+  windowStart: string | null | undefined,
+  windowEnd: string | null | undefined,
+  horizonDekads?: number | null,
+): { range: string; detail: string | null } {
+  const dekadDetail = horizonDekads
+    ? `${horizonDekads} ten-day period${horizonDekads === 1 ? '' : 's'} ahead`
+    : null
+
+  if (!windowStart || !windowEnd) {
+    return {
+      range: horizonDekads ? `Next ~${horizonDekads * 10} days` : '—',
+      detail: dekadDetail,
+    }
+  }
+  const start = new Date(windowStart)
+  const end = new Date(windowEnd)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return { range: '—', detail: dekadDetail }
+  }
+
+  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
+  const sameYear = start.getFullYear() === end.getFullYear()
+  // The year appears once, on the end date, unless the window straddles two.
+  const startText = start.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  })
+  const endText = end.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
+  return {
+    range: `${startText} – ${endText}`,
+    detail: [`~${days} days`, dekadDetail].filter(Boolean).join(' · '),
+  }
 }
 
 export function titleCase(value: string): string {

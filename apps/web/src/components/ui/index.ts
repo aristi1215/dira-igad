@@ -33,4 +33,4 @@ export {
   type CalloutTone,
 } from './Notes'
 export { Kbd } from './Kbd'
-export { DateStamp } from './DateStamp'
+export { DateStamp, ForecastWindow } from './DateStamp'

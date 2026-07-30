@@ -78,8 +78,8 @@ export function Stat({
   return (
     <div
       className={cx(
-        // p-5 to match Card and BentoCard — these tiles sit beside them.
-        'relative flex min-w-0 flex-col gap-1 overflow-hidden rounded-bento border border-line bg-surface p-5',
+        // p-4 to match Card and BentoCard — these tiles sit beside them.
+        'relative flex min-w-0 flex-col gap-1 overflow-hidden rounded-bento border border-line bg-surface p-4',
         'shadow-bento transition-shadow duration-200 ease-entrance hover:shadow-lg',
         className,
       )}

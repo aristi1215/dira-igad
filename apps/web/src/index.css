@@ -423,36 +423,43 @@ html.dark {
    * still override the background if it needs to.
    */
   .tone-inverse {
-    --tone-base: #0a0a0a;
-    --tone-on: #f5f5f7;
+    /*
+     * A tinted plate, not a black slab. A near-black card among white ones
+     * does draw the eye, but on these mostly-informational screens it reads as
+     * a hole punched in the page — and it forces every figure inside it to
+     * invert, so the numbers stop matching their neighbours. A cool accent
+     * wash plus a solid accent rule carries the same "read this first" weight
+     * while keeping the ink, and therefore the data, consistent.
+     */
+    --tone-base: #eef4fd;
+    --tone-on: #0a0a0a;
 
     --color-surface: var(--tone-base);
-    --color-surface-2: color-mix(in srgb, var(--tone-on) 8%, var(--tone-base));
-    --color-surface-3: color-mix(in srgb, var(--tone-on) 14%, var(--tone-base));
-    --color-canvas: color-mix(in srgb, var(--tone-on) 10%, var(--tone-base));
+    --color-surface-2: color-mix(in srgb, #ffffff 55%, var(--tone-base));
+    --color-surface-3: color-mix(in srgb, var(--color-accent) 14%, var(--tone-base));
+    --color-canvas: var(--tone-base);
     --color-ink: var(--tone-on);
-    --color-muted: color-mix(in srgb, var(--tone-on) 78%, var(--tone-base));
-    --color-faint: color-mix(in srgb, var(--tone-on) 58%, var(--tone-base));
-    --color-line: color-mix(in srgb, var(--tone-on) 16%, var(--tone-base));
-    --color-line-strong: color-mix(in srgb, var(--tone-on) 30%, var(--tone-base));
-    /* The mid-blue accent is too dim on near-black; lift it to stay legible. */
-    --color-accent: #4d9dff;
-    --color-accent-hover: #7ab6ff;
-    --color-accent-deep: #a8d4ff;
-    --color-accent-soft: color-mix(in srgb, var(--tone-on) 12%, var(--tone-base));
+    --color-muted: #3a3a3c;
+    --color-faint: #5d6470;
+    --color-line: color-mix(in srgb, var(--color-accent) 22%, var(--tone-base));
+    --color-line-strong: color-mix(in srgb, var(--color-accent) 42%, var(--tone-base));
 
     background-color: var(--tone-base);
     color: var(--tone-on);
+    /* The rule is what marks it as the hero once the plate is this quiet. */
+    box-shadow: inset 3px 0 0 0 var(--color-accent);
   }
 
-  /*
-   * In dark mode "inverse" cannot mean near-black — the page is already
-   * near-black, and #0a0a0a beside #141418 is the same invisible-hero problem
-   * in the other direction. A deep accent plate reads as the hero instead.
-   */
   html.dark .tone-inverse {
-    --tone-base: #10283f;
+    --tone-base: #16232f;
     --tone-on: #f2f7fd;
+
+    --color-surface-2: color-mix(in srgb, var(--tone-on) 7%, var(--tone-base));
+    --color-surface-3: color-mix(in srgb, var(--tone-on) 13%, var(--tone-base));
+    --color-muted: color-mix(in srgb, var(--tone-on) 76%, var(--tone-base));
+    --color-faint: color-mix(in srgb, var(--tone-on) 56%, var(--tone-base));
+    --color-line: color-mix(in srgb, var(--tone-on) 15%, var(--tone-base));
+    --color-line-strong: color-mix(in srgb, var(--tone-on) 28%, var(--tone-base));
   }
 
   /* Bring MapLibre's default controls in line with the rest of the chrome. */

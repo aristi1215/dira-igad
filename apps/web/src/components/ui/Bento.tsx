@@ -94,7 +94,7 @@ export function BentoCard({
       )}
     >
       {hasHeader ? (
-        <header className={cx('flex items-start justify-between gap-3', padded && 'px-5 pt-5')}>
+        <header className={cx('flex items-start justify-between gap-3', padded && 'px-4 pt-4')}>
           <div className="min-w-0">
             {eyebrow ? <Eyebrow className="block">{eyebrow}</Eyebrow> : null}
             {title ? (
@@ -107,8 +107,20 @@ export function BentoCard({
           {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
         </header>
       ) : null}
-      <div className={cx('min-w-0 flex-1', padded && (hasHeader ? 'px-5 pb-5' : 'p-5'))}>{children}</div>
-      {footer ? <footer className={cx('text-xs opacity-70', padded && 'px-5 pb-5')}>{footer}</footer> : null}
+      {/*
+        A flex column, so a child can use `mt-auto` to sit on the card's
+        baseline when a taller neighbour is driving the row height. As a plain
+        block, `flex-1` stretched the container and `mt-auto` did nothing.
+      */}
+      <div
+        className={cx(
+          'flex min-w-0 flex-1 flex-col',
+          padded && (hasHeader ? 'px-4 pb-4' : 'p-4'),
+        )}
+      >
+        {children}
+      </div>
+      {footer ? <footer className={cx('text-xs opacity-70', padded && 'px-4 pb-4')}>{footer}</footer> : null}
     </article>
   )
 }

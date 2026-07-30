@@ -11,13 +11,7 @@ import {
   prepareAlert,
   queryKeys,
 } from '../lib/api'
-import {
-  BAND_GUIDANCE,
-  CHART,
-  fmtDateTime,
-  fmtForecastWindow,
-  titleCase,
-} from '../lib/format'
+import { BAND_GUIDANCE, CHART, fmtDate, fmtDateTime, titleCase } from '../lib/format'
 import {
   BandChip,
   Button,
@@ -26,6 +20,7 @@ import {
   EmptyState,
   ErrorNote,
   DateStamp,
+  ForecastWindow,
   InfoHint,
   PageHeader,
   Screen,
@@ -132,9 +127,9 @@ export function SituationDetailScreen() {
       <PageHeader
         eyebrow={`Situation · ${titleCase(detail.situation.hazard)}`}
         title={zone ? zone.zone_name : detail.situation.zone_id}
-        description={`Opened ${detail.situation.opened_cycle ?? '—'} · ${detail.situation.status}${
+        description={`Opened ${fmtDate(detail.situation.opened_cycle)} · ${detail.situation.status}${
           detail.situation.resolved_cycle
-            ? ` · resolved ${detail.situation.resolved_cycle}`
+            ? ` · resolved ${fmtDate(detail.situation.resolved_cycle)}`
             : ''
         }`}
         actions={
@@ -162,56 +157,56 @@ export function SituationDetailScreen() {
       ) : null}
 
       {/*
-        The headline answer, before any numbers, with the two scores that
-        produced it beside rather than below it — stacked, the verdict's right
-        third was permanently blank while its justification sat three cards
-        down the page.
+        Straight down the page: what the verdict is, how the score was reached,
+        what pushed it, where it has been, what backs it up, what was done.
+        The two scores used to sit in a narrow rowSpan=2 column off to the
+        right of the verdict, so the reading order jumped left-right-left and
+        the one panel that explains the number was the hardest to read.
       */}
       <BentoGrid>
         <BentoCard
-          span={4}
+          span={6}
           tone="inverse"
           eyebrow="Current assessment"
           title={BAND_GUIDANCE[band]}
-          subtitle={
-            <DateStamp>
-              Forecast window ·{' '}
-              {fmtForecastWindow(
-                latest?.window_start,
-                latest?.window_end,
-                latest?.horizon_dekads,
-              )}
-            </DateStamp>
-          }
         >
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <BandChip band={latest?.operational_band ?? null} />
-              <DateStamp>Cycle {latest?.cycle ?? '—'}</DateStamp>
-              {quietCycles != null && quietCycles > 0 ? (
-                <StatusChip tone="info">
-                  {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
-                </StatusChip>
+          <div className="grid min-w-0 items-start gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <BandChip band={latest?.operational_band ?? null} />
+                <DateStamp>Cycle {fmtDate(latest?.cycle)}</DateStamp>
+                {quietCycles != null && quietCycles > 0 ? (
+                  <StatusChip tone="info">
+                    {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
+                  </StatusChip>
+                ) : null}
+              </div>
+              {latest?.explanation ? (
+                <p className="mt-3 max-w-[72ch] text-sm leading-relaxed text-muted">
+                  {latest.explanation}
+                </p>
               ) : null}
               <AskAboutButton
                 question={`Explain the current assessment for ${zone?.zone_name ?? detail.situation.zone_id} in plain language, and what it means for the next 30 days.`}
-                className="ml-auto"
+                className="mt-3"
               />
             </div>
-            {latest?.explanation ? (
-              <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-muted">
-                {latest.explanation}
-              </p>
-            ) : null}
+            {/*
+              The period this verdict applies to, at display size. It is the
+              thing an operator acts on, and it was a caption in the card's
+              subtitle with the two dates buried in a parenthetical.
+            */}
+            <ForecastWindow
+              start={latest?.window_start}
+              end={latest?.window_end}
+              horizonDekads={latest?.horizon_dekads}
+              size="lg"
+              className="shrink-0 bg-surface"
+            />
           </div>
         </BentoCard>
 
-        <BentoCard
-          span={2}
-          rowSpan={2}
-          eyebrow="Score flow"
-          title="Two scores, one decision"
-        >
+        <BentoCard span={3} eyebrow="Score flow" title="Two scores, one decision">
           <div data-tour={TOUR_ANCHORS.twoScore} className="flex flex-col gap-4">
             {latest ? (
               <ScoreFlow assessment={latest} />
@@ -222,13 +217,13 @@ export function SituationDetailScreen() {
         </BentoCard>
 
         {/*
-          span=4, expressed through the prop. This carried an extra
-          `className="lg:col-span-7"`, which asked a six-column grid for seven
-          columns — the responsive variant beat the unprefixed base, and the
-          class was the last survivor of an earlier layout.
+          Beside the score flow, at equal width: "here is the number" and "here
+          is what moved it" are one thought, and they read across rather than
+          down. (This also carried an extra `className="lg:col-span-7"`, which
+          asked a six-column grid for seven columns.)
         */}
         <BentoCard
-          span={4}
+          span={3}
           title={
             <span className="inline-flex items-center gap-1.5">
               How the model worked out the risk
@@ -302,8 +297,10 @@ export function SituationDetailScreen() {
                     <StatusChip tone={ALERT_TONE[alert.status] ?? 'success'}>
                       {alert.status.replace('_', ' ')}
                     </StatusChip>
+                    {/* Drafted-at is the timeline; it was a 11px faint caption. */}
+                    <DateStamp>{fmtDateTime(alert.created_at)}</DateStamp>
                     <span className="text-2xs text-faint">
-                      {alert.language.toUpperCase()} · {fmtDateTime(alert.created_at)}
+                      {alert.language.toUpperCase()}
                     </span>
                   </span>
                   <p className="mt-1 text-sm text-muted">

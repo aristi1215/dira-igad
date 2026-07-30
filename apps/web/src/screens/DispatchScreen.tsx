@@ -40,6 +40,7 @@ import {
   EmptyState,
   ErrorNote,
   Field,
+  ForecastWindow,
   Kbd,
   PageHeader,
   Screen,
@@ -512,15 +513,32 @@ export function DispatchScreen() {
 
           {current ? (
             <>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <StatusChip tone="warning">Pending approval</StatusChip>
-                <span className="text-sm font-semibold text-ink">
-                  {current.zone_name ?? 'Voice alert'}
-                </span>
-                <span className="text-2xs text-faint">
-                  {current.language.toUpperCase()} message · drafted
-                </span>
-                <DateStamp>{fmtDateTime(current.created_at)}</DateStamp>
+              {/*
+                What the alert is about, when it was drafted, and — at display
+                size — the period it warns about. The window used to be a
+                `text-xs` line of raw ISO dates below the message body, which
+                is the wrong weight for the single fact an approver is being
+                asked to stand behind.
+              */}
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <StatusChip tone="warning">Pending approval</StatusChip>
+                  <span className="text-sm font-semibold text-ink">
+                    {current.zone_name ?? 'Voice alert'}
+                  </span>
+                  <span className="text-2xs text-faint">
+                    {current.language.toUpperCase()} message
+                  </span>
+                  <DateStamp title="When this alert was drafted">
+                    Drafted {fmtDateTime(current.created_at)}
+                  </DateStamp>
+                </div>
+                <ForecastWindow
+                  label="Warns about"
+                  start={current.window_start}
+                  end={current.window_end}
+                  className="shrink-0"
+                />
               </div>
 
               {editingAlert && current.status === 'pending_approval' ? (
@@ -599,15 +617,6 @@ export function DispatchScreen() {
                   </div>
                 </>
               )}
-
-              {current.window_start && current.window_end ? (
-                <div className="mt-2 flex items-center gap-2 text-xs text-muted">
-                  <span>Forecast window:</span>
-                  <DateStamp>{current.window_start}</DateStamp>
-                  <span>–</span>
-                  <DateStamp>{current.window_end}</DateStamp>
-                </div>
-              ) : null}
 
               <div className="mt-4 rounded-md border border-line bg-surface-2 px-3 py-2.5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">

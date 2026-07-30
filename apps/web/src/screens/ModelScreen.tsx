@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { CircleCheck, TriangleAlert } from 'lucide-react'
 import { fetchModelCard, queryKeys } from '../lib/api'
-import { CHART, titleCase } from '../lib/format'
+import { CHART, fmtDate, titleCase } from '../lib/format'
 import { featureMeta } from '../lib/explain'
 import {
   Callout,
@@ -10,9 +10,11 @@ import {
   BentoCard,
   BentoGrid,
   DataTable,
+  DateStamp,
   EmptyState,
   ErrorNote,
   Eyebrow,
+  ForecastWindow,
   InfoHint,
   PageHeader,
   Screen,
@@ -79,32 +81,58 @@ export function ModelScreen() {
   const metrics = card.metrics
   const baselines = metrics?.baselines ?? {}
   const active = card.kind === 'lightgbm' ? 'LightGBM' : 'Transparent index'
+
+  /*
+   * The span of held-out cycles across every evaluation run. This is the
+   * single fact that makes "it was tested" checkable rather than asserted, and
+   * it was sitting unused in `evaluation_runs[].test_cycles`.
+   */
+  const testedPeriod = (card.evaluation_runs ?? []).reduce<{ from: string; to: string } | null>(
+    (span, run) => {
+      const [from, to] = run.test_cycles ?? []
+      if (!from || !to) return span
+      if (!span) return { from, to }
+      return { from: from < span.from ? from : span.from, to: to > span.to ? to : span.to }
+    },
+    null,
+  )
   const beatsBaselines =
     metrics != null &&
     Object.keys(baselines).length > 0 &&
     Object.values(baselines).every((baseline) => metrics.brier < baseline.brier)
 
-  // Three numbers in a table is a chart. Lower Brier is better, so the bars are
-  // inverted into "accuracy" to keep longer = better, as people expect.
-  const comparison = metrics
-    ? [
-        { key: 'active', label: `${active} (in use)`, value: metrics.brier },
-        ...(metrics.transparent_index && card.kind === 'lightgbm'
-          ? [
-              {
-                key: 'transparent',
-                label: 'Transparent index',
-                value: metrics.transparent_index.brier,
-              },
-            ]
-          : []),
-        ...Object.entries(baselines).map(([name, baseline]) => ({
-          key: name,
-          label: `${titleCase(name)} baseline`,
-          value: baseline.brier,
-        })),
-      ]
-    : []
+  /*
+   * Numbers in a table are a chart.
+   *
+   * Both accuracy measures, not just Brier. They answer different questions —
+   * "was the probability well calibrated" and "how far off was the count" — and
+   * a method can win one while losing the other, which is exactly the kind of
+   * thing this screen should not hide. `mae_incidents` was already in the
+   * payload for every baseline and went unread.
+   */
+  const compare = (pick: (m: { brier: number; mae_incidents: number }) => number) =>
+    metrics
+      ? [
+          { key: 'active', label: `${active} (in use)`, value: pick(metrics) },
+          ...(metrics.transparent_index && card.kind === 'lightgbm'
+            ? [
+                {
+                  key: 'transparent',
+                  label: 'Transparent index',
+                  value: pick(metrics.transparent_index),
+                },
+              ]
+            : []),
+          ...Object.entries(baselines).map(([name, baseline]) => ({
+            key: name,
+            label: `${titleCase(name)} baseline`,
+            value: pick(baseline),
+          })),
+        ]
+      : []
+
+  const comparison = compare((m) => m.brier)
+  const comparisonMae = compare((m) => m.mae_incidents)
 
   const evaluationColumns: Column<EvaluationRun>[] = [
     {
@@ -120,12 +148,15 @@ export function ModelScreen() {
     },
     {
       key: 'period',
-      header: 'Test period',
+      header: 'Held-out period',
+      // Formatted and at date weight. These were raw ISO strings at text-2xs —
+      // the one column on this screen that says *when* it was checked.
       render: (run) => (
-        <span className="tabular-nums text-2xs text-muted">
-          {run.test_cycles[0]} → {run.test_cycles[1]}
-        </span>
+        <DateStamp tone="strong">
+          {fmtDate(run.test_cycles[0])} → {fmtDate(run.test_cycles[1])}
+        </DateStamp>
       ),
+      sortBy: (run) => run.test_cycles[0] ?? '',
     },
     {
       key: 'model',
@@ -152,7 +183,7 @@ export function ModelScreen() {
   ]
 
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow="Transparency"
         title="How the forecast is made"
@@ -176,38 +207,47 @@ export function ModelScreen() {
             own tiles are in the StatRow immediately below — they were the same
             two numbers twice, a card's width apart.
           */}
-          <BentoGrid className="mb-5">
+          <BentoGrid className="mb-4">
             <BentoCard span={6} tone="inverse" eyebrow="The forecast" title="What it predicts">
-              <div className="grid items-start gap-x-10 gap-y-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+              <div className="grid items-start gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
                 <div className="min-w-0">
-                  <p className="max-w-[42ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-ink">
+                  <p className="max-w-[52ch] text-xl leading-snug font-semibold tracking-[-0.02em] text-ink">
                     {card.predicts}
                   </p>
-                  <p className="mt-3 max-w-[58ch] text-sm leading-relaxed text-muted">
-                    It looks about {card.horizon_days} days ahead and is checked only against
-                    periods it never saw during training.
+                  <p className="mt-2 max-w-[64ch] text-sm leading-relaxed text-muted">
+                    {card.label}
                   </p>
+                  {/*
+                    The held-out period, at date size. "Checked only against
+                    periods it never saw" is a claim; these two dates are the
+                    evidence for it, and they were in the payload unused.
+                  */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {testedPeriod ? (
+                      <ForecastWindow
+                        label="Held-out test period"
+                        start={testedPeriod.from}
+                        end={testedPeriod.to}
+                        size="sm"
+                      />
+                    ) : null}
+                    <AskAboutButton question="In plain language, what does this model predict, and what should I not use it for?" />
+                  </div>
                 </div>
-                <div className="flex min-w-0 flex-col items-start gap-3">
-                  <Callout
-                    tone={beatsBaselines ? 'success' : 'warning'}
-                    icon={beatsBaselines ? CircleCheck : TriangleAlert}
-                    className="w-full"
-                  >
-                    {beatsBaselines
-                      ? 'On periods it never saw, it scores better than every naive baseline we tested it against.'
-                      : 'It does not beat every baseline, so the transparent index is preferred.'}
-                    {card.fallback_reason ? ` ${card.fallback_reason}` : ''}
-                  </Callout>
-                  <AskAboutButton
-                    question="In plain language, what does this model predict, and what should I not use it for?"
-                  />
-                </div>
+                <Callout
+                  tone={beatsBaselines ? 'success' : 'warning'}
+                  icon={beatsBaselines ? CircleCheck : TriangleAlert}
+                >
+                  {beatsBaselines
+                    ? 'On periods it never saw, it scores better than every naive baseline we tested it against.'
+                    : 'It does not beat every baseline, so the transparent index is preferred.'}
+                  {card.fallback_reason ? ` ${card.fallback_reason}` : ''}
+                </Callout>
               </div>
             </BentoCard>
           </BentoGrid>
 
-          <StatRow className="mb-5">
+          <StatRow className="mb-4">
             <Stat
               label="Model in use"
               value={active}
@@ -225,29 +265,52 @@ export function ModelScreen() {
               detail="0 is perfect, lower is better"
             />
             <Stat
-              label="Tested on"
-              value={card.test_rows}
-              detail={`held-out rows, after ${card.train_rows} training rows`}
+              label="Incident error"
+              value={fmtMetric(metrics.mae_incidents)}
+              detail="mean absolute error, incidents per zone"
+            />
+            <Stat
+              label="Inputs"
+              value={card.feature_list?.length ?? 0}
+              detail={`features across ${featureGroups.length} groups`}
+            />
+            <Stat
+              label="Rows"
+              value={card.rows}
+              detail={`${card.train_rows} train · ${card.test_rows} held out`}
             />
           </StatRow>
 
           <BentoGrid className="mb-5">
             <BentoCard span={4}
               title="Compared with simpler methods"
-              subtitle="Brier score on held-out future periods — shorter is better"
+              subtitle="On held-out future periods, by both accuracy measures — shorter is better"
               actions={
                 <InfoHint content={`Brier score measures how far probability forecasts land from what actually happened. ${glossaryEntry('snapshot')?.explanation ?? ''} 0 means perfect; 0.25 is what you get by always guessing 50%.`} />
               }
             >
-              <HBarList
-                items={comparison.map((row) => ({
-                  key: row.key,
-                  label: row.label,
-                  value: row.value,
-                }))}
-                formatter={(value) => value.toFixed(3)}
-                color={CHART.cat1}
-              />
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <h3 className="mb-2">
+                    <Eyebrow>Brier score · calibration</Eyebrow>
+                  </h3>
+                  <HBarList
+                    items={comparison}
+                    formatter={(value) => value.toFixed(3)}
+                    color={CHART.cat1}
+                  />
+                </div>
+                <div>
+                  <h3 className="mb-2">
+                    <Eyebrow>Incident count · mean error</Eyebrow>
+                  </h3>
+                  <HBarList
+                    items={comparisonMae}
+                    formatter={(value) => value.toFixed(2)}
+                    color={CHART.cat4}
+                  />
+                </div>
+              </div>
             </BentoCard>
 
             <BentoCard span={2}
