@@ -647,10 +647,10 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "news",
-        "name": "GDELT DOC 2.0 — Horn of Africa news (E3 signals)",
+        "name": "GDELT DOC 2.0 + ReliefWeb — Horn of Africa news (E3 signals)",
         "category": "Unstructured · media",
-        "live_endpoint": "GDELT DOC 2.0 ArtList (key-free); optional ReliefWeb overlay",
-        "licence": "GDELT open; ReliefWeb open when configured",
+        "live_endpoint": "GDELT DOC 2.0 ArtList (key-free) + ReliefWeb API reports overlay (configured)",
+        "licence": "GDELT open; ReliefWeb open (appname configured)",
         "cadence": "Continuous (15-min GDELT refresh window)",
         "count_sql": "SELECT count(*), max(available_at) FROM news_documents",
     },
