@@ -147,3 +147,33 @@ This file records honest deviations from the authoritative specification for hum
 **What we did:** `/advisor` is now a grounded, read-only agent: deterministic retrieval "tools" (situation, zone context via `v_zone_context`, news signals, hazard bulletins, field reports) scoped to the selected zone, multi-turn history persisted in `advisor_conversations`/`advisor_messages` (migration `0003`), and citations + tools-used returned to the UI (chat log in the Ask Dira drawer). It has no mutating tools — approval and dispatch remain exclusively behind the human gate. `scripts/demo_pulse.py` (`make pulse`) is a seeded-only, restart-safe feeder that walks a Mandera-first scenario through the public API (reports → verification → alert drafts) so the room visibly evolves during a presentation; it never approves or dispatches.
 
 **Why:** improvements.md §§4, 6. Full pgvector/RAG embedding retrieval was scoped down to deterministic SQL retrieval with citations: with 12 seeded news documents the vector index adds latency and nondeterminism without improving grounding; the schema (pgvector, `advisor_messages.citations`) is in place to add it when the corpus grows.
+
+## D-021 — Apple-grade reskin (supersedes the light-Carbon look of D-017)
+
+**What we did:** Restyled the frontend from the flat light-Carbon theme to an Apple-inspired design system while keeping D-017's route structure and information architecture intact. New `@theme` tokens (refined ink/muted/faint hierarchy, elevated surfaces, hairline lines, soft shadows), Inter + JetBrains Mono type, and a `Bento` primitive (`BentoGrid`/`BentoCard`/`BentoSpan`) that every screen now composes. Motion tokens (`lib/motion.ts`: `EASE`, panel/spotlight spring `stiffness 380 / damping 32`) via `motion/react`. The map choropleth fills were darkened for legibility, zone outlines crisped, and a reusable `DateStamp` makes cycle/forecast/report dates prominent. `App.css` was fully deleted and all consumers migrated to Tailwind utilities; Preflight stays disabled and the `theme, base, vendor, components, utilities` layer order plus the `maplibre-gl.css` vendor import are unchanged. Band and IPC palettes remain byte-identical (guarded by `lib/tokens.test.ts`).
+
+**Why:** User request — "the frontend is horrible … total freedom over the design", with IBM Design Language and Stripe-dashboard progressive disclosure as references. The Carbon flatness could not convey the credibility a life-safety situation room needs.
+
+## D-022 — Dark mode override (docs/improvements.md wins over the plan)
+
+**What we did:** `plans/apple-reskin-hazards-advisor.md` explicitly excluded dark mode, but `docs/improvements.md` (the newer acceptance backlog) requires a switchable dark mode. Per the user's stated precedence (newer doc wins), we built it: a `@custom-variant dark` with an `html.dark` semantic-token override, a persisted `dira-theme` Zustand store with OS-preference fallback, a pre-paint init script in `index.html` (no flash), and a CommandBar sun/moon toggle. Band, IPC, and `band-very-high-map` palettes are deliberately NOT redefined in the dark block, so they stay byte-identical across themes (asserted in `lib/tokens.test.ts`).
+
+**Why:** Explicit user instruction resolving the known plan/acceptance conflict.
+
+## D-023 — pgvector RAG + tool-calling advisor (supersedes the D-020 scope-down)
+
+**What we did:** D-020 scoped vector retrieval down to deterministic SQL. Plan workstreams G/H re-enable it honestly: migration `0005_retrieval_chunks` (pgvector, HNSW cosine index, bitemporal `available_at`), a deterministic hash-derived 1024-dim seeded embedding adapter (network-free, stable) with an OpenAI `text-embedding-3-small` live path, `scripts/embed_corpus.py` (`make embed`, idempotent), and vector `search_corpus` that is **additive** to the primary SQL retrieval. The advisor gained bounded (`MAX_TOOL_ROUNDS=5`) tool calling: read-only tools plus proposal-only tools (`propose_verify_field_report`, `propose_alert_draft`) that return structured suggestions the operator confirms via existing safe endpoints. Query embedding always happens before opening a DB cursor — no network in an open transaction — and seeded mode stays deterministic.
+
+**Why:** `docs/improvements.md` L1–L3 (grounded retrieval, tool calling, transparency). The seeded corpus is now large enough that the vector index earns its keep.
+
+## D-024 — Provenance-or-remove applied to health surveillance and hazards
+
+**What we did:** Following the user's literal rule ("where trustworthy sourcing does not exist, remove rather than show"), the seeded health-surveillance cases/deaths/status figures were removed from the UI (ZoneDossier table and the ZoneCard health-alert cell) and replaced with an honest note that no verified feed is connected; the `/sources` catalog entry is relabelled "seeded illustrative data; not a verified live feed" and stays out of `LIVE_CAPABLE`. Seeded hazard bulletins are labelled "Illustrative bulletin (seeded) — modeled on {GLOFAS/ICPAC/FAO DLIS/USGS}, not a live-issued advisory" with a link to the real upstream feed's methodology page, never implying the specific event is real.
+
+**Why:** `docs/improvements.md` Z4/Z5 and the repeated demand that credibility rests on real sourcing. No sources, citations, figures, addresses, or people were invented anywhere in this work.
+
+## D-025 — Real SMS + voice/sms/both dispatch channel (honest about trial limits)
+
+**What we did:** Added a real SMS path (`SmsChannel` port, `TwilioSmsAdapter`, MockDispatcher SMS support) and made the recipient `channel` (`voice`/`sms`/`both`) drive dispatch: the worker branches on `delivery.channel`, and the approve transaction expands a `both` recipient into two deliveries (voice + sms), each with its own idempotency key, with the atomic per-recipient delivery-count assertion preserved. Operators can now edit a pending alert's message/language (`PATCH /alerts/{id}`, pending-only) and manage recipients (`POST/PATCH/DELETE /recipients`, soft-delete). The human gate is untouched: deliveries are still created only inside the named-approver approve transaction, and no network call happens inside an open transaction. The UI states honestly that real SMS depends on the Twilio account tier (trial accounts block custom-body SMS); SMS works end-to-end in seeded/mock mode and voice is the verified live channel.
+
+**Why:** `docs/improvements.md` D2–D5. The advisor still cannot approve/dispatch/deliver/send (red line intact, `docs/improvements.md` L4 documented) — only humans dispatch, from the Dispatch page.

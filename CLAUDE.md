@@ -123,31 +123,41 @@ against repeated provider callbacks.
 
 ### Frontend
 
-Multi-screen light-Carbon app (D-017, supersedes D-015): react-router routes **/** (map),
-**/situations(/:id)**, **/zones(/:id)**, **/dispatch**, **/analytics**, **/model**, **/sources**.
-`App.tsx` is routing only; the chrome (command bar, the single SSE EventSource, the advisor
-`Sheet`, the tour) lives in `src/layouts/AppLayout.tsx`, and the five chart-heavy screens are
-`React.lazy`-loaded so the map route does not pay for recharts.
+Multi-screen Apple-reskinned app (D-021, restyles D-017; do not revert to the flat light-Carbon
+look): react-router routes **/** (map), **/situations(/:id)**, **/zones(/:id)**, **/dispatch**,
+**/analytics**, **/model**, **/sources**. `App.tsx` is routing only; the chrome (command bar with
+the dark-mode sun/moon toggle, the single SSE EventSource, the advisor `Sheet`, the tour) lives in
+`src/layouts/AppLayout.tsx`, and the five chart-heavy screens are `React.lazy`-loaded so the map
+route does not pay for recharts.
+
+Type is **Inter + JetBrains Mono**. Every screen composes the `Bento` primitive
+(`BentoGrid`/`BentoCard`/`BentoSpan`, `src/components/ui/Bento.tsx`); motion uses `motion/react`
+(never `framer-motion`) with tokens in `src/lib/motion.ts` (`EASE`; panel/spotlight spring
+`stiffness 380 / damping 32`). Dates use the shared `DateStamp` treatment. **Dark mode** (D-022) is a
+`@custom-variant dark` + `html.dark` semantic-token override, persisted via `stores/theme.ts` with an
+OS fallback and a pre-paint init script in `index.html`; band/IPC palettes are NOT redefined in dark
+and stay byte-identical (guarded by `lib/tokens.test.ts`).
+
+`App.css` has been **deleted** (D-021) — all styling is Tailwind utilities; do not reintroduce it.
 
 Styling is **Tailwind v4**, configured entirely in `src/index.css`. Two things there are load-bearing:
 
-- **Layer order is `theme, base, vendor, components, utilities`.** `maplibre-gl.css` and the legacy
-  `App.css` are imported *into* layers. Unlayered CSS beats every layered rule regardless of
-  specificity, so an unlayered `.maplibregl-map { position: relative }` silently overrides Tailwind's
-  `absolute` and collapses the map container to zero height.
-- **Preflight is disabled** so it cannot trample `App.css` mid-migration; `@layer base` in
-  `index.css` supplies a minimal stand-in. Consequence: always write `border border-line`, never a
-  bare `border`.
+- **Layer order is `theme, base, vendor, components, utilities`.** `maplibre-gl.css` is imported
+  *into* the `vendor` layer. Unlayered CSS beats every layered rule regardless of specificity, so an
+  unlayered `.maplibregl-map { position: relative }` silently overrides Tailwind's `absolute` and
+  collapses the map container to zero height.
+- **Preflight is disabled**; `@layer base` in `index.css` supplies a minimal stand-in. Consequence:
+  always write `border border-line`, never a bare `border`.
 
 > **Variable class names must come from an explicit `Record<K, string>` of full literal class
 > names** (see `components/ui/Chips.tsx`). Tailwind's scanner cannot see `` `bg-band-${band}` `` and
 > the class simply never gets generated — it fails silently, with no build error.
 
 Primitives live in `src/components/ui/` (Button, Field/Select, Tabs, DataTable, Skeleton, Tooltip,
-Sheet, Meter, Stat, Card, Chips, Callout). Band/IPC palettes are duplicated by necessity in
-`@theme` (for Tailwind) and `lib/format.ts` (for MapLibre paint expressions and recharts);
-`src/lib/tokens.test.ts` asserts the two agree. `App.css` is the shrinking remainder, still used by
-the situation/economy feature components.
+Sheet, Meter, Stat, Card, Chips, Callout, Bento, DateStamp, Eyebrow). Band/IPC palettes are
+duplicated by necessity in `@theme` (for Tailwind) and `lib/format.ts` (for MapLibre paint
+expressions and recharts); `src/lib/tokens.test.ts` asserts the two agree and that dark mode does not
+redefine them.
 
 The map (`src/features/map/`) loads CARTO's key-less **vector** Positron style, tuned in place by
 `basemap.ts` (hide competing detail, mute water, insert data layers `beforeId` the first symbol
