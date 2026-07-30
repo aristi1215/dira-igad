@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { motion } from 'motion/react'
 import { ArrowRight } from 'lucide-react'
 import { fetchZoneProfile, queryKeys } from '../lib/api'
 import {
@@ -8,9 +9,7 @@ import {
   COUNTRY_NAMES,
   fmtCompact,
   fmtDate,
-  fmtMonth,
   fmtNumber,
-  titleCase,
 } from '../lib/format'
 import {
   Button,
@@ -25,27 +24,28 @@ import {
   ScreenSkeleton,
   Stat,
   StatRow,
-  StatusChip,
-  DateStamp,
+  Tabs,
   type Column,
 } from '../components/ui'
+import { T } from '../lib/motion'
 import { TimeSeriesChart } from '../components/charts'
 import { ConflictEvents, HazardBulletins, SignalsList } from '../features/situations'
 import { ZoneFieldReports } from './zone/ZoneFieldReports'
 import { ZoneMarketPrices } from './zone/ZoneMarketPrices'
-import type { HealthRow, ZoneProfile } from '../lib/types'
+import type { ZoneProfile } from '../lib/types'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview' },
   { id: 'climate', label: 'Climate' },
   { id: 'conflict', label: 'Conflict' },
-  { id: 'markets', label: 'Markets & health' },
+  { id: 'markets', label: 'Markets' },
   { id: 'reports', label: 'Reports' },
 ]
 
 export function ZoneDossierScreen() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
+  const [climateRange, setClimateRange] = useState<'6' | '12' | 'all'>('all')
 
   const profileQuery = useQuery({
     queryKey: queryKeys.zoneProfile(id),
@@ -66,6 +66,10 @@ export function ZoneDossierScreen() {
       })),
     [profile?.climate],
   )
+  const climateView = useMemo(() => {
+    if (climateRange === 'all') return climateData
+    return climateData.slice(-Number(climateRange))
+  }, [climateData, climateRange])
 
   const displacementData = useMemo(
     () =>
@@ -92,53 +96,6 @@ export function ZoneDossierScreen() {
     profile.situation && typeof profile.situation.id === 'string'
       ? profile.situation.id
       : null
-
-  const healthColumns: Column<HealthRow>[] = [
-    {
-      key: 'week',
-      header: 'Week',
-      width: '6rem',
-      render: (row) => <DateStamp>{fmtDate(row.week_start)}</DateStamp>,
-      sortBy: (row) => row.week_start,
-    },
-    {
-      key: 'disease',
-      header: 'Disease',
-      render: (row) => <span className="text-ink">{titleCase(row.disease)}</span>,
-      sortBy: (row) => row.disease,
-    },
-    {
-      key: 'cases',
-      header: 'Cases',
-      align: 'right',
-      width: '5rem',
-      render: (row) => <span className="font-mono">{row.cases}</span>,
-      sortBy: (row) => row.cases,
-    },
-    {
-      key: 'deaths',
-      header: 'Deaths',
-      align: 'right',
-      width: '5rem',
-      render: (row) => <span className="font-mono">{row.deaths}</span>,
-      sortBy: (row) => row.deaths,
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      width: '7rem',
-      render: (row) => (
-        <StatusChip
-          tone={
-            row.status === 'outbreak' ? 'error' : row.status === 'alert' ? 'warning' : 'neutral'
-          }
-        >
-          {row.status}
-        </StatusChip>
-      ),
-      sortBy: (row) => row.status,
-    },
-  ]
 
   const recipientColumns: Column<ZoneProfile['recipients'][number]>[] = [
     {
@@ -262,34 +219,57 @@ export function ZoneDossierScreen() {
           subtitle="Rain and vegetation over the same 10-day periods — never on a shared axis"
         >
           {climateData.length > 0 ? (
-            <div className="grid gap-5 lg:grid-cols-2">
-              <div>
-                <h3 className="mb-1 text-eyebrow text-faint uppercase">
-                  Rainfall · mm per 10 days
-                </h3>
-                <TimeSeriesChart
-                  data={climateData}
-                  xKey="dekad"
-                  xFormatter={fmtMonth}
-                  height={180}
-                  series={[
-                    { key: 'rain_mm', label: 'Rain (mm)', kind: 'bar', color: CHART.cat1 },
+            <div className="grid gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-muted">Each point is one 10-day dekad, shown by its start date.</p>
+                <Tabs
+                  items={[
+                    { id: '6', label: 'Last 6' },
+                    { id: '12', label: 'Last 12' },
+                    { id: 'all', label: 'All' },
                   ]}
+                  value={climateRange}
+                  onChange={setClimateRange}
+                  layoutId="climate-range"
+                  size="sm"
+                  ariaLabel="Climate chart range"
                 />
               </div>
-              <div>
-                <h3 className="mb-1 text-eyebrow text-faint uppercase">
-                  Vegetation · NDVI mean
-                </h3>
-                <TimeSeriesChart
-                  data={climateData}
-                  xKey="dekad"
-                  xFormatter={fmtMonth}
-                  height={180}
-                  series={[{ key: 'ndvi', label: 'NDVI', kind: 'line', color: CHART.cat3 }]}
-                  yFormatter={(value) => value.toFixed(2)}
-                />
-              </div>
+              <motion.div
+                key={climateRange}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={T.enter}
+                className="grid gap-5 lg:grid-cols-2"
+              >
+                <div>
+                  <h3 className="mb-1 text-eyebrow text-faint uppercase">
+                    Rainfall · mm per 10-day dekad
+                  </h3>
+                  <TimeSeriesChart
+                    data={climateView}
+                    xKey="dekad"
+                    xFormatter={fmtDate}
+                    height={180}
+                    series={[
+                      { key: 'rain_mm', label: 'Rain (mm)', kind: 'bar', color: CHART.cat1 },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <h3 className="mb-1 text-eyebrow text-faint uppercase">
+                    Vegetation · NDVI mean per dekad
+                  </h3>
+                  <TimeSeriesChart
+                    data={climateView}
+                    xKey="dekad"
+                    xFormatter={fmtDate}
+                    height={180}
+                    series={[{ key: 'ndvi', label: 'NDVI', kind: 'line', color: CHART.cat3 }]}
+                    yFormatter={(value) => value.toFixed(2)}
+                  />
+                </div>
+              </motion.div>
             </div>
           ) : (
             <EmptyState>No climate series.</EmptyState>
@@ -308,7 +288,7 @@ export function ZoneDossierScreen() {
                 <TimeSeriesChart
                   data={profile.incidents_monthly as unknown as Record<string, unknown>[]}
                   xKey="month"
-                  xFormatter={fmtMonth}
+                  xFormatter={fmtDate}
                   height={180}
                   series={[
                     { key: 'events', label: 'Events', kind: 'bar', color: CHART.cat1 },
@@ -327,7 +307,7 @@ export function ZoneDossierScreen() {
                 <TimeSeriesChart
                   data={displacementData}
                   xKey="date"
-                  xFormatter={fmtMonth}
+                  xFormatter={fmtDate}
                   height={180}
                   series={[
                     { key: 'idps', label: 'Displaced', kind: 'line', color: CHART.cat1 },
@@ -369,20 +349,11 @@ export function ZoneDossierScreen() {
         </div>
 
         <div className="grid items-start gap-5 lg:grid-cols-2">
-          <Card
-            title="Health surveillance"
-            subtitle="Weekly disease reporting"
-            padded={false}
-          >
-            <DataTable
-              columns={healthColumns}
-              rows={[...profile.health]
-                .sort((a, b) => b.week_start.localeCompare(a.week_start))
-                .slice(0, 10)}
-              getRowId={(row) => `${row.week_start}-${row.disease}`}
-              caption="Weekly disease surveillance"
-              empty={<EmptyState>No surveillance data.</EmptyState>}
-            />
+          <Card title="Health surveillance" subtitle="Display intentionally withheld">
+            <EmptyState>
+              Health surveillance is not connected to a verified feed in this build.
+              Unverifiable case and death figures have been removed rather than shown.
+            </EmptyState>
           </Card>
 
           <Card

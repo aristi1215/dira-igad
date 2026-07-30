@@ -5,6 +5,7 @@ import { hazardMeta, HAZARD_ICONS, HAZARD_SEVERITY_META } from '../../lib/explai
 import { fmtDate } from '../../lib/format'
 import { placeNearPoint, type Placement } from '../../lib/anchor'
 import { DateStamp, IconButton, StatusChip } from '../../components/ui'
+import { hazardSourceMeta } from '../../lib/hazardSources'
 
 export function HazardCard({
   hazard,
@@ -20,6 +21,7 @@ export function HazardCard({
   const meta = hazardMeta(hazard.hazard_type)
   const severity = HAZARD_SEVERITY_META[hazard.severity]
   const Icon = HAZARD_ICONS[hazard.hazard_type]
+  const source = hazardSourceMeta(hazard.source)
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -54,13 +56,37 @@ export function HazardCard({
             <StatusChip tone={severity?.tone ?? 'info'}>{severity?.label ?? hazard.severity}</StatusChip>
           </div>
           <p className="mt-1 text-sm font-medium text-ink">{hazard.headline}</p>
-          <p className="mt-1 text-xs text-faint">{hazard.zone_name} · {hazard.source}</p>
+          <p className="mt-1 text-xs leading-relaxed text-faint">
+            {hazard.zone_name} ·{' '}
+            {source.isSeeded ? (
+              <>
+                Illustrative bulletin (seeded) — modeled on{' '}
+                {source.url ? (
+                  <a href={source.url} target="_blank" rel="noreferrer" className="font-medium text-accent hover:text-accent-hover">
+                    {source.name}
+                  </a>
+                ) : source.name}
+                , not a live-issued advisory
+              </>
+            ) : (
+              <>Source: {source.name}</>
+            )}
+          </p>
         </div>
         <IconButton icon={X} label="Close hazard bulletin" size="sm" onClick={onClose} />
       </div>
       <div className="space-y-3 p-4">
         <p className="text-sm leading-relaxed text-muted">{meta.description}</p>
         {hazard.detail ? <p className="text-sm leading-relaxed text-muted">{hazard.detail}</p> : null}
+        <p className="rounded-md border border-line bg-surface-2 px-3 py-2 text-xs leading-relaxed text-muted">
+          {source.isSeeded ? 'Illustrative bulletin (seeded) — modeled on ' : 'Source: '}
+          {source.url ? (
+            <a href={source.url} target="_blank" rel="noreferrer" className="font-medium text-accent hover:text-accent-hover">
+              {source.name}
+            </a>
+          ) : source.name}
+          {source.isSeeded ? ', not a live-issued advisory.' : null}
+        </p>
         <div className="border-t border-line pt-3">
           <p className="text-eyebrow text-faint">Validity</p>
           <DateStamp className="mt-1">

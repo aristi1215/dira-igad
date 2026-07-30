@@ -649,7 +649,10 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
         "key": "news",
         "name": "GDELT DOC 2.0 + ReliefWeb — Horn of Africa news (E3 signals)",
         "category": "Unstructured · media",
-        "live_endpoint": "GDELT DOC 2.0 ArtList (key-free) + ReliefWeb API reports overlay (configured)",
+        "live_endpoint": (
+            "GDELT DOC 2.0 ArtList (key-free) + "
+            "ReliefWeb API reports overlay (configured)"
+        ),
         "licence": "GDELT open; ReliefWeb open (appname configured)",
         "cadence": "Continuous (15-min GDELT refresh window)",
         "count_sql": "SELECT count(*), max(available_at) FROM news_documents",
@@ -694,10 +697,10 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
     },
     {
         "key": "who_ewars",
-        "name": "Health surveillance (WHO EWARS-style)",
+        "name": "Health surveillance (seeded illustrative data; not a verified live feed)",
         "category": "Health",
-        "live_endpoint": "WHO bulletins (no public API — seeded)",
-        "licence": "WHO publications",
+        "live_endpoint": "No verified live feed connected — seeded illustrative records only",
+        "licence": "Illustrative seed data; not attributable to a live WHO feed",
         "cadence": "Weekly epi weeks",
         "count_sql": "SELECT count(*), max(available_at) FROM health_surveillance",
     },

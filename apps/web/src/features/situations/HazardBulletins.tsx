@@ -6,6 +6,7 @@ import { Modal, DetailRow } from '../../components/Modal'
 import { EmptyState, StatusChip } from '../../components/ui'
 import { fmtDate, fmtDateTime } from '../../lib/format'
 import { hazardMeta, HAZARD_ICONS, HAZARD_SEVERITY_META } from '../../lib/explain'
+import { hazardSourceMeta } from '../../lib/hazardSources'
 import type { HazardBulletin } from '../../lib/types'
 
 /**
@@ -50,6 +51,7 @@ export function HazardBulletins({
           const meta = hazardMeta(bulletin.hazard_type)
           const severity = HAZARD_SEVERITY_META[bulletin.severity]
           const active = isActive(bulletin)
+          const source = hazardSourceMeta(bulletin.source)
           return (
             <li key={bulletin.id}>
               <button
@@ -77,7 +79,15 @@ export function HazardBulletins({
                   <small className="text-muted">
                     {fmtDate(bulletin.valid_from)} →{' '}
                     {bulletin.valid_to ? fmtDate(bulletin.valid_to) : 'open-ended'} ·{' '}
-                    {bulletin.source}
+                    {source.isSeeded ? (
+                      <>
+                        Illustrative bulletin (seeded) — modeled on{' '}
+                        {source.name}
+                        , not a live-issued advisory
+                      </>
+                    ) : (
+                      <>Source: {source.name}</>
+                    )}
                   </small>
                 </span>
                 <span className="text-xl text-faint" aria-hidden="true">
@@ -128,6 +138,26 @@ export function HazardDetailModal({
       </div>
 
       <p className="m-0 text-sm leading-relaxed text-ink">{meta.description}</p>
+      <p className="rounded-md border border-line bg-surface-2 px-3 py-2 text-xs leading-relaxed text-muted">
+        {hazardSourceMeta(bulletin.source).isSeeded
+          ? 'Illustrative bulletin (seeded) — modeled on '
+          : 'Source: '}
+        {hazardSourceMeta(bulletin.source).url ? (
+          <a
+            href={hazardSourceMeta(bulletin.source).url ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-accent hover:text-accent-hover"
+          >
+            {hazardSourceMeta(bulletin.source).name}
+          </a>
+        ) : (
+          hazardSourceMeta(bulletin.source).name
+        )}
+        {hazardSourceMeta(bulletin.source).isSeeded
+          ? ', not a live-issued advisory.'
+          : null}
+      </p>
       {severity ? (
         <p className="m-0 text-sm leading-relaxed text-ink">
           <strong>{severity.label}:</strong> {severity.meaning}
@@ -147,7 +177,9 @@ export function HazardDetailModal({
         <DetailRow label="Valid until">
           {bulletin.valid_to ? fmtDate(bulletin.valid_to) : 'Open-ended'}
         </DetailRow>
-        <DetailRow label="Issuing source">{bulletin.source}</DetailRow>
+        <DetailRow label="Source">
+          {hazardSourceMeta(bulletin.source).name}
+        </DetailRow>
         <DetailRow label="Available to system">
           {fmtDateTime(bulletin.available_at)}
         </DetailRow>

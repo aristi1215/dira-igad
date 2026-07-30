@@ -112,6 +112,11 @@ export function ZoneFieldReports({
           verification. Until verified they contribute exactly zero to the combined score.
         </Callout>
       ) : null}
+      <Callout tone="info" className="mb-4">
+        Field reports are observations filed by monitors, peace committees, DRM officers, or chiefs.
+        Only a human-verified report affects corroboration; unverified and dismissed reports
+        contribute zero.
+      </Callout>
 
       {showForm ? (
         <form
@@ -184,7 +189,7 @@ export function ZoneFieldReports({
 
       {unverified.length > 0 ? (
         <div className="mb-4 max-w-sm">
-          <Field label="Your name" hint="Required to verify or dismiss a report">
+          <Field label="Reviewer name (required)" hint="Enter your name before verifying or dismissing any report">
             <TextInput
               value={signer}
               placeholder="Who is reviewing these?"
@@ -257,7 +262,7 @@ export function ZoneFieldReports({
                       title={canGate ? undefined : 'Enter your name first'}
                       onClick={() => verifyMutation.mutate(report.id)}
                     >
-                      Verify
+                      Verify report
                     </Button>
                     <Button
                       size="sm"
@@ -268,11 +273,16 @@ export function ZoneFieldReports({
                       title={canGate ? undefined : 'Enter your name first'}
                       onClick={() => dismissMutation.mutate(report.id)}
                     >
-                      Dismiss
+                      Dismiss report
                     </Button>
                   </>
                 ) : null}
               </div>
+              {report.status === 'unverified' && !canGate ? (
+                <p className="mt-2 text-xs text-warn-fg">
+                  Enter your reviewer name above to enable the verification controls.
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>

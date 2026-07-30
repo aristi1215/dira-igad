@@ -9,7 +9,6 @@ import {
   Flame,
   ExternalLink,
   FileCheck2,
-  HeartPulse,
   Megaphone,
   Newspaper,
   ShoppingBasket,
@@ -146,7 +145,7 @@ export function ZoneCard({
           icon: Flame,
           text: `${zone.active_hazards ?? 0} active hazard bulletin${
             zone.active_hazards === 1 ? '' : 's'
-          }${zone.active_health_alerts ? ` · ${zone.active_health_alerts} health alert${zone.active_health_alerts === 1 ? '' : 's'}` : ''}.`,
+          }.`,
         }
       case 'markets':
         return {
@@ -361,11 +360,6 @@ export function ZoneCard({
             />
             <ExposureCell icon={Waves} label="Water points" value={fmtCompact(zone.water_points)} />
             <ExposureCell icon={ShoppingBasket} label="Markets" value={fmtCompact(zone.markets)} />
-            <ExposureCell
-              icon={HeartPulse}
-              label="Health alerts"
-              value={String(zone.active_health_alerts ?? 0)}
-            />
             <ExposureCell
               icon={FileCheck2}
               label="Verified reports"

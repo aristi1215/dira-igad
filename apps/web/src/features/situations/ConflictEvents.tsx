@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
+import { ExternalLink } from 'lucide-react'
 import { Modal, DetailRow } from '../../components/Modal'
-import { EmptyState, StatusChip } from '../../components/ui'
+import { DateStamp, EmptyState, StatusChip } from '../../components/ui'
 import { fmtDate, fmtDateTime } from '../../lib/format'
 import type { AcledEventRow } from '../../lib/types'
 
@@ -18,6 +19,19 @@ type EventWithContribution = AcledEventRow & {
   recencyDays: number
   inWindow: boolean
   windowShare: number | null
+}
+
+function eventSource(value: string | null | undefined) {
+  if (!value) return <span className="text-muted">Source not recorded</span>
+  if (/^https?:\/\//.test(value)) {
+    return (
+      <a href={value} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium text-accent hover:text-accent-hover">
+        <ExternalLink size={13} strokeWidth={1.75} aria-hidden />
+        Open source
+      </a>
+    )
+  }
+  return value.toLowerCase() === 'acled' ? 'ACLED' : value
 }
 
 /**
@@ -83,7 +97,7 @@ export function ConflictEvents({
                   if (e.key === 'Enter' || e.key === ' ') setSelected(event)
                 }}
               >
-                <td>{fmtDate(event.event_date)}</td>
+                <td><DateStamp>{fmtDate(event.event_date)}</DateStamp></td>
                 <td>{event.event_type}</td>
                 <td className="text-muted">
                   {[event.actor1, event.actor2].filter(Boolean).join(' vs ') || '—'}
@@ -153,10 +167,10 @@ function EventDetailModal({
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-x-4 gap-y-2">
         <DetailRow label="Zone">{zoneName ?? '—'}</DetailRow>
-        <DetailRow label="Event date">{fmtDate(event.event_date)}</DetailRow>
+        <DetailRow label="Event date"><DateStamp>{fmtDate(event.event_date)}</DateStamp></DetailRow>
         <DetailRow label="Primary actor">{event.actor1 ?? '—'}</DetailRow>
         <DetailRow label="Secondary actor">{event.actor2 ?? '—'}</DetailRow>
-        <DetailRow label="Data source">{event.source ?? 'ACLED'}</DetailRow>
+        <DetailRow label="Data source">{eventSource(event.source)}</DetailRow>
         <DetailRow label="Available to system">
           {fmtDateTime(event.available_at)}
         </DetailRow>
