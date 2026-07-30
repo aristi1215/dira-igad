@@ -1,6 +1,7 @@
+import { CheckCircle2, MapPin, TriangleAlert } from 'lucide-react'
 import { Modal, DetailRow } from '../../components/Modal'
-import { StatusChip } from '../../components/ui'
-import { fmtDateTime, titleCase } from '../../lib/format'
+import { DateStamp, InfoHint, StatusChip } from '../../components/ui'
+import { fmtDate, fmtDateTime, titleCase } from '../../lib/format'
 import { reportCategoryMeta, REPORTER_ROLE_META } from '../../lib/explain'
 import type { FieldReport } from '../../lib/types'
 
@@ -42,8 +43,11 @@ export function FieldReportModal({
       wide
     >
       <div className="flex flex-wrap gap-1.5">
-        <StatusChip tone={STATUS_TONE[report.status]}>{report.status}</StatusChip>
-        <StatusChip tone={report.severity >= 3 ? 'error' : report.severity === 2 ? 'warning' : 'neutral'}>
+        <StatusChip tone={STATUS_TONE[report.status]} className="px-2.5 py-1 text-xs font-semibold">
+          {report.status === 'verified' ? <CheckCircle2 size={14} strokeWidth={1.9} aria-hidden /> : <TriangleAlert size={14} strokeWidth={1.9} aria-hidden />}
+          {report.status}
+        </StatusChip>
+        <StatusChip tone={report.severity >= 3 ? 'error' : report.severity === 2 ? 'warning' : 'neutral'} className="px-2.5 py-1 text-xs font-semibold">
           Severity {report.severity}/3
         </StatusChip>
       </div>
@@ -70,7 +74,7 @@ export function FieldReportModal({
         <DetailRow label="Severity">
           {SEVERITY_LABELS[report.severity] ?? `${report.severity}/3`}
         </DetailRow>
-        <DetailRow label="Reported">{fmtDateTime(report.reported_at)}</DetailRow>
+        <DetailRow label="Reported"><DateStamp>{fmtDate(report.reported_at)}</DateStamp></DetailRow>
         <DetailRow label="Available to system">
           {fmtDateTime(report.available_at)}
         </DetailRow>
@@ -80,10 +84,19 @@ export function FieldReportModal({
             <small className="mt-px block text-xs text-faint">{fmtDateTime(report.verified_at)}</small>
           ) : null}
         </DetailRow>
+        <DetailRow label="Location">
+          <span className="inline-flex items-center gap-1.5 text-muted">
+            <MapPin size={14} strokeWidth={1.75} aria-hidden />
+            {zoneName ?? report.zone_name ?? report.zone_id ?? 'Zone location unavailable'}
+          </span>
+        </DetailRow>
+        <DetailRow label="Operator provenance">
+          {report.reporter_role}
+        </DetailRow>
       </div>
 
       <div className="grid gap-1.5 rounded-lg border border-accent-ring bg-accent-soft px-3.5 py-3">
-        <h3>How this affects the risk score</h3>
+        <h3 className="flex items-center gap-1.5">How this affects the risk score <InfoHint content="Only verified reports contribute to corroboration; unverified and dismissed reports contribute zero." /></h3>
         <p>{STATUS_MEANING[report.status]}</p>
         {report.status === 'verified' ? (
           <p>

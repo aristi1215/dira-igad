@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
+  CheckCircle2,
   ClipboardCheck,
   FileQuestion,
   Newspaper,
@@ -49,8 +50,6 @@ export function EvidenceBoard({
     enabled: zoneId.length > 0,
   })
   const signals = signalsQuery.data ?? []
-  const verified = reports.filter((report) => report.status === 'verified')
-
   const columns: { id: EvidenceTab; node: ReactNode }[] = [
     {
       id: 'signals',
@@ -62,7 +61,7 @@ export function EvidenceBoard({
         />
       ),
     },
-    { id: 'reports', node: <ReportsColumn reports={verified} zoneName={zoneName} /> },
+    { id: 'reports', node: <ReportsColumn reports={reports} zoneName={zoneName} /> },
     { id: 'hazards', node: <HazardsColumn hazards={hazards} zoneName={zoneName} /> },
   ]
 
@@ -73,7 +72,7 @@ export function EvidenceBoard({
         <Tabs
           items={[
             { id: 'signals', label: 'News', count: signals.length || undefined },
-            { id: 'reports', label: 'Field reports', count: verified.length || undefined },
+            { id: 'reports', label: 'Field reports', count: reports.length || undefined },
             { id: 'hazards', label: 'Hazards', count: hazards.length || undefined },
           ]}
           value={tab}
@@ -258,18 +257,32 @@ function ReportsColumn({
     <Column title="Verified field reports" count={reports.length} icon={ClipboardCheck}>
       {reports.length === 0 ? (
         <NoneYet>
-          None verified. Unverified reports contribute exactly zero to the combined score until
-          someone verifies them.
+          No field reports are available for this zone yet.
         </NoneYet>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {reports.slice(0, 12).map((report) => (
             <li key={report.id}>
               <button type="button" className={ROW} onClick={() => setSelected(report)}>
-                <span className="flex items-center gap-1.5">
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink">
-                    {titleCase(report.category)}
-                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink">
+                      {titleCase(report.category)}
+                    </span>
+                    <StatusChip
+                      tone={
+                        report.status === 'verified'
+                          ? 'success'
+                          : report.status === 'dismissed'
+                            ? 'neutral'
+                            : 'warning'
+                      }
+                      className="font-semibold"
+                    >
+                      {report.status === 'verified' ? (
+                        <CheckCircle2 size={12} strokeWidth={1.9} aria-hidden />
+                      ) : null}
+                      {report.status}
+                    </StatusChip>
                   <span
                     aria-label={`Severity ${report.severity} of 3`}
                     className="flex shrink-0 gap-0.5"
@@ -290,7 +303,7 @@ function ReportsColumn({
                   {report.narrative}
                 </span>
                 <span className="mt-1 block truncate font-mono text-2xs text-faint">
-                  {titleCase(report.reporter_role)} · {fmtDate(report.reported_at)}
+                  {titleCase(report.reporter_role)} · {fmtDate(report.reported_at)} · severity {report.severity}/3
                 </span>
               </button>
             </li>

@@ -25,6 +25,8 @@ import {
   BentoGrid,
   EmptyState,
   ErrorNote,
+  DateStamp,
+  InfoHint,
   PageHeader,
   Screen,
   ScreenSkeleton,
@@ -145,17 +147,18 @@ export function SituationDetailScreen() {
         scores that justify it were three cards further down the page.
       */}
       <BentoGrid>
-      <BentoCard span={4} tone="inverse" eyebrow="Current assessment" title={BAND_GUIDANCE[band]} subtitle={`Forecast window · ${fmtForecastWindow(latest?.window_start, latest?.window_end, latest?.horizon_dekads)}`}>
+      <BentoCard span={4} tone="inverse" eyebrow="Current assessment" title={BAND_GUIDANCE[band]} subtitle={<DateStamp>Forecast window · {fmtForecastWindow(latest?.window_start, latest?.window_end, latest?.horizon_dekads)}</DateStamp>}>
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <BandChip band={latest?.operational_band ?? null} />
-            <span className="font-mono text-2xs text-faint">
+            <DateStamp>Cycle {latest?.cycle ?? '—'}</DateStamp>
+            <DateStamp>
               {fmtForecastWindow(
                 latest?.window_start,
                 latest?.window_end,
                 latest?.horizon_dekads,
               )}
-            </span>
+            </DateStamp>
             {quietCycles != null && quietCycles > 0 ? (
               <StatusChip tone="info">
                 {quietCycles} quiet cycle{quietCycles === 1 ? '' : 's'} — resolving if it holds
@@ -191,7 +194,12 @@ export function SituationDetailScreen() {
       */}
         <BentoCard
           span={4}
-          title="What the model leaned on"
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              How the model worked out the risk
+              <InfoHint content="These are the factors that pushed this forecast up or down; they are model contributions, not proof of cause." />
+            </span>
+          }
           subtitle="Each input's contribution to this cycle's score"
           className="lg:col-span-7"
           actions={
@@ -251,7 +259,22 @@ export function SituationDetailScreen() {
         ) : <EmptyState title="No alerts yet">Use “Prepare alert” to draft one for the approval gate.</EmptyState>}
       </BentoCard>
 
-      <BentoCard span={2} title="Exposure at assessment time" subtitle="Frozen when the assessment ran">
+      <BentoCard
+        span={2}
+        title="Exposure at assessment time"
+        subtitle={
+          latest?.created_at ? (
+            <DateStamp>Frozen on {fmtDateTime(latest.created_at)}</DateStamp>
+          ) : (
+            'Frozen when the assessment ran'
+          )
+        }
+        actions={
+          <Button size="sm" variant="ghost" onClick={() => void navigate(`/zones/${detail.situation.zone_id}`)}>
+            See current zone state →
+          </Button>
+        }
+      >
         {latest?.exposure_snapshot && Object.keys(latest.exposure_snapshot).length > 0 ? (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
             {Object.entries(latest.exposure_snapshot).map(([key, value]) => <div key={key} className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5"><dt className="text-xs text-muted">{titleCase(key)}</dt><dd className="text-sm font-medium tabular-nums text-ink">{value == null ? '—' : typeof value === 'number' ? Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2) : String(value)}</dd></div>)}
