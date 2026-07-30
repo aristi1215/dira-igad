@@ -12,8 +12,14 @@ from uuid import UUID
 from dira_core.alerts import derive_idempotency_key
 from dira_data.db import connect
 from dira_data.economy import get_economy_source
+from dira_data.retrieval import search_corpus
 from dira_dispatch import build_voice_twiml
-from dira_llm import ALERT_DRAFT_SYSTEM, CannedResponseAdapter, get_language_model
+from dira_llm import (
+    ALERT_DRAFT_SYSTEM,
+    CannedResponseAdapter,
+    get_embedding_model,
+    get_language_model,
+)
 from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
@@ -389,6 +395,9 @@ def _advisor_gather(
     citations: list[dict[str, Any]] = []
     tools: list[str] = []
     zone_id = body.zone_id
+    # Embed before opening the read cursor: live adapters may make an external
+    # request, and no external network call belongs inside a DB transaction.
+    query_embedding = get_embedding_model().embed([body.question])[0]
     with conn.cursor() as cur:
         if body.situation_id:
             tools.append("read_situation")
@@ -490,6 +499,25 @@ def _advisor_gather(
                 """
             )
             context = {"top_zones": [_jsonable(dict(r)) for r in cur.fetchall()]}
+    tools.append("search_corpus")
+    corpus_hits = search_corpus(
+        conn,
+        query_embedding,
+        cutoff=datetime.now(UTC),
+        zone_id=zone_id,
+        limit=6,
+    )
+    context["retrieval_chunks"] = [_jsonable(hit) for hit in corpus_hits]
+    citations += [
+        {
+            "kind": hit["kind"],
+            "title": str(hit["content"]).splitlines()[0][:160],
+            "source": hit["source_id"],
+            "reference": hit["available_at"],
+            "similarity": hit["similarity"],
+        }
+        for hit in corpus_hits
+    ]
     return context, citations, tools
 
 

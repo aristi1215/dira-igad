@@ -9,9 +9,10 @@ from __future__ import annotations
 import logging
 import os
 
-from dira_core.ports import LanguageModel
+from dira_core.ports import EmbeddingModel, LanguageModel
 
 from dira_llm.canned import CannedResponseAdapter
+from dira_llm.embeddings import OpenAIEmbeddingAdapter, PrecomputedEmbeddingsAdapter
 
 logger = logging.getLogger("dira.llm")
 
@@ -37,3 +38,19 @@ def get_language_model(
         except Exception:
             logger.exception("Anthropic adapter unavailable; falling back")
     return CannedResponseAdapter()
+
+
+def get_embedding_model(
+    openai_api_key: str | None = None,
+    *,
+    data_mode: str | None = None,
+) -> EmbeddingModel:
+    """Select a network-free seeded adapter or the live OpenAI adapter."""
+    mode = data_mode or os.environ.get("DATA_MODE", "seeded")
+    key = openai_api_key or os.environ.get("OPENAI_API_KEY")
+    if mode == "live" and key:
+        try:
+            return OpenAIEmbeddingAdapter(api_key=key)
+        except Exception:
+            logger.exception("OpenAI embedding adapter unavailable; falling back")
+    return PrecomputedEmbeddingsAdapter()

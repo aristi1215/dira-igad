@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
+from typing import Any
+
+from openai import OpenAI
 
 EMBEDDING_DIM = 1024
 
@@ -26,9 +30,35 @@ class LocalBgeM3Adapter:
 
     def __init__(self, fallback: PrecomputedEmbeddingsAdapter | None = None) -> None:
         self.fallback = fallback or PrecomputedEmbeddingsAdapter()
+        self.dimensions = self.fallback.dimensions
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         return self.fallback.embed(texts)
+
+
+class OpenAIEmbeddingAdapter:
+    """OpenAI text embeddings with the fixed retrieval dimension."""
+
+    dimensions = EMBEDDING_DIM
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "text-embedding-3-small",
+    ) -> None:
+        key = api_key or os.environ.get("OPENAI_API_KEY")
+        if not key:
+            raise RuntimeError("OPENAI_API_KEY is required for OpenAI embeddings.")
+        self.client = OpenAI(api_key=key)
+        self.model = model
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        response: Any = self.client.embeddings.create(
+            model=self.model,
+            input=texts,
+            dimensions=self.dimensions,
+        )
+        return [list(item.embedding) for item in sorted(response.data, key=lambda item: item.index)]
 
 
 def _hash_embedding(text: str, dimensions: int) -> list[float]:

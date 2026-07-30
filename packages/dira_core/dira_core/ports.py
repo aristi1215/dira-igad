@@ -91,6 +91,8 @@ class LanguageModel(Protocol):
 
 @runtime_checkable
 class EmbeddingModel(Protocol):
+    dimensions: int
+
     def embed(self, texts: list[str]) -> list[list[float]]: ...
 
 
