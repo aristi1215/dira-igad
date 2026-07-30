@@ -61,9 +61,24 @@ export const IPC_LABELS: Record<number, string> = {
   5: 'Famine',
 }
 
+/*
+ * The band and IPC fills are theme-invariant on purpose — they are data
+ * semantics, not styling, and `tokens.test.ts` enforces that dark mode leaves
+ * them alone. That makes the ink sitting on them theme-invariant too: the
+ * semantic `--color-ink` token flips to near-white in dark, which on the pale
+ * `ipc-1` fill measured 1.06:1. These two helpers are the single place that
+ * answers "what ink clears this fill", and they must return literals.
+ */
+
 /** Ink color that clears contrast on an IPC phase fill. */
 export function ipcInk(phase: number): string {
   return phase >= 3 ? '#ffffff' : '#161616'
+}
+
+/** Ink color that clears contrast on an operational band fill. */
+export function bandInk(band: OperationalBand | 'none'): string {
+  // `watch` is the one bright fill in the ramp; the rest are dark enough for white.
+  return band === 'watch' || band === 'none' ? '#161616' : '#ffffff'
 }
 
 export const COUNTRY_NAMES: Record<string, string> = {

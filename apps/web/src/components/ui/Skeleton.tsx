@@ -33,7 +33,8 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
 export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
-      className={cx('rounded-bento border border-line bg-surface p-5', className)}
+      // shadow-bento so content does not visibly gain elevation on arrival.
+      className={cx('rounded-bento border border-line bg-surface p-5 shadow-bento', className)}
       role="status"
       aria-label="Loading"
     >

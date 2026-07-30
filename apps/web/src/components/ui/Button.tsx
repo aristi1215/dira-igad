@@ -13,14 +13,23 @@ const VARIANT: Record<ButtonVariant, string> = {
     'bg-surface text-ink border border-line-strong hover:bg-surface-2 hover:border-faint',
   ghost:
     'bg-transparent text-muted border border-transparent hover:bg-surface-3 hover:text-ink',
+  // `--color-danger`, not `err-fg`: that one is a text token and inverts in dark.
   danger:
-    'bg-band-high text-white border border-band-high hover:bg-err-fg hover:border-err-fg',
+    'bg-danger text-white border border-danger hover:bg-danger-hover hover:border-danger-hover',
 }
 
 const SIZE: Record<ButtonSize, string> = {
-  sm: 'h-7 px-2.5 text-xs gap-1.5 rounded-full',
-  md: 'h-8.5 px-3.5 text-sm gap-2 rounded-full',
+  sm: 'h-7 px-2.5 text-xs gap-1.5',
+  md: 'h-8.5 px-3.5 text-sm gap-2',
 }
+
+/*
+ * Radius is a shape decision, not a size one, so it does not live in `SIZE`.
+ * Labelled buttons are pills; an icon-only button is square-ish, and a pill
+ * around a single 16px glyph reads as a stray dot.
+ */
+const PILL = 'rounded-full'
+const ICON_SHAPE = 'rounded-md'
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant
@@ -61,6 +70,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANT[variant],
         SIZE[size],
+        PILL,
         block && 'w-full',
         className,
       )}
@@ -97,7 +107,8 @@ export const IconButton = forwardRef<
       aria-label={label}
       title={label}
       className={cx(
-        'inline-flex items-center justify-center rounded-md',
+        'inline-flex items-center justify-center',
+        ICON_SHAPE,
         'transition-colors duration-[120ms] ease-standard',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANT[variant],

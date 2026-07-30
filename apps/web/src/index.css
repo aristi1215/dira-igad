@@ -57,6 +57,14 @@
   --color-ipc-4: #c80000;
   --color-ipc-5: #640000;
 
+  /*
+   * Destructive-action surface. Distinct from `--color-err-fg`, which is a
+   * *text* token and flips to a light pink in dark mode — using it as a button
+   * background put white label text on pale pink at 1.68:1.
+   */
+  --color-danger: #c02128;
+  --color-danger-hover: #9c161d;
+
   /* --- Status pairs --- */
   --color-ok-bg: #defbe6;
   --color-ok-fg: #0e6027;
@@ -361,6 +369,55 @@ html.dark {
 }
 
 @layer components {
+  /*
+   * The one hero tile per screen (BentoCard tone="inverse").
+   *
+   * Rather than a pair of on-dark utilities, this re-points the semantic
+   * tokens for its own subtree, so anything inside written as `text-muted`,
+   * `text-faint` or `border-line` resolves against the dark plate instead of
+   * against the page. That is what lets an ordinary card's contents be dropped
+   * into the hero without a second set of classes.
+   *
+   * `--tone-base` and `--tone-on` must be literal colors: a custom property
+   * whose value reads a property the same block redefines is a cycle, and both
+   * resolve to guaranteed-invalid.
+   *
+   * It lives in `@layer components` so utilities still win — a call site can
+   * still override the background if it needs to.
+   */
+  .tone-inverse {
+    --tone-base: #0a0a0a;
+    --tone-on: #f5f5f7;
+
+    --color-surface: var(--tone-base);
+    --color-surface-2: color-mix(in srgb, var(--tone-on) 8%, var(--tone-base));
+    --color-surface-3: color-mix(in srgb, var(--tone-on) 14%, var(--tone-base));
+    --color-canvas: color-mix(in srgb, var(--tone-on) 10%, var(--tone-base));
+    --color-ink: var(--tone-on);
+    --color-muted: color-mix(in srgb, var(--tone-on) 78%, var(--tone-base));
+    --color-faint: color-mix(in srgb, var(--tone-on) 58%, var(--tone-base));
+    --color-line: color-mix(in srgb, var(--tone-on) 16%, var(--tone-base));
+    --color-line-strong: color-mix(in srgb, var(--tone-on) 30%, var(--tone-base));
+    /* The mid-blue accent is too dim on near-black; lift it to stay legible. */
+    --color-accent: #4d9dff;
+    --color-accent-hover: #7ab6ff;
+    --color-accent-deep: #a8d4ff;
+    --color-accent-soft: color-mix(in srgb, var(--tone-on) 12%, var(--tone-base));
+
+    background-color: var(--tone-base);
+    color: var(--tone-on);
+  }
+
+  /*
+   * In dark mode "inverse" cannot mean near-black — the page is already
+   * near-black, and #0a0a0a beside #141418 is the same invisible-hero problem
+   * in the other direction. A deep accent plate reads as the hero instead.
+   */
+  html.dark .tone-inverse {
+    --tone-base: #10283f;
+    --tone-on: #f2f7fd;
+  }
+
   /* Bring MapLibre's default controls in line with the rest of the chrome. */
   .maplibregl-ctrl-group {
     border: 1px solid var(--color-line);

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { BAND_LABELS, IPC_LABELS } from '../../lib/format'
+import { BAND_LABELS, IPC_LABELS, bandInk, ipcInk } from '../../lib/format'
 import type { OperationalBand } from '../../lib/types'
 import { cx } from '../../lib/cx'
 
@@ -11,14 +11,19 @@ const CHIP_BASE =
  * which meant a third copy of the palette lived here. These lookups use the
  * @theme tokens instead — full literal class names, because Tailwind cannot
  * see an interpolated `bg-band-${band}`.
+ *
+ * The ink is deliberately a literal rather than `text-ink`. The fills never
+ * change between themes (that is enforced by tokens.test.ts), so an ink that
+ * *does* change cannot stay legible on them: `bg-band-watch text-ink` measured
+ * 1.55:1 in dark mode. `bandInk` and `ipcInk` are the single source for it.
  */
 const BAND_CHIP: Record<OperationalBand | 'none', string> = {
-  very_high: 'bg-band-very-high text-white',
-  high: 'bg-band-high text-white',
-  elevated: 'bg-band-elevated text-white',
-  watch: 'bg-band-watch text-ink',
-  low: 'bg-band-low text-white',
-  none: 'bg-canvas text-muted',
+  very_high: 'bg-band-very-high',
+  high: 'bg-band-high',
+  elevated: 'bg-band-elevated',
+  watch: 'bg-band-watch',
+  low: 'bg-band-low',
+  none: 'bg-canvas',
 }
 
 export function BandChip({
@@ -36,9 +41,18 @@ export function BandChip({
     )
   }
   if (!band) {
-    return <span className={cx(CHIP_BASE, BAND_CHIP.none, className)}>No band</span>
+    return (
+      <span className={cx(CHIP_BASE, BAND_CHIP.none, 'text-muted', className)}>No band</span>
+    )
   }
-  return <span className={cx(CHIP_BASE, BAND_CHIP[band], className)}>{BAND_LABELS[band]}</span>
+  return (
+    <span
+      className={cx(CHIP_BASE, BAND_CHIP[band], className)}
+      style={{ color: bandInk(band) }}
+    >
+      {BAND_LABELS[band]}
+    </span>
+  )
 }
 
 /** Small filled circle in the band color — used by the watchlist and legends. */
@@ -67,11 +81,11 @@ export function BandDot({
 }
 
 const IPC_CHIP: Record<number, string> = {
-  1: 'bg-ipc-1 text-ink',
-  2: 'bg-ipc-2 text-ink',
-  3: 'bg-ipc-3 text-white',
-  4: 'bg-ipc-4 text-white',
-  5: 'bg-ipc-5 text-white',
+  1: 'bg-ipc-1',
+  2: 'bg-ipc-2',
+  3: 'bg-ipc-3',
+  4: 'bg-ipc-4',
+  5: 'bg-ipc-5',
 }
 
 export function IpcChip({
@@ -85,7 +99,7 @@ export function IpcChip({
     return <span className={cx(CHIP_BASE, 'bg-canvas text-muted', className)}>IPC —</span>
   }
   return (
-    <span className={cx(CHIP_BASE, IPC_CHIP[phase], className)}>
+    <span className={cx(CHIP_BASE, IPC_CHIP[phase], className)} style={{ color: ipcInk(phase) }}>
       IPC {phase} · {IPC_LABELS[phase] ?? ''}
     </span>
   )
