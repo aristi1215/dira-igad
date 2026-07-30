@@ -422,6 +422,7 @@ def _advisor_gather(
                 FROM news_signals ns
                 LEFT JOIN news_documents nd ON nd.id = ns.document_id
                 WHERE ns.zone_id = %s
+                  AND nd.available_at <= now()
                 ORDER BY ns.cycle DESC LIMIT 5
                 """,
                 (zone_id,),
@@ -441,7 +442,8 @@ def _advisor_gather(
             cur.execute(
                 """
                 SELECT hazard_type, severity, headline, source, valid_from
-                FROM hazard_bulletins WHERE zone_id = %s
+                FROM hazard_bulletins
+                WHERE zone_id = %s AND available_at <= now()
                 ORDER BY valid_from DESC LIMIT 5
                 """,
                 (zone_id,),
@@ -461,7 +463,8 @@ def _advisor_gather(
             cur.execute(
                 """
                 SELECT reporter_role, category, severity, status, reported_at
-                FROM field_reports WHERE zone_id = %s
+                FROM field_reports
+                WHERE zone_id = %s AND available_at <= now()
                 ORDER BY reported_at DESC LIMIT 5
                 """,
                 (zone_id,),

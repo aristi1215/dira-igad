@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { eventWeightedAnchors, featureCenter } from './geometry'
+import { eventWeightedAnchors, featureCenter, spreadCoincident } from './geometry'
 import type { MapEvents } from '../../lib/types'
 
 function events(
@@ -95,5 +95,25 @@ describe('featureCenter', () => {
       },
     })
     expect(center).toEqual([5, 2])
+  })
+})
+
+describe('spreadCoincident', () => {
+  it('leaves a single point unmoved', () => {
+    expect(spreadCoincident([[10, 20]], 8)).toEqual([[10, 20]])
+  })
+
+  it('separates two coincident points by approximately two radii', () => {
+    const [a, b] = spreadCoincident([[10, 20], [10, 20]], 8)
+    expect(Math.hypot(a[0] - b[0], a[1] - b[1])).toBeCloseTo(16)
+  })
+
+  it('is stable across calls', () => {
+    const points: [number, number][] = [[10, 20], [10, 20], [10, 20]]
+    expect(spreadCoincident(points, 8)).toEqual(spreadCoincident(points, 8))
+  })
+
+  it('does not move distinct points', () => {
+    expect(spreadCoincident([[10, 20], [11, 21]], 8)).toEqual([[10, 20], [11, 21]])
   })
 })

@@ -1,38 +1,21 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Bug,
   ClipboardCheck,
   FileQuestion,
-  Mountain,
-  MountainSnow,
   Newspaper,
-  Sun,
-  Thermometer,
   TriangleAlert,
-  Waves,
-  Zap,
   type LucideIcon,
 } from 'lucide-react'
 import { fetchZoneSignals, queryKeys } from '../../lib/api'
 import { fmtDate, titleCase } from '../../lib/format'
-import { hazardMeta, HAZARD_SEVERITY_META } from '../../lib/explain'
+import { hazardMeta, HAZARD_ICONS, HAZARD_SEVERITY_META } from '../../lib/explain'
 import type { FieldReport, HazardBulletin, ZoneSignal } from '../../lib/types'
 import { Meter, Skeleton, StatusChip, Tabs } from '../../components/ui'
 import { cx } from '../../lib/cx'
 import { SignalDetailModal } from './SignalDetailModal'
 import { FieldReportModal } from './FieldReportModal'
 import { HazardDetailModal } from './HazardBulletins'
-
-const HAZARD_ICONS: Record<string, LucideIcon> = {
-  drought: Sun,
-  flood: Waves,
-  heat: Thermometer,
-  locust: Bug,
-  volcanic: Mountain,
-  earthquake: Zap,
-  landslide: MountainSnow,
-}
 
 type EvidenceTab = 'signals' | 'reports' | 'hazards'
 

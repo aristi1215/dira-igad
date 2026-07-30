@@ -181,7 +181,8 @@ def zone_profile(zone_id: str) -> dict[str, Any]:
                 """
                 SELECT id, hazard_type, severity, headline, detail, valid_from, valid_to,
                        source, available_at
-                FROM hazard_bulletins WHERE zone_id = %s
+                FROM hazard_bulletins
+                WHERE zone_id = %s AND available_at <= now()
                 ORDER BY valid_from DESC
                 """,
                 (zone_id,),
@@ -414,6 +415,74 @@ def map_trends(cycles: int = Query(6, ge=2, le=24)) -> dict[str, list[dict[str, 
                 record = _jsonable(dict(row))
                 trends.setdefault(record.pop("zone_id"), []).append(record)
     return trends
+
+
+@router.get("/hazards")
+def list_hazards(
+    hazard_type: str | None = None,
+    include_expired: bool = False,
+) -> dict[str, Any]:
+    """Current, knowable hazard bulletins as a point FeatureCollection."""
+    where = [
+        "hb.available_at <= now()",
+        "(%s OR hb.valid_to IS NULL OR hb.valid_to >= CURRENT_DATE)",
+    ]
+    params: list[Any] = [include_expired]
+    if hazard_type:
+        where.append("hb.hazard_type = %s")
+        params.append(hazard_type)
+    with _db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT hb.id, hb.zone_id, z.name AS zone_name, z.country_iso2,
+                       hb.hazard_type, hb.severity, hb.headline, hb.detail,
+                       hb.valid_from, hb.valid_to, hb.source,
+                       json_build_array(
+                         round(ST_X(z.centroid)::numeric, 4),
+                         round(ST_Y(z.centroid)::numeric, 4)
+                       ) AS coordinates
+                FROM hazard_bulletins hb
+                JOIN zones z ON z.id = hb.zone_id
+                WHERE {' AND '.join(where)}
+                ORDER BY hb.valid_from DESC
+                LIMIT 500
+                """,
+                tuple(params),
+            )
+            rows = cur.fetchall()
+            # Fetch one extra row so truncation is truthful.
+            if len(rows) == 500:
+                cur.execute(
+                    f"""
+                    SELECT hb.id
+                    FROM hazard_bulletins hb
+                    JOIN zones z ON z.id = hb.zone_id
+                    WHERE {' AND '.join(where)}
+                    ORDER BY hb.valid_from DESC
+                    LIMIT 1 OFFSET 500
+                    """,
+                    tuple(params),
+                )
+                truncated = cur.fetchone() is not None
+            else:
+                truncated = False
+    features = []
+    for raw in rows:
+        row = dict(raw)
+        coordinates = row.pop("coordinates")
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": coordinates},
+                "properties": _jsonable(row),
+            }
+        )
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "window": {"count": len(features), "truncated": truncated},
+    }
 
 
 @router.get("/recipients")
@@ -653,7 +722,19 @@ SOURCE_CATALOG: list[dict[str, Any]] = [
         "cadence": "Event-driven (near-real-time)",
         "count_sql": (
             "SELECT count(*), max(available_at) FROM hazard_bulletins "
-            "WHERE hazard_type <> 'locust'"
+            "WHERE hazard_type IN ('flood', 'heat', 'drought')"
+        ),
+    },
+    {
+        "key": "usgs_geological",
+        "name": "USGS — geological hazard bulletins",
+        "category": "Hazards",
+        "live_endpoint": None,
+        "licence": "USGS public domain",
+        "cadence": "Event-driven",
+        "count_sql": (
+            "SELECT count(*), max(available_at) FROM hazard_bulletins "
+            "WHERE hazard_type IN ('volcanic', 'earthquake', 'landslide')"
         ),
     },
     {

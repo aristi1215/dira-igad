@@ -36,9 +36,13 @@ const CAPTIONS: Record<MapOverlay, string> = {
 export function MapToolbar({
   overlay,
   onChange,
+  showHazards,
+  onToggleHazards,
 }: {
   overlay: MapOverlay
   onChange: (overlay: MapOverlay) => void
+  showHazards: boolean
+  onToggleHazards: () => void
 }) {
   return (
     <div
@@ -53,6 +57,14 @@ export function MapToolbar({
         ariaLabel="Map overlay"
         className="rounded-full border border-line bg-surface/92 shadow-panel backdrop-blur-xl"
       />
+      <button
+        type="button"
+        aria-pressed={showHazards}
+        onClick={onToggleHazards}
+        className="rounded-full border border-line bg-surface/92 px-2.5 py-1 text-2xs font-medium text-muted shadow-panel backdrop-blur-xl transition-colors hover:bg-surface-2 hover:text-ink"
+      >
+        {showHazards ? 'Hide hazard pins' : 'Show hazard pins'}
+      </button>
       <p className="rounded-full border border-line bg-surface/92 px-2.5 py-0.5 text-2xs text-muted shadow-panel backdrop-blur-xl">
         {CAPTIONS[overlay]}
       </p>

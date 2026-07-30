@@ -1,4 +1,4 @@
-import type { Feature, FeatureCollection, Geometry } from 'geojson'
+import type { Feature, FeatureCollection, Geometry, Point } from 'geojson'
 
 export type OperationalBand =
   | 'low'
@@ -368,14 +368,43 @@ export type HealthRow = {
 
 export type HazardBulletin = {
   id: string
-  hazard_type: string
-  severity: 'advisory' | 'watch' | 'warning'
+  hazard_type: HazardType
+  severity: HazardSeverity
   headline: string
   detail: string | null
   valid_from: string
   valid_to: string | null
   source: string
   available_at?: string | null
+}
+
+export type HazardSeverity = 'advisory' | 'watch' | 'warning'
+export type HazardType =
+  | 'drought'
+  | 'flood'
+  | 'heat'
+  | 'locust'
+  | 'volcanic'
+  | 'earthquake'
+  | 'landslide'
+
+export type HazardProperties = {
+  id: string
+  zone_id: string
+  zone_name: string
+  country_iso2: string
+  hazard_type: HazardType
+  severity: HazardSeverity
+  headline: string
+  detail: string | null
+  valid_from: string
+  valid_to: string | null
+  source: string
+}
+
+export type HazardFeature = Feature<Point, HazardProperties>
+export type HazardCollection = FeatureCollection<Point, HazardProperties> & {
+  window?: { count: number; truncated: boolean }
 }
 
 export type FieldReportStatus = 'unverified' | 'verified' | 'dismissed'

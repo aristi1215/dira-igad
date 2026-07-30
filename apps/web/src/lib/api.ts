@@ -9,6 +9,7 @@ import type {
   EconomyResponse,
   FieldReport,
   MapEvents,
+  HazardCollection,
   ModelCard,
   Recipient,
   RegionalIndicators,
@@ -40,6 +41,7 @@ export const queryKeys = {
   zoneProfile: (zoneId: string) => ['zones', zoneId, 'profile'] as const,
   regionalIndicators: ['indicators', 'regional'] as const,
   mapEvents: ['map', 'events'] as const,
+  hazards: ['hazards'] as const,
   mapTrends: ['map', 'trends'] as const,
   situationDetail: (id: string) => ['situations', id] as const,
   fieldReports: (zoneId?: string | null, status?: string | null) =>
@@ -319,6 +321,10 @@ export function fetchRegionalIndicators(): Promise<RegionalIndicators> {
 /** Individual conflict events. The map's heat field is kernel density over these. */
 export function fetchMapEvents(days = 180): Promise<MapEvents> {
   return requestJson<MapEvents>(`/map/events?days=${days}`)
+}
+
+export function fetchHazards(): Promise<HazardCollection> {
+  return requestJson<HazardCollection>('/hazards')
 }
 
 /** Recent risk history per zone, oldest first — the badge sparklines. */

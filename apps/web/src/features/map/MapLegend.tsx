@@ -16,6 +16,7 @@ import type {
   RegionalIndicators,
 } from '../../lib/types'
 import { cx } from '../../lib/cx'
+import { HAZARD_ICONS, HAZARD_META, HAZARD_SEVERITY_META } from '../../lib/explain'
 
 const FILTERABLE_BANDS: OperationalBand[] = ['very_high', 'high', 'elevated', 'watch', 'low']
 
@@ -220,6 +221,35 @@ export function MapLegend({
           ) : null}
           Weighted by fatalities. Includes events outside the 22 assessed zones.
         </p>
+      </LegendShell>
+    )
+  }
+
+  if (overlay === 'hazards') {
+    return (
+      <LegendShell title="Geological and climate hazards">
+        <div className="grid grid-cols-2 gap-1.5 text-2xs text-ink">
+          {(Object.keys(HAZARD_ICONS) as Array<keyof typeof HAZARD_ICONS>).map((type) => {
+            const Icon = HAZARD_ICONS[type]
+            return (
+              <span key={type} className="flex items-center gap-1.5">
+                <Icon size={13} strokeWidth={1.75} style={{ color: HAZARD_META[type]?.color }} aria-hidden />
+                {HAZARD_META[type]?.label ?? type}
+              </span>
+            )
+          })}
+        </div>
+        <div className="mt-2 border-t border-line pt-2">
+          <p className="text-eyebrow text-faint">Severity</p>
+          <div className="mt-1.5 flex flex-col gap-1 text-2xs text-muted">
+            {(Object.keys(HAZARD_SEVERITY_META) as Array<keyof typeof HAZARD_SEVERITY_META>).map((severity) => (
+              <span key={severity} className="flex items-center gap-2">
+                <span className={cx('size-2 rounded-full ring-2 ring-offset-1 ring-offset-surface', severity === 'warning' ? 'bg-err-fg ring-err-fg/30' : severity === 'watch' ? 'bg-warn-fg ring-warn-fg/30' : 'bg-accent ring-accent/30')} />
+                {HAZARD_SEVERITY_META[severity].label}
+              </span>
+            ))}
+          </div>
+        </div>
       </LegendShell>
     )
   }
