@@ -17,8 +17,15 @@ import {
   YAxis,
 } from 'recharts'
 import { CHART, fmtCompact } from '../lib/format'
+import { useChartChrome } from '../lib/chartChrome'
 
-const AXIS_TICK = { fill: CHART.axisInk, fontSize: 11 }
+/*
+ * The chart *chrome* is read per render from `useChartChrome`, never from a
+ * module constant. As a constant it could not follow the theme, so a dark
+ * dashboard drew near-white gridlines and bright empty heatmap cells. The
+ * data hues in `CHART` stay theme-invariant, exactly like the band and IPC
+ * palettes — those carry meaning, this does not.
+ */
 
 type SeriesSpec = {
   key: string
@@ -42,22 +49,24 @@ export function TimeSeriesChart({
   xFormatter?: (value: string) => string
   yFormatter?: (value: number) => string
 }) {
+  const chrome = useChartChrome()
+  const axisTick = { fill: chrome.axisInk, fontSize: 11 }
   const palette = [CHART.cat1, CHART.cat2, CHART.cat3, CHART.cat4]
   const multi = series.length > 1
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }} barCategoryGap="25%">
-        <CartesianGrid stroke={CHART.grid} strokeWidth={1} vertical={false} />
+        <CartesianGrid stroke={chrome.grid} strokeWidth={1} vertical={false} />
         <XAxis
           dataKey={xKey}
-          tick={AXIS_TICK}
+          tick={axisTick}
           tickLine={false}
-          axisLine={{ stroke: CHART.grid }}
+          axisLine={{ stroke: chrome.grid }}
           tickFormatter={xFormatter}
           minTickGap={24}
         />
         <YAxis
-          tick={AXIS_TICK}
+          tick={axisTick}
           tickLine={false}
           axisLine={false}
           width={44}
@@ -68,7 +77,7 @@ export function TimeSeriesChart({
           <Legend
             iconType="circle"
             iconSize={8}
-            wrapperStyle={{ fontSize: 12, color: CHART.axisInk }}
+            wrapperStyle={{ fontSize: 12, color: chrome.legendInk }}
           />
         ) : null}
         {series.map((s, i) =>
@@ -91,7 +100,7 @@ export function TimeSeriesChart({
               strokeWidth={2}
               strokeLinecap="round"
               dot={false}
-              activeDot={{ r: 4, strokeWidth: 2, stroke: '#ffffff' }}
+              activeDot={{ r: 4, strokeWidth: 2, stroke: chrome.markStroke }}
               connectNulls
             />
           ),
@@ -184,9 +193,11 @@ export function HeatStrip({
   columnFormatter?: (value: string) => string
   title?: string
 }) {
+  const chrome = useChartChrome()
   const ramp = CHART.blues
   const cellColor = (value: number | null) => {
-    if (value == null) return '#f4f4f4'
+    // "No observation" is the surface showing through, not a fixed light grey.
+    if (value == null) return chrome.nullFill
     const t = Math.max(0, Math.min(1, value / maxValue))
     // More-is-darker on the blue ramp.
     return ramp[Math.min(ramp.length - 1, Math.max(1, Math.round(t * (ramp.length - 1))))]

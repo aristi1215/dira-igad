@@ -92,13 +92,17 @@ export const COUNTRY_NAMES: Record<string, string> = {
   ER: 'Eritrea',
 }
 
+/**
+ * Data hues only. These carry meaning — a series keeps its colour between
+ * themes for the same reason a band does — so they are deliberately
+ * theme-invariant. Gridlines, axis ink and empty cells are *not* meaningful
+ * and live in `lib/chartChrome.ts`, which follows the theme.
+ */
 export const CHART = {
   cat1: '#0f62fe',
   cat2: '#d02670',
   cat3: '#198038',
   cat4: '#8a3ffc',
-  grid: '#e0e0e0',
-  axisInk: '#525252',
   /** Sequential blues, light → dark (IBM blue ramp). */
   blues: ['#edf5ff', '#d0e2ff', '#a6c8ff', '#78a9ff', '#4589ff', '#0f62fe', '#0043ce'],
   /**

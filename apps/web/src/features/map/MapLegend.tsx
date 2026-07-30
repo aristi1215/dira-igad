@@ -334,8 +334,15 @@ function LegendShell({
   children: React.ReactNode
 }) {
   return (
-    // bottom-14 clears the status strip along the bottom edge.
-    <div className="pointer-events-auto absolute bottom-14 left-[17.5rem] z-map-ui w-56 rounded-bento border border-line bg-surface/92 p-2.5 shadow-panel backdrop-blur-xl xl:left-[21rem]">
+    /*
+     * Anchored to the right edge, not floated at `left-17.5rem`. Pinned just
+     * clear of the watchlist rail it sat in open water in the middle of the
+     * map, reading as a panel that had come loose rather than as chrome.
+     * The right edge is a stack, bottom-up: status strip, Ask Dira, MapLibre's
+     * controls (lifted to 8.5rem in index.css), then this. `bottom-64` is
+     * where that stack ends — measured, not guessed.
+     */
+    <div className="pointer-events-auto absolute right-3 bottom-64 z-map-ui w-56 rounded-bento border border-line bg-surface/92 p-2.5 shadow-panel backdrop-blur-xl">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="text-eyebrow text-faint uppercase">
           {title}

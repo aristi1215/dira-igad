@@ -4,6 +4,7 @@ import maplibregl, { type Map } from 'maplibre-gl'
 // Tailwind utilities can override it — see the note there.
 import { AnimatePresence } from 'motion/react'
 import { useMapUiStore } from '../../stores/mapUi'
+import { useThemeStore } from '../../stores/theme'
 import { Callout } from '../../components/ui'
 import type {
   AckBySituation,
@@ -75,6 +76,12 @@ export function MapView({
   const [map, setMap] = useState<Map | null>(null)
   /** Bumped on a style swap so the layer hook re-installs everything. */
   const [styleEpoch, setStyleEpoch] = useState(0)
+  /**
+   * Bumped when a style finishes loading. Separate from `styleEpoch` because
+   * it drives only the basemap repaint, not a full layer re-install.
+   */
+  const [styleTick, setStyleTick] = useState(0)
+  const theme = useThemeStore((state) => state.theme)
   /*
    * Two separate ways the map can fail to exist, and they are knowable at
    * different times.
@@ -135,9 +142,14 @@ export function MapView({
     nextMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
     nextMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
 
-    // Restyle the basemap whenever a style becomes available.
+    /*
+     * Restyle whenever a style becomes available. The tuning itself lives in
+     * the effect below so that a theme toggle repaints too — a toggle fires no
+     * style event, and without that the canvas stayed light while every panel
+     * over it went dark.
+     */
     const handleStyleLoad = () => {
-      tuneBasemap(nextMap)
+      setStyleTick((tick) => tick + 1)
     }
     nextMap.on('style.load', handleStyleLoad)
 
@@ -151,7 +163,7 @@ export function MapView({
       }
       usedFallback = true
       console.warn('Vector basemap unavailable — falling back to raster tiles.', event.error)
-      nextMap.setStyle(rasterFallbackStyle())
+      nextMap.setStyle(rasterFallbackStyle(useThemeStore.getState().theme))
       setStyleEpoch((epoch) => epoch + 1)
     }
     nextMap.on('error', handleError)
@@ -186,9 +198,19 @@ export function MapView({
     // changes after its lazy probe, so this still runs exactly once.
   }, [onMapReady, webglSupported])
 
+  /*
+   * Repaint on a style load *and* on a theme toggle. Positron is re-painted
+   * rather than swapped for DarkMatter — see the note on BASEMAP_PAINT.
+   */
+  useEffect(() => {
+    if (!map) return
+    tuneBasemap(map, theme)
+  }, [map, theme, styleTick])
+
   useMapLayers({
     map,
     styleEpoch,
+    theme,
     indicators,
     events,
     overlay,

@@ -49,11 +49,20 @@ export function CommandBar({
         </span>
       </div>
 
-      <nav aria-label="Primary" className="flex min-w-0 items-center gap-0.5">
+      {/*
+        Scrolls rather than forcing the bar wide. Seven pills plus the brand,
+        status cluster and two buttons need ~650px of the bar's own width; with
+        no wrap and no scroll, everything below that overflowed with no way to
+        reach it.
+      */}
+      <nav
+        aria-label="Primary"
+        className="flex min-w-0 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {PRIMARY_NAV.map((item) => (
           <NavItemLink key={item.to} item={item} layoutId="nav-primary" />
         ))}
-        <span aria-hidden className="mx-2 h-5 w-px bg-line" />
+        <span aria-hidden className="mx-2 h-5 w-px shrink-0 bg-line" />
         {SECONDARY_NAV.map((item) => (
           <NavItemLink key={item.to} item={item} layoutId="nav-primary" subdued />
         ))}
@@ -86,7 +95,9 @@ export function CommandBar({
           onClick={onToggleAdvisor}
           data-tour={TOUR_ANCHORS.askDira}
         >
-          Ask Dira
+          {/* Hidden below sm, matching Guide — this was the widest item in the
+              right cluster and the only one with no responsive treatment. */}
+          <span className="hidden sm:inline">Ask Dira</span>
         </Button>
       </div>
     </header>

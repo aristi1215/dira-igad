@@ -101,7 +101,9 @@ export function StatusCluster({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={T.fast}
-            className="absolute top-full right-0 z-header mt-2 w-80 rounded-lg border border-line bg-surface p-3 shadow-panel"
+            // max-w clamps it to the viewport: anchored `right-0` to a button that is
+// itself well left of the screen edge, a fixed 20rem ran off-screen.
+className="absolute top-full right-0 z-header mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface p-3 shadow-panel"
           >
             <ul className="flex flex-col gap-3">
               <StatusRow

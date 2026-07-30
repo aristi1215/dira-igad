@@ -141,6 +141,10 @@ export function AppLayout() {
         !event.altKey
       ) {
         event.preventDefault()
+        // Cancel any half-typed `G` chord. Without this, pressing `g` and then
+        // ⌘K left the chord armed, so the next plain keystroke — usually the
+        // first letter typed into the advisor — navigated the whole app.
+        chordRef.current = null
         toggleAdvisor()
         return
       }

@@ -1,4 +1,5 @@
 import type { Map, LayerSpecification, StyleSpecification } from 'maplibre-gl'
+import type { Theme } from '../../stores/theme'
 
 /**
  * Basemap styling.
@@ -31,16 +32,17 @@ const HIDDEN_PREFIXES = [
  * fails to load (offline, blocked CDN) the map falls back to this rather than
  * rendering a blank canvas.
  */
-export function rasterFallbackStyle(): StyleSpecification {
+export function rasterFallbackStyle(theme: Theme = 'light'): StyleSpecification {
+  const variant = theme === 'dark' ? 'dark_all' : 'light_all'
   return {
     version: 8,
     sources: {
       carto: {
         type: 'raster',
         tiles: [
-          'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-          'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-          'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+          `https://a.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}@2x.png`,
+          `https://b.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}@2x.png`,
+          `https://c.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}@2x.png`,
         ],
         tileSize: 256,
         attribution: '© OpenStreetMap contributors © CARTO',
@@ -106,8 +108,50 @@ function setPaintIfPresent(
   }
 }
 
+/**
+ * Theme-dependent basemap paint.
+ *
+ * Positron is re-painted rather than swapped for DarkMatter. They share the
+ * same CARTO vector tile source, so a repaint costs no network at all — no
+ * tile refetch, no sprite or glyph reload, no white flash on toggle. A style
+ * swap would also re-open `HIDDEN_PREFIXES`, `firstSymbolLayerId` and the
+ * italic-avoidance in `fontStack` against a second set of layer ids, all of
+ * which were tuned against this one.
+ *
+ * Values track the surface tokens in index.css.
+ */
+const BASEMAP_PAINT: Record<Theme, {
+  background: string
+  water: string
+  boundary: string
+  boundaryOpacity: number
+  /** Place-name ink and halo. Positron ships dark ink on a white halo. */
+  labelInk: string
+  labelHalo: string
+}> = {
+  light: {
+    background: '#f5f5f7',
+    water: '#eef1f3',
+    boundary: '#c6c6c6',
+    boundaryOpacity: 0.9,
+    labelInk: '#5b5b62',
+    labelHalo: '#f5f5f7',
+  },
+  dark: {
+    background: '#0a0a0c',
+    water: '#14141a',
+    boundary: '#4b4b57',
+    // Slightly hotter in dark: a mid grey on near-black carries less than the
+    // same step does on near-white.
+    boundaryOpacity: 1,
+    labelInk: '#a8a8b3',
+    labelHalo: '#0a0a0c',
+  },
+}
+
 /** Desaturate and simplify the basemap so the data carries the color. */
-export function tuneBasemap(map: Map): void {
+export function tuneBasemap(map: Map, theme: Theme = 'light'): void {
+  const paint = BASEMAP_PAINT[theme]
   let layers: LayerSpecification[]
   try {
     layers = (map.getStyle().layers ?? []) as LayerSpecification[]
@@ -128,14 +172,14 @@ export function tuneBasemap(map: Map): void {
     }
 
     if (layer.type === 'background') {
-      setPaintIfPresent(map, id, 'background-color', '#f5f5f7')
+      setPaintIfPresent(map, id, 'background-color', paint.background)
       continue
     }
 
     // Water reads as a neutral tone rather than blue, so the blue sequential
     // ramps used by the displacement/incidents overlays stay unambiguous.
     if (id.startsWith('water') && layer.type === 'fill') {
-      setPaintIfPresent(map, id, 'fill-color', '#eef1f3')
+      setPaintIfPresent(map, id, 'fill-color', paint.water)
       continue
     }
 
@@ -156,8 +200,8 @@ export function tuneBasemap(map: Map): void {
     // Country borders orient the viewer — seven countries is part of the
     // story — so they are strengthened rather than muted.
     if (id.includes('boundary') && layer.type === 'line') {
-      setPaintIfPresent(map, id, 'line-color', '#c6c6c6')
-      setPaintIfPresent(map, id, 'line-opacity', 0.9)
+      setPaintIfPresent(map, id, 'line-color', paint.boundary)
+      setPaintIfPresent(map, id, 'line-opacity', paint.boundaryOpacity)
       continue
     }
 
@@ -175,6 +219,14 @@ export function tuneBasemap(map: Map): void {
         0.8,
       ])
       setPaintIfPresent(map, id, 'text-halo-width', 1.2)
+      /*
+       * Both themes, unconditionally. Setting these only for dark left the
+       * dark ink and near-black halo in place when toggling back, which
+       * embossed every place name on the light map — a repaint has to be
+       * able to undo itself.
+       */
+      setPaintIfPresent(map, id, 'text-color', paint.labelInk)
+      setPaintIfPresent(map, id, 'text-halo-color', paint.labelHalo)
     }
   }
 }

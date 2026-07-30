@@ -15,6 +15,7 @@ import type {
 } from '../../lib/types'
 import { featureCenter } from './geometry'
 import { firstSymbolLayerId, fontStack } from './basemap'
+import type { Theme } from '../../stores/theme'
 
 export const ZONE_SOURCE_ID = 'dira-zones'
 export const LABEL_SOURCE_ID = 'dira-zone-labels'
@@ -139,10 +140,42 @@ function fillOpacityExpression(overlay: MapOverlay): ExpressionSpecification {
   ] as unknown as ExpressionSpecification
 }
 
+/**
+ * Paint for our own layers that has to read against the basemap rather than
+ * carry meaning: the halo separating a mark from what is behind it, the
+ * resting outline of a zone, and zone-label ink. Band, IPC and overlay ramps
+ * are data and stay identical across themes.
+ */
+const LAYER_CHROME: Record<Theme, {
+  markStroke: string
+  /** Resting zone outline. */
+  zoneOutline: string
+  /** Hovered or selected zone outline — maximum contrast with the basemap. */
+  zoneOutlineActive: string
+  labelInk: string
+  labelHalo: string
+}> = {
+  light: {
+    markStroke: '#ffffff',
+    zoneOutline: '#c7c7cc',
+    zoneOutlineActive: '#161616',
+    labelInk: '#525252',
+    labelHalo: '#ffffff',
+  },
+  dark: {
+    markStroke: '#141418',
+    zoneOutline: '#4b4b57',
+    zoneOutlineActive: '#f5f5f7',
+    labelInk: '#e4e4ea',
+    labelHalo: '#0a0a0c',
+  },
+}
+
 type UseMapLayersOptions = {
   map: Map | null
   /** Bumped when the style is swapped, to force a re-install. */
   styleEpoch: number
+  theme: Theme
   indicators: RegionalIndicators | undefined
   events: MapEvents | undefined
   overlay: MapOverlay
@@ -156,6 +189,7 @@ type UseMapLayersOptions = {
 export function useMapLayers({
   map,
   styleEpoch,
+  theme,
   indicators,
   events,
   overlay,
@@ -274,6 +308,36 @@ export function useMapLayers({
       map.off('style.load', install)
     }
   }, [map, styleEpoch])
+
+  /*
+   * Theme-dependent paint, applied after install and again on every toggle.
+   *
+   * Repainting in place rather than passing the theme into the layer builders
+   * keeps a toggle from tearing down and rebuilding six layers and three
+   * sources — and means the install path and the toggle path cannot drift,
+   * because there is only one place that sets these.
+   */
+  useEffect(() => {
+    if (!map || !installedRef.current) return
+    const chrome = LAYER_CHROME[theme]
+    const set = (layerId: string, property: string, value: unknown) => {
+      try {
+        if (map.getLayer(layerId)) map.setPaintProperty(layerId, property, value)
+      } catch {
+        // A layer removed by a style swap is fine — the re-install will follow.
+      }
+    }
+
+    set(EVENT_LAYER_ID, 'circle-stroke-color', chrome.markStroke)
+    set(ZONE_OUTLINE_LAYER_ID, 'line-color', [
+      'case',
+      ['boolean', ['feature-state', 'selected'], false], chrome.zoneOutlineActive,
+      ['boolean', ['feature-state', 'hover'], false], chrome.zoneOutlineActive,
+      chrome.zoneOutline,
+    ])
+    set(ZONE_LABEL_LAYER_ID, 'text-color', chrome.labelInk)
+    set(ZONE_LABEL_LAYER_ID, 'text-halo-color', chrome.labelHalo)
+  }, [map, theme, installedTick])
 
   // Push data updates.
   useEffect(() => {

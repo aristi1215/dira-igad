@@ -165,6 +165,43 @@
   --z-tooltip: 95;
 }
 
+/*
+ * Tailwind v4 has no `--z-*` theme namespace — the z-index utilities come from
+ * a bare numeric scale — so declaring these tokens in `@theme` published the
+ * custom properties but generated no classes. `z-drawer`, `z-header`,
+ * `z-map-panel` and the rest were silently emitting nothing, and the whole app
+ * was layering on DOM order: MapLibre's own controls (z-index 2) painted over
+ * the advisor panel, which believed it was at 45.
+ *
+ * Each utility is declared explicitly against the token above, so the scale
+ * stays the single source of truth. `z-scale.test.ts` asserts the two lists
+ * stay in step — a missing entry here fails exactly the same way, silently.
+ */
+@utility z-map-base {
+  z-index: var(--z-map-base);
+}
+@utility z-map-ui {
+  z-index: var(--z-map-ui);
+}
+@utility z-map-panel {
+  z-index: var(--z-map-panel);
+}
+@utility z-header {
+  z-index: var(--z-header);
+}
+@utility z-drawer {
+  z-index: var(--z-drawer);
+}
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+@utility z-tour {
+  z-index: var(--z-tour);
+}
+@utility z-tooltip {
+  z-index: var(--z-tooltip);
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 html.dark {
@@ -441,10 +478,18 @@ html.dark {
     font-size: var(--text-2xs);
   }
 
-  /* Lift the zoom controls and attribution clear of the map status strip. */
-  .maplibregl-ctrl-bottom-right,
+  /*
+   * The map's bottom-right corner is a stack, bottom-up: the status strip
+   * (bottom-3, 44px tall), the Ask Dira button, then MapLibre's own controls,
+   * then the legend. Each offset here is what keeps the next thing clear —
+   * at MapLibre's default they sat under the status strip.
+   */
   .maplibregl-ctrl-bottom-left {
-    bottom: 2.75rem;
+    bottom: 4.25rem;
+  }
+
+  .maplibregl-ctrl-bottom-right {
+    bottom: 8.5rem;
   }
 }
 

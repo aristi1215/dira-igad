@@ -45,8 +45,12 @@ export function MapToolbar({
   onToggleHazards: () => void
 }) {
   return (
+    /*
+     * Capped and centred within the space the rail leaves. Uncapped, the
+     * widest caption reached past the rail's right edge on a 1280 laptop.
+     */
     <div
-      className="pointer-events-auto absolute top-3 left-1/2 z-map-ui flex -translate-x-1/2 flex-col items-center gap-1.5"
+      className="pointer-events-auto absolute top-3 left-1/2 z-map-ui flex max-w-[min(38rem,calc(100vw-24rem))] -translate-x-1/2 flex-col items-center gap-1.5"
       data-tour={TOUR_ANCHORS.mapOverlays}
     >
       <Tabs
@@ -65,7 +69,7 @@ export function MapToolbar({
       >
         {showHazards ? 'Hide hazard pins' : 'Show hazard pins'}
       </button>
-      <p className="rounded-full border border-line bg-surface/92 px-2.5 py-0.5 text-2xs text-muted shadow-panel backdrop-blur-xl">
+      <p className="max-w-full truncate rounded-full border border-line bg-surface/92 px-2.5 py-0.5 text-2xs text-muted shadow-panel backdrop-blur-xl">
         {CAPTIONS[overlay]}
       </p>
     </div>
