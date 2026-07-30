@@ -29,6 +29,8 @@ export type AckStatus =
   | 'conflict_reported'
   | 'resolved'
 
+export type DeliveryChannel = 'voice' | 'sms' | 'both'
+
 export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
@@ -110,7 +112,7 @@ export type Delivery = {
   id: string
   alert_id: string
   recipient_id: string
-  channel: string
+  channel: DeliveryChannel
   status: DeliveryStatus
   ack_status: AckStatus
   attempt_count: number
@@ -450,9 +452,9 @@ export type Recipient = {
   id: string
   name: string
   phone_e164: string
-  zone_id: string
+  zone_id: string | null
   zone_name?: string
-  channel: string
+  channel: 'voice' | 'sms' | 'both'
   language: string
   active: boolean
 }

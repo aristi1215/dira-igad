@@ -57,7 +57,7 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: JsonBody
 }
 
-type JsonBody = Record<string, string | number | boolean | null>
+type JsonBody = Record<string, string | number | boolean | null | undefined>
 
 export class ApiError extends Error {
   readonly status: number
@@ -163,6 +163,16 @@ export function approveAlert(
     body: {
       approved_by: approvedBy,
     },
+  })
+}
+
+export function updateAlert(
+  alertId: string,
+  input: { body_text?: string; language?: string },
+): Promise<Alert> {
+  return requestJson<Alert>(`/alerts/${alertId}`, {
+    method: 'PATCH',
+    body: input,
   })
 }
 
@@ -407,4 +417,36 @@ export function fetchAnalytics(): Promise<AnalyticsOverview> {
 
 export function fetchRecipients(): Promise<Recipient[]> {
   return requestJson<Recipient[]>('/recipients')
+}
+
+export function createRecipient(input: {
+  name: string
+  zone_id: string | null
+  phone_e164: string
+  language: string
+  channel: Recipient['channel']
+}): Promise<Recipient> {
+  return requestJson<Recipient>('/recipients', { method: 'POST', body: input })
+}
+
+export function updateRecipient(
+  recipientId: string,
+  input: Partial<{
+    name: string
+    phone_e164: string
+    language: string
+    channel: Recipient['channel']
+    active: boolean
+  }>,
+): Promise<Recipient> {
+  return requestJson<Recipient>(`/recipients/${recipientId}`, {
+    method: 'PATCH',
+    body: input,
+  })
+}
+
+export function deleteRecipient(recipientId: string): Promise<Recipient> {
+  return requestJson<Recipient>(`/recipients/${recipientId}`, {
+    method: 'DELETE',
+  })
 }
