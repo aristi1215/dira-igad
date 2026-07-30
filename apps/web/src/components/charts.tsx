@@ -184,6 +184,7 @@ export function HeatStrip({
   valueAt,
   maxValue,
   columnFormatter,
+  rowFormatter,
   title,
 }: {
   rows: string[]
@@ -191,6 +192,8 @@ export function HeatStrip({
   valueAt: (row: string, column: string) => number | null
   maxValue: number
   columnFormatter?: (value: string) => string
+  /** Row keys double as labels; pass this when the key is an id. */
+  rowFormatter?: (value: string) => string
   title?: string
 }) {
   const chrome = useChartChrome()
@@ -206,14 +209,18 @@ export function HeatStrip({
     <div className="grid gap-[3px] text-xs" role="table" aria-label={title}>
       {rows.map((row) => (
         <div key={row} className="grid grid-cols-[minmax(7rem,10rem)_1fr] items-center gap-2.5" role="row">
-          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-muted">{row}</span>
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-muted">
+            {rowFormatter ? rowFormatter(row) : row}
+          </span>
           <span className="flex gap-0.5">
             {columns.map((col) => {
               const value = valueAt(row, col)
               return (
                 <span
                   key={col}
-                  className="h-4 min-w-0 flex-1 rounded-sm"
+                  // rounded-[2px], not rounded-sm: a 6px radius on a ~10px-wide
+                  // cell turned the grid into a field of dots.
+                  className="h-4 min-w-0 flex-1 rounded-[2px]"
                   style={{ background: cellColor(value) }}
                   title={`${row} · ${columnFormatter ? columnFormatter(col) : col}: ${
                     value == null ? 'no data' : `${value.toFixed(1)} mm`

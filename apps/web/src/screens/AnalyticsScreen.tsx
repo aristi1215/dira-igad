@@ -7,6 +7,7 @@ import {
   COUNTRY_NAMES,
   fmtCompact,
   fmtMonth,
+  titleCase,
 } from '../lib/format'
 import {
   BentoCard,
@@ -167,7 +168,7 @@ export function AnalyticsScreen() {
               />
             </BentoCard>
 
-            <BentoCard span={2} eyebrow="Field evidence" title="Report funnel">
+            <BentoCard span={3} eyebrow="Field evidence" title="Report funnel">
               <p className="text-metric font-semibold tabular-nums text-ink">
                 {data.field_report_stats.verified}
               </p>
@@ -177,7 +178,7 @@ export function AnalyticsScreen() {
               </p>
             </BentoCard>
 
-            <BentoCard span={2} eyebrow="Dispatch" title="Delivery health">
+            <BentoCard span={3} eyebrow="Dispatch" title="Delivery health">
               <p className="text-metric font-semibold tabular-nums text-ink">
                 {ackRate != null ? `${ackRate}%` : '—'}
               </p>
@@ -185,8 +186,10 @@ export function AnalyticsScreen() {
               <p className="mt-3 text-xs text-faint">{data.delivery_stats.total} calls placed</p>
             </BentoCard>
 
+            {/* Full width: nine clusters across every dekad of the year needs
+                the room, and at span=2 it drove the height of the whole row. */}
             <BentoCard
-              span={2}
+              span={6}
               eyebrow="Climate"
               title="Rainfall by cluster"
               subtitle="Millimetres per 10-day period"
@@ -198,6 +201,7 @@ export function AnalyticsScreen() {
                   valueAt={(row, column) => rainfall.lookup.get(`${row}|${column}`) ?? null}
                   maxValue={rainfall.maxValue}
                   columnFormatter={fmtMonth}
+                  rowFormatter={titleCase}
                   title="Rainfall by cluster and 10-day period"
                 />
               ) : null}

@@ -48,8 +48,15 @@ const ALERT_TONE: Record<string, StatusTone> = {
 /** One exposure figure, as stored on the frozen snapshot. */
 function fmtExposure(value: unknown): string {
   if (value == null) return '—'
-  if (typeof value !== 'number') return String(value)
-  return Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2)
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2)
+  }
+  // The snapshot stores a few raw timestamps; `updated_at` was rendering as
+  // "2026-03-21 09:00:00+00:00" in a column three words wide.
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:/.test(value)) {
+    return fmtDateTime(value)
+  }
+  return String(value)
 }
 
 export function SituationDetailScreen() {
@@ -238,7 +245,7 @@ export function SituationDetailScreen() {
           </div>
         </BentoCard>
 
-        <BentoCard span={4} title="How it got here" subtitle="Both scores across every cycle">
+        <BentoCard span={6} title="How it got here" subtitle="Both scores across every cycle">
           {trajectory.length > 0 ? (
             <TimeSeriesChart
               data={trajectory}
@@ -260,9 +267,13 @@ export function SituationDetailScreen() {
           )}
         </BentoCard>
 
+        {/*
+          Full width. EvidenceBoard is a three-column board; at span=2 each of
+          its columns was about 70px, which set the report text to two or three
+          characters a line.
+        */}
         <BentoCard
-          span={2}
-          rowSpan={2}
+          span={6}
           title="Evidence"
           subtitle="What supports this forecast"
           padded={false}
@@ -331,7 +342,9 @@ export function SituationDetailScreen() {
         >
           {latest?.exposure_snapshot &&
           Object.keys(latest.exposure_snapshot).length > 0 ? (
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+            // One column: at a third of the page, two columns wrapped every
+            // label ("Pop Phase3 / Plus") onto three lines.
+            <dl className="grid grid-cols-1 gap-y-1.5">
               {Object.entries(latest.exposure_snapshot).map(([key, value]) => (
                 <div
                   key={key}
