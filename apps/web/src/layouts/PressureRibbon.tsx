@@ -47,12 +47,12 @@ export function PressureRibbon() {
   }, [data])
 
   if (segments.length === 0) {
-    return <div aria-hidden className="h-[3px] shrink-0 bg-line" />
+    return <div aria-hidden className="h-1 shrink-0 bg-line" />
   }
 
   return (
     <div
-      className="flex h-[3px] shrink-0 overflow-hidden"
+      className="flex h-1 shrink-0 overflow-hidden"
       role="img"
       aria-label={`Regional pressure: ${segments
         .map((segment) => `${segment.count} ${BAND_LABELS[segment.band]}`)

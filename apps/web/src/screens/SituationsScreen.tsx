@@ -14,7 +14,7 @@ import {
 } from '../lib/format'
 import {
   BandChip,
-  Card,
+  BentoCard,
   DataTable,
   EmptyState,
   ErrorNote,
@@ -300,7 +300,7 @@ export function SituationsScreen() {
 
       {situationsQuery.isError ? <ErrorNote error={situationsQuery.error} /> : null}
 
-      <Card padded={false}>
+      <BentoCard span={6} tone="inverse" padded={false} title="Situation registry">
         <DataTable
           columns={columns}
           rows={filtered}
@@ -315,7 +315,7 @@ export function SituationsScreen() {
             </EmptyState>
           }
         />
-      </Card>
+      </BentoCard>
 
       {needsAlert.length > 0 ? (
         <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">

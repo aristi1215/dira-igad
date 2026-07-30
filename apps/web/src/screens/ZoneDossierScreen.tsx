@@ -14,6 +14,7 @@ import {
 } from '../lib/format'
 import {
   Button,
+  BentoCard,
   Card,
   DataTable,
   EmptyState,
@@ -253,7 +254,9 @@ export function ZoneDossierScreen() {
         measured twice.
       */}
       <section id="climate" className="mb-5 scroll-mt-16">
-        <Card
+        <BentoCard
+          span={4}
+          tone="inverse"
           title="Climate"
           subtitle="Rain and vegetation over the same dekads — never on a shared axis"
         >
@@ -290,7 +293,7 @@ export function ZoneDossierScreen() {
           ) : (
             <EmptyState>No climate series.</EmptyState>
           )}
-        </Card>
+        </BentoCard>
       </section>
 
       <section id="conflict" className="mb-5 scroll-mt-16">

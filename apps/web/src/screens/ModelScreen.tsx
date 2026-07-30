@@ -7,6 +7,8 @@ import { featureMeta } from '../lib/explain'
 import {
   Callout,
   Card,
+  BentoCard,
+  BentoGrid,
   DataTable,
   EmptyState,
   ErrorNote,
@@ -168,13 +170,14 @@ export function ModelScreen() {
             beside its caveat instead of above it, which also closes the 40% of
             blank card the single paragraph used to leave.
           */}
-          <Card className="group mb-5">
+          <BentoGrid className="mb-5">
+          <BentoCard span={2} tone="inverse" eyebrow="The forecast" title="What it predicts">
             <div className="grid items-start gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
               <div className="min-w-0">
-                <p className="font-sans max-w-[46ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-ink">
+                <p className="max-w-[46ch] text-2xl leading-snug font-semibold tracking-[-0.02em] text-white">
                   {card.predicts}
                 </p>
-                <p className="mt-2.5 max-w-[58ch] text-sm leading-relaxed text-muted">
+                <p className="mt-2.5 max-w-[58ch] text-sm leading-relaxed text-white/70">
                   It looks about {card.horizon_days} days ahead and is checked only against
                   periods it never saw during training.
                 </p>
@@ -195,7 +198,16 @@ export function ModelScreen() {
                 />
               </div>
             </div>
-          </Card>
+          </BentoCard>
+          <BentoCard span={2} eyebrow="Horizon" title={`${card.horizon_days} days`}>
+            <p className="font-mono text-3xl font-semibold tabular-nums">~{card.horizon_days}</p>
+            <p className="mt-2 text-sm text-muted">{card.horizon_dekads} ten-day periods ahead</p>
+          </BentoCard>
+          <BentoCard span={2} eyebrow="Training" title="How it was trained">
+            <p className="font-mono text-3xl font-semibold tabular-nums">{card.train_rows}</p>
+            <p className="mt-2 text-sm text-muted">rows used for training</p>
+          </BentoCard>
+          </BentoGrid>
 
           <StatRow className="mb-5">
             <Stat
@@ -221,8 +233,8 @@ export function ModelScreen() {
             />
           </StatRow>
 
-          <div className="mb-5 grid items-start gap-5 lg:grid-cols-2">
-            <Card
+          <BentoGrid className="mb-5">
+            <BentoCard span={4}
               title="Compared with simpler methods"
               subtitle="Brier score on held-out future periods — shorter is better"
               actions={
@@ -238,9 +250,9 @@ export function ModelScreen() {
                 formatter={(value) => value.toFixed(3)}
                 color={CHART.cat1}
               />
-            </Card>
+            </BentoCard>
 
-            <Card
+            <BentoCard span={2}
               title="What it does not tell you"
               subtitle="Read before acting on any forecast"
             >
@@ -258,9 +270,9 @@ export function ModelScreen() {
                   </li>
                 ))}
               </ul>
-            </Card>
+            </BentoCard>
 
-            <Card
+            <BentoCard span={6}
               title="Where it does best and worst"
               subtitle={card.performance_breakdown?.note ?? 'Per-zone error on held-out periods'}
             >
@@ -298,9 +310,9 @@ export function ModelScreen() {
               ) : (
                 <EmptyState>No breakdown available.</EmptyState>
               )}
-            </Card>
+            </BentoCard>
 
-            <Card
+            <BentoCard span={6}
               title="How it was tested"
               subtitle="Every test period is strictly later than every training period"
             >
@@ -311,8 +323,8 @@ export function ModelScreen() {
                 caption="Evaluation runs"
                 empty={<EmptyState>No evaluation runs recorded.</EmptyState>}
               />
-            </Card>
-          </div>
+            </BentoCard>
+          </BentoGrid>
 
           <Card
             title="What it looks at"

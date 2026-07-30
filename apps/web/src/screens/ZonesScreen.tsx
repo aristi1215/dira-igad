@@ -12,8 +12,10 @@ import {
 } from '../lib/format'
 import {
   BandChip,
+  BandDot,
+  BentoCard,
+  BentoGrid,
   Callout,
-  Card,
   DataTable,
   EmptyState,
   ErrorNote,
@@ -79,6 +81,10 @@ export function ZonesScreen() {
     (sum, zone) => sum + (zone.unverified_field_reports_recent ?? 0),
     0,
   )
+  const attentionZones = zones.filter(
+    (zone) => zone.operational_band === 'high' || zone.operational_band === 'very_high',
+  )
+  const topZones = zones.slice(0, 6)
 
   const columns: Column<ZoneSummary>[] = [
     {
@@ -195,46 +201,81 @@ export function ZonesScreen() {
 
       {zonesQuery.isError ? <ErrorNote error={zonesQuery.error} className="mb-4" /> : null}
 
-      {/*
-        Distribution, search and filters in one bar.
-
-        The distribution used to be a full-width card wrapping a single 24px
-        bar — the thinnest card in the app, and a whole band of chrome around
-        one element. It is the same control, folded into the filter row it was
-        already acting as.
-      */}
-      <div className="mb-4 flex flex-wrap items-end gap-x-4 gap-y-3 rounded-lg border border-line bg-surface px-3 py-2.5">
-        <div className="min-w-[18rem] flex-1">
-          <Eyebrow className="mb-1.5 block">
-            Where the region stands
-          </Eyebrow>
+      <BentoGrid>
+        <BentoCard span={4} eyebrow="Regional picture" title="Where the region stands" subtitle="Click a band to filter the registry">
           <BandDistributionBar
             counts={bandCounts}
             selected={bandFilter}
             onSelect={setBandFilter}
           />
-        </div>
-        <SearchInput
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search zone or cluster…"
-          label="Search zones"
-          className="w-56"
-        />
-        <Field label="Country" className="w-40">
-          <Select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)}>
-            <option value="all">All countries</option>
-            {countries.map((iso2) => (
-              <option key={iso2} value={iso2}>
-                {COUNTRY_NAMES[iso2] ?? iso2}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">
-          {filtered.length} / {zones.length}
-        </span>
-      </div>
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div><Eyebrow>Zones</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{zones.length}</p></div>
+            <div><Eyebrow>High+</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{attentionZones.length}</p></div>
+            <div><Eyebrow>Filtered</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{filtered.length}</p></div>
+            <div><Eyebrow>Countries</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{countries.length}</p></div>
+          </div>
+        </BentoCard>
+
+        <BentoCard span={2} tone="inverse" eyebrow="Priority signal" title="Needs attention now">
+          <p className="font-mono text-4xl font-semibold tabular-nums">{attentionZones.length}</p>
+          <ul className="mt-4 flex flex-col gap-1 text-sm text-white/75">
+            {attentionZones.slice(0, 4).map((zone) => <li key={zone.zone_id}>{zone.zone_name}</li>)}
+            {attentionZones.length > 4 ? <li className="text-xs text-white/50">+{attentionZones.length - 4} more</li> : null}
+          </ul>
+        </BentoCard>
+
+        {topZones.map((zone) => (
+          <BentoCard key={zone.zone_id} span={1} interactive>
+            <div className="flex items-start justify-between gap-2">
+              <BandDot band={zone.operational_band} />
+              <span className="font-mono text-xl font-semibold tabular-nums">{fmtRiskScore(zone.model_risk)}</span>
+            </div>
+            <p className="mt-4 truncate text-sm font-semibold text-ink">{zone.zone_name}</p>
+            <Sparkline
+              values={(trends?.[zone.zone_id] ?? []).map((point) => point.model_risk)}
+              width={110}
+              height={22}
+              color={BAND_MAP_COLORS[zone.operational_band ?? 'none']}
+              className="mt-3 w-full"
+            />
+          </BentoCard>
+        ))}
+
+        <BentoCard span={6} eyebrow="Filter the registry" title="Find a zone">
+          <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+            <SearchInput
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search zone or cluster…"
+              label="Search zones"
+              className="w-56"
+            />
+            <Field label="Country" className="w-40">
+              <Select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)}>
+                <option value="all">All countries</option>
+                {countries.map((iso2) => <option key={iso2} value={iso2}>{COUNTRY_NAMES[iso2] ?? iso2}</option>)}
+              </Select>
+            </Field>
+            <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">{filtered.length} / {zones.length}</span>
+          </div>
+        </BentoCard>
+        <BentoCard span={6} padded={false} title="All monitored zones">
+          <DataTable
+            columns={columns}
+            rows={filtered}
+            getRowId={(zone) => zone.zone_id}
+            onRowClick={(zone) => void navigate(`/zones/${zone.zone_id}`)}
+            rowAccent={(zone) => BAND_MAP_COLORS[zone.operational_band ?? 'none']}
+            loading={zonesQuery.isLoading}
+            caption="Monitored zones"
+            empty={
+              <EmptyState icon={SearchX} title="No zones match">
+                Try clearing the search or the band filter.
+              </EmptyState>
+            }
+          />
+        </BentoCard>
+      </BentoGrid>
 
       {totalUnverified > 0 ? (
         <Callout tone="warning" className="mb-4">
@@ -243,22 +284,6 @@ export function ZonesScreen() {
         </Callout>
       ) : null}
 
-      <Card padded={false}>
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          getRowId={(zone) => zone.zone_id}
-          onRowClick={(zone) => void navigate(`/zones/${zone.zone_id}`)}
-          rowAccent={(zone) => BAND_MAP_COLORS[zone.operational_band ?? 'none']}
-          loading={zonesQuery.isLoading}
-          caption="Monitored zones"
-          empty={
-            <EmptyState icon={SearchX} title="No zones match">
-              Try clearing the search or the band filter.
-            </EmptyState>
-          }
-        />
-      </Card>
     </Screen>
   )
 }

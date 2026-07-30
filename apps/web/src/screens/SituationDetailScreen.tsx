@@ -12,30 +12,25 @@ import {
   queryKeys,
 } from '../lib/api'
 import {
-  BAND_COLORS,
   BAND_GUIDANCE,
-  BAND_MAP_COLORS,
   CHART,
   fmtDateTime,
   fmtForecastWindow,
-  fmtProbability,
   fmtRisk,
-  fmtRiskScore,
   titleCase,
 } from '../lib/format'
 import { BAND_TICKS } from '../lib/explain'
 import {
   BandChip,
   Button,
-  Card,
+  BentoCard,
+  BentoGrid,
   EmptyState,
   ErrorNote,
   Meter,
   PageHeader,
   Screen,
   ScreenSkeleton,
-  Stat,
-  StatRow,
   StatusChip,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
@@ -153,13 +148,8 @@ export function SituationDetailScreen() {
         Stacked, the banner's right third was permanently blank while the
         scores that justify it were three cards further down the page.
       */}
-      <div
-        className="group mb-5 grid gap-x-6 gap-y-4 rounded-lg border border-line border-l-[3px] bg-surface px-5 py-4 lg:grid-cols-[minmax(0,1fr)_16rem]"
-        style={{
-          borderLeftColor: BAND_COLORS[band],
-          background: `color-mix(in srgb, ${BAND_COLORS[band]} 6%, white)`,
-        }}
-      >
+      <BentoGrid>
+      <BentoCard span={4} tone="inverse" eyebrow="Current assessment" title={BAND_GUIDANCE[band]} subtitle={`Forecast window · ${fmtForecastWindow(latest?.window_start, latest?.window_end, latest?.horizon_dekads)}`}>
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <BandChip band={latest?.operational_band ?? null} />
@@ -184,72 +174,30 @@ export function SituationDetailScreen() {
             The one sentence on this page that is a judgement rather than a
             measurement, so it is the one sentence set in the serif.
           */}
-          <p className="font-sans max-w-[54ch] text-xl leading-snug font-semibold tracking-[-0.02em] text-ink">
-            {BAND_GUIDANCE[band]}
-          </p>
           {latest?.explanation ? (
-            <p className="mt-2 max-w-[68ch] text-sm leading-relaxed text-muted">
+            <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-white/70">
               {latest.explanation}
             </p>
           ) : null}
         </div>
+      </BentoCard>
 
-        <div className="flex flex-col justify-center gap-3 border-line lg:border-l lg:pl-6">
-          <ScoreLine
-            name="Model risk"
-            hint="Climate and conflict history only"
-            value={latest?.model_risk}
-            color={CHART.cat1}
-            track="var(--color-accent-ring)"
-            showTicks
-          />
-          <ScoreLine
-            name="Corroboration"
-            hint="News and verified field reports"
-            value={latest?.corroboration}
-            color={CHART.cat2}
-            track="#ffd6e8"
-          />
+      <BentoCard span={2} rowSpan={2} eyebrow="Score flow" title="Two scores, one decision">
+        <div data-tour={TOUR_ANCHORS.twoScore} className="flex flex-col gap-4">
+          <ScoreLine name="Model risk" hint="Climate and conflict history only" value={latest?.model_risk} color={CHART.cat1} track="var(--color-accent-ring)" showTicks />
+          <ScoreLine name="Corroboration" hint="News and verified field reports" value={latest?.corroboration} color={CHART.cat2} track="var(--color-accent-ring)" />
+          <p className="rounded-md border border-line bg-surface-2 px-2.5 py-2 font-mono text-2xs leading-relaxed break-words text-muted">{latest?.combination_rule ?? '—'}</p>
+          {latest ? <Button size="sm" icon={Sigma} onClick={() => setShowScoreExplainer(true)}>How?</Button> : null}
         </div>
-      </div>
-
-      <StatRow className="mb-5">
-        <Stat
-          label="Conflict pressure"
-          value={
-            <span className="flex items-baseline gap-1">
-              {fmtRiskScore(latest?.model_risk)}
-              <span className="text-xs text-faint">/100</span>
-            </span>
-          }
-          detail="Model forecast, out of 100"
-          accent={BAND_MAP_COLORS[band]}
-        />
-        <Stat
-          label="Chance of conflict"
-          value={fmtProbability(latest?.prob_conflict)}
-          detail="At least one incident in the window"
-        />
-        <Stat
-          label="Expected incidents"
-          value={latest ? latest.expected_incidents.toFixed(1) : '—'}
-          detail="Over the forecast window"
-        />
-        <Stat
-          label="Corroboration"
-          value={fmtRisk(latest?.corroboration)}
-          detail="News and verified field reports"
-          accent={CHART.cat2}
-        />
-      </StatRow>
+      </BentoCard>
 
       {/*
         Spans rather than equal halves. `lg:grid-cols-2` stretched both cards
         to the taller one, so the drivers list dragged a column of whitespace
         alongside it on every situation with few features.
       */}
-      <div className="mb-5 grid items-start gap-5 lg:grid-cols-12">
-        <Card
+        <BentoCard
+          span={4}
           title="What the model leaned on"
           subtitle="Each input's contribution to this cycle's score"
           className="lg:col-span-7"
@@ -260,10 +208,9 @@ export function SituationDetailScreen() {
           <div data-tour={TOUR_ANCHORS.shapDrivers}>
             <ShapDrivers shap={latest?.shap ?? {}} />
           </div>
-        </Card>
+        </BentoCard>
 
-        <div className="flex flex-col gap-5 lg:col-span-5">
-          <Card title="How it got here" subtitle="Both scores across every cycle">
+          <BentoCard span={4} title="How it got here" subtitle="Both scores across every cycle">
             {trajectory.length > 0 ? (
               <TimeSeriesChart
                 data={trajectory}
@@ -283,31 +230,44 @@ export function SituationDetailScreen() {
             ) : (
               <EmptyState>No assessments recorded yet.</EmptyState>
             )}
-          </Card>
+          </BentoCard>
 
-          {/* The combination rule is the product's central claim, and it is a
-              literal string on the row — so it is shown literally. */}
-          <Card
-            title="Two scores, never blended"
-            subtitle="The exact rule, stored on every assessment"
-            actions={
-              latest ? (
-                <Button size="sm" icon={Sigma} onClick={() => setShowScoreExplainer(true)}>
-                  How?
-                </Button>
-              ) : undefined
-            }
-          >
-            <p
-              data-tour={TOUR_ANCHORS.twoScore}
-              className="rounded-sm border border-line bg-surface-2 px-2.5 py-2 font-mono text-2xs leading-relaxed break-words text-muted"
-            >
-              {latest?.combination_rule ?? '—'}
-            </p>
-          </Card>
-        </div>
-      </div>
+      <BentoCard span={2} rowSpan={2} title="Evidence" subtitle="What supports this forecast" padded={false}
+        actions={<AskAboutButton question="Summarise the evidence for this situation and say where it is thin." />}>
+        <EvidenceBoard
+          zoneId={detail.situation.zone_id}
+          zoneName={zone?.zone_name}
+          reports={reportsQuery.data ?? []}
+          hazards={hazards}
+        />
+      </BentoCard>
 
+      <BentoCard span={4} title="Alert timeline" subtitle="Every alert drafted for this situation and where it stands">
+        {situationAlerts.length > 0 ? (
+          <ul className="flex flex-col gap-3">
+            {situationAlerts.map((alert) => (
+              <li key={alert.id} className="border-l-2 border-line pl-3">
+                <span className="flex flex-wrap items-center gap-2">
+                  <StatusChip tone={alert.status === 'pending_approval' ? 'warning' : alert.status === 'failed' ? 'error' : alert.status === 'draft' ? 'neutral' : 'success'}>{alert.status.replace('_', ' ')}</StatusChip>
+                  <span className="text-2xs text-faint">{alert.language.toUpperCase()} · {fmtDateTime(alert.created_at)}</span>
+                </span>
+                <p className="mt-1 text-sm text-muted">{alert.body_text.slice(0, 140)}{alert.body_text.length > 140 ? '…' : ''}</p>
+              </li>
+            ))}
+          </ul>
+        ) : <EmptyState title="No alerts yet">Use “Prepare alert” to draft one for the approval gate.</EmptyState>}
+      </BentoCard>
+
+      <BentoCard span={2} title="Exposure at assessment time" subtitle="Frozen when the assessment ran">
+        {latest?.exposure_snapshot && Object.keys(latest.exposure_snapshot).length > 0 ? (
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {Object.entries(latest.exposure_snapshot).map(([key, value]) => <div key={key} className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5"><dt className="text-xs text-muted">{titleCase(key)}</dt><dd className="text-sm font-medium tabular-nums text-ink">{value == null ? '—' : typeof value === 'number' ? Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2) : String(value)}</dd></div>)}
+          </dl>
+        ) : <EmptyState>No snapshot stored.</EmptyState>}
+      </BentoCard>
+      </BentoGrid>
+
+      {/*
       <Card
         title="Evidence"
         subtitle="Everything corroborating — or failing to corroborate — this forecast"
@@ -396,7 +356,7 @@ export function SituationDetailScreen() {
             <EmptyState>No snapshot stored.</EmptyState>
           )}
         </Card>
-      </div>
+      </div> */}
 
       {showScoreExplainer && latest ? (
         <ScoreExplainer assessment={latest} onClose={() => setShowScoreExplainer(false)} />

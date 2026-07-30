@@ -5,7 +5,8 @@ import { fetchSources, queryKeys } from '../lib/api'
 import { fmtNumber, titleCase } from '../lib/format'
 import {
   Callout,
-  Card,
+  BentoCard,
+  BentoGrid,
   DataTable,
   ErrorNote,
   Field,
@@ -15,7 +16,6 @@ import {
   Select,
   SkeletonCard,
   Stat,
-  StatRow,
   StatusChip,
   type Column,
 } from '../components/ui'
@@ -150,7 +150,9 @@ export function SourcesScreen() {
         The red lines are the credibility statement, so they lead rather than
         sitting at the bottom of the page as an appendix.
       */}
-      <Card
+      <BentoCard
+        span={4}
+        tone="inverse"
         title="Red lines"
         subtitle="Enforced in code and database schema — not in prose"
         className="mb-5"
@@ -201,14 +203,14 @@ export function SourcesScreen() {
             </li>
           ))}
         </ul>
-      </Card>
+      </BentoCard>
 
       {sourcesQuery.isError ? <ErrorNote error={sourcesQuery.error} className="mb-4" /> : null}
       {sourcesQuery.isLoading ? <SkeletonCard /> : null}
 
       {data ? (
         <>
-          <StatRow className="mb-5">
+          <BentoGrid className="mb-5">
             <Stat label="Feeds" value={sources.length} detail="Distinct inputs" />
             <Stat
               label="Reading live"
@@ -230,7 +232,7 @@ export function SourcesScreen() {
                   : 'Fixed fixtures, identical every run'
               }
             />
-          </StatRow>
+          </BentoGrid>
 
           <Callout tone="info" className="mb-5" icon={Radio}>
             <span className="flex flex-wrap items-center gap-1.5">
@@ -266,14 +268,14 @@ export function SourcesScreen() {
             </span>
           </div>
 
-          <Card padded={false}>
+          <BentoCard span={6} padded={false} title="All data sources">
             <DataTable
               columns={sourceColumns}
               rows={visibleSources}
               getRowId={(source) => source.key}
               caption="Data sources"
             />
-          </Card>
+          </BentoCard>
 
           <p className="mt-4 text-xs text-faint">
             Freshness is the newest <span className="font-mono">available_at</span> in each feed —

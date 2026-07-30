@@ -61,7 +61,7 @@ export function MapStatusStrip({
   if (summary.assessed === 0) return null
 
   return (
-    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-map-ui flex h-11 items-center gap-4 border-t border-line bg-surface/92 px-4 backdrop-blur-sm">
+    <div className="pointer-events-auto absolute inset-x-3 bottom-3 z-map-ui flex min-h-11 items-center gap-4 rounded-full border border-line bg-surface/92 px-4 py-2 shadow-panel backdrop-blur-xl">
       <Readout
         label="Need attention"
         value={`${summary.needAttention}`}
@@ -115,7 +115,7 @@ export function MapStatusStrip({
         <Link
           to="/dispatch"
           className={cx(
-            'flex shrink-0 items-center gap-1.5 rounded-sm border border-line-strong bg-surface px-2 py-1',
+            'flex shrink-0 items-center gap-1.5 rounded-full border border-line-strong bg-surface px-2 py-1',
             'text-2xs font-medium text-ink transition-colors duration-[120ms] ease-standard',
             'hover:border-accent hover:bg-accent-soft hover:text-accent-deep',
           )}

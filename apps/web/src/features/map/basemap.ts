@@ -128,7 +128,7 @@ export function tuneBasemap(map: Map): void {
     }
 
     if (layer.type === 'background') {
-      setPaintIfPresent(map, id, 'background-color', '#fafafa')
+      setPaintIfPresent(map, id, 'background-color', '#f5f5f7')
       continue
     }
 

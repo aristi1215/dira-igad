@@ -280,15 +280,15 @@ function Badge({
             onClick={() => onSelect(entry.zoneId, entry.situationId)}
             aria-label={`${entry.zoneName} — ${BAND_LABELS[entry.band]}, risk ${fmtRiskScore(entry.risk)}`}
             className={cx(
-              'pointer-events-auto absolute flex -translate-x-1/2 items-stretch overflow-hidden rounded-md',
-              'border border-line bg-surface/95 shadow-panel backdrop-blur-sm',
+              'pointer-events-auto absolute flex -translate-x-1/2 items-stretch overflow-hidden rounded-xl',
+              'border border-line bg-surface/92 shadow-lg backdrop-blur-xl',
               'transition-[box-shadow,border-color] duration-[140ms] ease-standard',
               'hover:border-line-strong hover:shadow-lg',
               selected && 'border-ink ring-1 ring-ink',
             )}
             style={{ bottom: LEADER_LENGTH + 4, left: 0 }}
           >
-            <span aria-hidden className="w-[3px] shrink-0" style={{ background: color }} />
+            <span aria-hidden className="w-[2.5px] shrink-0 rounded-l-xl" style={{ background: color }} />
             <span className="flex flex-col gap-0.5 px-2 py-1.5 text-left">
               <span className="max-w-[9rem] truncate text-eyebrow leading-none text-faint uppercase">
                 {entry.zoneName}

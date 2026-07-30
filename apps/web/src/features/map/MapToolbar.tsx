@@ -51,9 +51,9 @@ export function MapToolbar({
         onChange={onChange}
         layoutId="map-overlay"
         ariaLabel="Map overlay"
-        className="shadow-panel"
+        className="rounded-full border border-line bg-surface/92 shadow-panel backdrop-blur-xl"
       />
-      <p className="rounded-full bg-surface/85 px-2.5 py-0.5 text-2xs text-muted backdrop-blur-sm">
+      <p className="rounded-full border border-line bg-surface/92 px-2.5 py-0.5 text-2xs text-muted shadow-panel backdrop-blur-xl">
         {CAPTIONS[overlay]}
       </p>
     </div>

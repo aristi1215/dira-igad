@@ -64,6 +64,7 @@ export function BentoCard({
   className,
   children,
 }: BentoCardProps): ReactElement {
+  const hasHeader = Boolean(eyebrow || title || actions)
   return (
     <article
       className={cx(
@@ -75,7 +76,7 @@ export function BentoCard({
         className,
       )}
     >
-      {eyebrow || title || actions ? (
+      {hasHeader ? (
         <header className={cx('flex items-start justify-between gap-3', padded && 'px-5 pt-5')}>
           <div className="min-w-0">
             {eyebrow ? <p className="text-eyebrow uppercase opacity-70">{eyebrow}</p> : null}
@@ -85,7 +86,7 @@ export function BentoCard({
           {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
         </header>
       ) : null}
-      <div className={cx('min-w-0 flex-1', padded && 'p-5')}>{children}</div>
+      <div className={cx('min-w-0 flex-1', padded && (hasHeader ? 'px-5 pb-5' : 'p-5'))}>{children}</div>
       {footer ? <footer className={cx('text-xs opacity-70', padded && 'px-5 pb-5')}>{footer}</footer> : null}
     </article>
   )

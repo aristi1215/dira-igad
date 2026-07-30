@@ -107,9 +107,9 @@ export function ZoneCard({
         initial={{ opacity: 0, x: 12 }}
         animate={{ opacity: 1, x: 0 }}
         transition={T.enter}
-        className="pointer-events-auto absolute top-3 right-3 z-map-panel flex max-h-[calc(100%-1.5rem)] w-[22.5rem] max-w-[88vw] flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-panel"
+        className="pointer-events-auto absolute top-3 right-3 z-map-panel flex max-h-[calc(100%-1.5rem)] w-[22.5rem] max-w-[88vw] flex-col overflow-hidden rounded-bento border border-line bg-surface shadow-panel"
       >
-        <header className="flex shrink-0 items-start justify-between gap-2 border-b border-line px-4 py-3">
+        <header className="flex shrink-0 items-start justify-between gap-2 px-4 py-3">
           <div className="min-w-0">
             <h2 className="truncate text-lg leading-tight font-semibold tracking-[-0.01em] text-ink">
               {zone.zone_name}
@@ -124,7 +124,7 @@ export function ZoneCard({
         <div className="min-h-0 flex-1 overflow-y-auto">
           {/* 1. What to do — the plain-language answer comes first. */}
           <div
-            className="border-l-[3px] px-4 py-3"
+            className="grid gap-4 border-l-[3px] px-4 py-3 lg:grid-cols-2"
             style={{
               borderLeftColor: BAND_COLORS[band],
               background: `color-mix(in srgb, ${BAND_COLORS[band]} 8%, white)`,
@@ -134,12 +134,12 @@ export function ZoneCard({
               <BandChip band={zone.operational_band} />
               <IpcChip phase={zone.ipc_phase} />
             </div>
-            <p className="text-[15px] leading-snug font-medium text-ink">
+            <p className="col-span-2 text-[15px] leading-snug font-medium text-ink">
               {BAND_GUIDANCE[band]}
             </p>
 
             {/* 2. How much — and, just as importantly, which way. */}
-            <div className="mt-3 flex items-end justify-between gap-3">
+            <div className="flex items-end justify-between gap-3">
               <span className="flex items-end gap-2.5">
                 <span
                   className="font-mono text-3xl leading-none font-semibold tabular-nums"
@@ -169,10 +169,10 @@ export function ZoneCard({
               track="var(--color-line)"
               ticks={BAND_TICKS}
               height="lg"
-              className="mt-1.5"
+              className="col-span-2 mt-1.5"
               label={`Conflict pressure for ${zone.zone_name}`}
             />
-            <p className="mt-1.5 text-2xs text-faint">
+            <p className="col-span-2 text-2xs text-faint">
               Conflict pressure ·{' '}
               {fmtForecastWindow(
                 situation?.window_start,

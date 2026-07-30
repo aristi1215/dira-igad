@@ -301,7 +301,7 @@ function LegendShell({
 }) {
   return (
     // bottom-14 clears the status strip along the bottom edge.
-    <div className="pointer-events-auto absolute bottom-14 left-[17.5rem] xl:left-[21rem] z-map-ui w-56 rounded-lg border border-line bg-surface/95 p-2.5 shadow-panel backdrop-blur-sm">
+    <div className="pointer-events-auto absolute bottom-14 left-[17.5rem] z-map-ui w-56 rounded-bento border border-line bg-surface/92 p-2.5 shadow-panel backdrop-blur-xl xl:left-[21rem]">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="text-eyebrow text-faint uppercase">
           {title}

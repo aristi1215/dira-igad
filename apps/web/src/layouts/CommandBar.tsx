@@ -29,16 +29,15 @@ export function CommandBar({
   return (
     <header
       className={cx(
-        'z-header flex h-14 shrink-0 items-center gap-4 bg-surface px-4',
+        'z-header flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface/80 px-4 backdrop-blur-xl',
         // A rule plus a whisper of cast shadow, so the bar sits above the
         // canvas instead of being drawn onto it.
-        'shadow-[0_1px_0_var(--color-line),0_1px_10px_rgba(22,22,22,0.035)]',
       )}
     >
       <div className="flex shrink-0 items-center gap-2.5" data-tour={TOUR_ANCHORS.brand}>
         <BrandMark size={21} className="text-accent" />
         <span className="text-xl leading-none font-semibold tracking-[-0.02em] text-ink">
-          DIRA
+          Dira
         </span>
         <span aria-hidden className="hidden h-5 w-px bg-line lg:block" />
         <span className="text-eyebrow hidden text-faint uppercase lg:inline">
@@ -106,7 +105,7 @@ function NavItemLink({
       title={`${item.label} — ${item.hint}  (G then ${item.key.toUpperCase()})`}
       className={({ isActive }) =>
         cx(
-          'relative flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium whitespace-nowrap',
+          'relative flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap',
           'transition-colors duration-[120ms] ease-standard',
           // Active is a real state, not a hairline: the label, the icon and the
           // plate all move together.
