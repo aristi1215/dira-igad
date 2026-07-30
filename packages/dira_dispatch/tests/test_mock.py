@@ -12,3 +12,14 @@ def test_mock_dispatcher_records_deterministic_calls() -> None:
     assert first.provider_message_id == second.provider_message_id
     assert len(dispatcher.calls) == 2
     assert dispatcher.calls[0].idem_key == "idem-1"
+
+
+def test_mock_dispatcher_records_deterministic_sms() -> None:
+    dispatcher = MockDispatcher()
+
+    first = dispatcher.send("+15550000001", "Alert text", "sms-idem-1")
+    second = dispatcher.send("+15550000001", "Alert text", "sms-idem-1")
+
+    assert first == second
+    assert len(dispatcher.messages) == 2
+    assert dispatcher.messages[0].body == "Alert text"

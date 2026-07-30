@@ -6,7 +6,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from dira_core.alerts import derive_idempotency_key
@@ -56,6 +56,31 @@ class ApproveBody(BaseModel):
 class AlertDraftBody(BaseModel):
     created_by: str = "advisor"
     language: str = "sw"
+
+
+class AlertEditBody(BaseModel):
+    body_text: str | None = Field(default=None, min_length=1, max_length=4000)
+    language: str | None = Field(
+        default=None, pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12
+    )
+
+
+class RecipientCreateBody(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    zone_id: str | None = None
+    phone_e164: str = Field(pattern=r"^\+[1-9][0-9]{7,14}$")
+    language: str = Field(default="sw", pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12)
+    channel: Literal["voice", "sms", "both"] = "voice"
+
+
+class RecipientPatchBody(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    phone_e164: str | None = Field(default=None, pattern=r"^\+[1-9][0-9]{7,14}$")
+    language: str | None = Field(
+        default=None, pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12
+    )
+    channel: Literal["voice", "sms", "both"] | None = None
+    active: bool | None = None
 
 
 class RetryBody(BaseModel):
@@ -233,6 +258,103 @@ def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, An
     return _jsonable(dict(row))
 
 
+@app.patch("/alerts/{alert_id}")
+def edit_alert(alert_id: UUID, body: AlertEditBody) -> dict[str, Any]:
+    updates: dict[str, Any] = {}
+    if body.body_text is not None:
+        updates["body_text"] = body.body_text
+    if body.language is not None:
+        updates["language"] = body.language
+    if not updates:
+        raise HTTPException(422, "At least one alert field is required")
+
+    assignments = ", ".join(f"{key} = %s" for key in updates)
+    values = [*updates.values(), alert_id]
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE alerts
+                    SET {assignments}, updated_at = now()
+                    WHERE id = %s AND status = 'pending_approval'
+                    RETURNING id, situation_id, status, language, body_text,
+                              created_by, approved_by, approved_at, created_at,
+                              updated_at, window_start, window_end
+                    """,
+                    values,
+                )
+                row = cur.fetchone()
+                if row is None:
+                    cur.execute("SELECT id, status FROM alerts WHERE id = %s", (alert_id,))
+                    existing = cur.fetchone()
+                    if existing is None:
+                        raise HTTPException(404, "Alert not found")
+                    raise HTTPException(409, f"Alert status is {existing['status']}")
+    return _jsonable(dict(row))
+
+
+@app.post("/recipients")
+def create_recipient(body: RecipientCreateBody) -> dict[str, Any]:
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO recipients (name, zone_id, phone_e164, language, channel)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, name, phone_e164, zone_id, language, channel, active
+                    """,
+                    (body.name, body.zone_id, body.phone_e164, body.language, body.channel),
+                )
+                row = cur.fetchone()
+    return _jsonable(dict(row))
+
+
+@app.patch("/recipients/{recipient_id}")
+def edit_recipient(recipient_id: UUID, body: RecipientPatchBody) -> dict[str, Any]:
+    updates = body.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(422, "At least one recipient field is required")
+    assignments = ", ".join(f"{key} = %s" for key in updates)
+    values = [*updates.values(), recipient_id]
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE recipients
+                    SET {assignments}
+                    WHERE id = %s
+                    RETURNING id, name, phone_e164, zone_id, language, channel, active
+                    """,
+                    values,
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise HTTPException(404, "Recipient not found")
+    return _jsonable(dict(row))
+
+
+@app.delete("/recipients/{recipient_id}")
+def delete_recipient(recipient_id: UUID) -> dict[str, Any]:
+    with connect(_settings().database_url) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE recipients SET active = FALSE
+                    WHERE id = %s
+                    RETURNING id, name, phone_e164, zone_id, language, channel, active
+                    """,
+                    (recipient_id,),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise HTTPException(404, "Recipient not found")
+    return _jsonable(dict(row))
+
+
 @app.post("/alerts/{alert_id}/approve")
 def approve_alert(
     alert_id: UUID,
@@ -285,20 +407,27 @@ def approve_alert(
                         (alert["zone_id"],),
                     )
                     recipients = cur.fetchall()
-                    expected_delivery_count = len(recipients)
+                    expected_delivery_count = 0
                     for rec in recipients:
-                        idem = derive_idempotency_key(
-                            str(alert_id), str(rec["id"]), str(rec["channel"])
+                        channels = (
+                            ("voice", "sms")
+                            if rec["channel"] == "both"
+                            else (rec["channel"],)
                         )
-                        cur.execute(
-                            """
-                            INSERT INTO deliveries (
-                              alert_id, recipient_id, channel, idempotency_key, status
-                            ) VALUES (%s, %s, %s, %s, 'queued')
-                            ON CONFLICT (idempotency_key) DO NOTHING
-                            """,
-                            (alert_id, rec["id"], rec["channel"], idem),
-                        )
+                        expected_delivery_count += len(channels)
+                        for channel in channels:
+                            idem = derive_idempotency_key(
+                                str(alert_id), str(rec["id"]), channel
+                            )
+                            cur.execute(
+                                """
+                                INSERT INTO deliveries (
+                                  alert_id, recipient_id, channel, idempotency_key, status
+                                ) VALUES (%s, %s, %s, %s, 'queued')
+                                ON CONFLICT (idempotency_key) DO NOTHING
+                                """,
+                                (alert_id, rec["id"], channel, idem),
+                            )
                     cur.execute(
                         "SELECT count(*) AS count FROM deliveries WHERE alert_id = %s",
                         (alert_id,),

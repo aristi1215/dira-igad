@@ -23,6 +23,14 @@ class MockCall:
 
 
 @dataclass
+class MockMessage:
+    phone: str
+    body: str
+    idem_key: str
+    provider_message_id: str
+
+
+@dataclass
 class MockDispatcher:
     """VoiceChannel that records calls and can simulate asynchronous acks."""
 
@@ -30,6 +38,7 @@ class MockDispatcher:
     ack_delay_seconds: float | None = None
     database_url: str | None = None
     calls: list[MockCall] = field(default_factory=list)
+    messages: list[MockMessage] = field(default_factory=list)
 
     def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef:
         provider_message_id = f"mock-{uuid.uuid5(uuid.NAMESPACE_URL, idem_key)}"
@@ -53,6 +62,26 @@ class MockDispatcher:
                 timer.daemon = True
                 timer.start()
         return ref
+
+    def send(self, to_e164: str, body: str, idempotency_key: str) -> str:
+        provider_message_id = f"mock-sms-{uuid.uuid5(uuid.NAMESPACE_URL, idempotency_key)}"
+        message = MockMessage(
+            phone=to_e164,
+            body=body,
+            idem_key=idempotency_key,
+            provider_message_id=provider_message_id,
+        )
+        self.messages.append(message)
+        ref = ProviderRef(provider_message_id=provider_message_id, raw=_raw_message(message))
+        callback = self.ack_callback
+        if callback is not None:
+            if self.ack_delay_seconds is None or self.ack_delay_seconds <= 0:
+                callback(ref)
+            else:
+                timer = threading.Timer(self.ack_delay_seconds, callback, args=(ref,))
+                timer.daemon = True
+                timer.start()
+        return provider_message_id
 
     def _db_ack(self, ref: ProviderRef) -> None:
         """Simulate keypad '1' ack after a successful seeded call."""
@@ -85,4 +114,13 @@ def _raw(call: MockCall) -> dict[str, Any]:
         "audio_url": call.audio_url,
         "idem_key": call.idem_key,
         "provider_message_id": call.provider_message_id,
+    }
+
+
+def _raw_message(message: MockMessage) -> dict[str, Any]:
+    return {
+        "phone": message.phone,
+        "body": message.body,
+        "idem_key": message.idem_key,
+        "provider_message_id": message.provider_message_id,
     }

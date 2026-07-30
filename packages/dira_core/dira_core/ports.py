@@ -125,6 +125,11 @@ class VoiceChannel(Protocol):
 
 
 @runtime_checkable
+class SmsChannel(Protocol):
+    def send(self, to_e164: str, body: str, idempotency_key: str) -> str: ...
+
+
+@runtime_checkable
 class SpeechSynthesizer(Protocol):
     def synthesize(self, text: str, language: str) -> AudioRef: ...
 

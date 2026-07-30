@@ -143,7 +143,7 @@ def make_delivery(db_conn: Any, make_alert: Callable[..., UUID]) -> Callable[...
                     """
                     SELECT id, channel
                     FROM recipients
-                    WHERE active = TRUE
+                    WHERE active = TRUE AND channel = 'voice'
                     ORDER BY id
                     LIMIT 1
                     """
@@ -153,7 +153,7 @@ def make_delivery(db_conn: Any, make_alert: Callable[..., UUID]) -> Callable[...
                     """
                     SELECT id, channel
                     FROM recipients
-                    WHERE active = TRUE AND zone_id = %s
+                    WHERE active = TRUE AND channel = 'voice' AND zone_id = %s
                     ORDER BY id
                     LIMIT 1
                     """,

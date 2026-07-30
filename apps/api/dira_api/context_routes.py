@@ -493,8 +493,8 @@ def list_recipients() -> list[dict[str, Any]]:
                 """
                 SELECT r.id, r.name, r.phone_e164, r.zone_id, z.name AS zone_name,
                        r.channel, r.language, r.active
-                FROM recipients r JOIN zones z ON z.id = r.zone_id
-                ORDER BY z.name, r.name
+                FROM recipients r LEFT JOIN zones z ON z.id = r.zone_id
+                ORDER BY z.name NULLS LAST, r.name
                 """
             )
             return _rows(cur)
