@@ -115,7 +115,7 @@ export function MapHoverCard({
         <div className="mt-2 flex items-end justify-between gap-2">
           <span className="flex items-baseline gap-1.5">
             <span
-              className="font-mono text-xl leading-none font-semibold tabular-nums"
+              className="text-xl leading-none font-semibold tabular-nums"
               style={{ color }}
             >
               {zone.model_risk != null ? fmtRiskScore(zone.model_risk) : '—'}
@@ -147,7 +147,7 @@ export function MapHoverCard({
               >
                 <span className="truncate text-faint">{featureMeta(feature).label}</span>
                 <span
-                  className={`shrink-0 font-mono tabular-nums ${
+                  className={`shrink-0 tabular-nums ${
                     value >= 0 ? 'text-err-fg' : 'text-ok-fg'
                   }`}
                 >

@@ -60,11 +60,11 @@ export function ShapDrivers({ shap }: { shap: ShapBreakdown }) {
                     ) : null}
                   </span>
                 </span>
-                <span className={value >= 0 ? 'font-mono text-err-fg' : 'font-mono text-info-fg'}>
+                <span className={value >= 0 ? 'tabular-nums text-err-fg' : 'tabular-nums text-info-fg'}>
                   {value >= 0 ? '+' : '−'}
                   {Math.abs(value).toFixed(3)}
                 </span>
-                <span className="font-mono text-muted">{share.toFixed(0)}%</span>
+                <span className="tabular-nums text-muted">{share.toFixed(0)}%</span>
               </button>
               {isOpen ? (
                 <p className="m-0 rounded-md border border-line bg-surface-2 px-2.5 py-2 text-xs leading-relaxed text-muted">{meta.description}</p>

@@ -158,7 +158,7 @@ export function HBarList({
               style={{ width: `${((item.value ?? 0) / max) * 100}%`, background: color }}
             />
           </span>
-          <span className="min-w-12 text-right font-mono font-semibold tabular-nums">
+          <span className="min-w-12 text-right font-semibold tabular-nums">
             {item.value == null ? '—' : formatter(item.value)}
           </span>
           {rightSlot ? rightSlot(item) : null}

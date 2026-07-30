@@ -243,7 +243,7 @@ export function ZoneCard({
             <div className="flex items-end justify-between gap-3">
               <span className="flex items-end gap-2.5">
                 <span
-                  className="font-mono text-3xl leading-none font-semibold tabular-nums"
+                  className="text-3xl leading-none font-semibold tabular-nums"
                   style={{ color: BAND_COLORS[band] }}
                 >
                   {fmtRiskScore(zone.model_risk)}
@@ -381,7 +381,7 @@ export function ZoneCard({
               </span>
               <span
                 className={cx(
-                  'font-mono font-medium tabular-nums',
+                  'font-medium tabular-nums',
                   zone.staple_pct_vs_3m_avg > 5
                     ? 'text-err-fg'
                     : zone.staple_pct_vs_3m_avg < -5

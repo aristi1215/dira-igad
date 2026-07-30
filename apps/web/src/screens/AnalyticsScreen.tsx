@@ -109,7 +109,7 @@ export function AnalyticsScreen() {
             </BentoCard>
 
             <BentoCard span={2} tone="inverse" eyebrow="Priority signal" title="Zones at risk">
-              <p className="font-mono text-4xl font-semibold tabular-nums">{severeZones}</p>
+              <p className="text-4xl font-semibold tabular-nums">{severeZones}</p>
               <p className="mt-2 text-sm text-muted">high or very high this cycle</p>
               <p className="mt-5 text-xs text-faint">
                 {data.delivery_stats.needs_review > 0
@@ -141,7 +141,7 @@ export function AnalyticsScreen() {
                 ]}
               />
               <p className="mt-3 text-xs text-faint">
-                Latest month: <span className="font-mono text-ink">{incidentTrend?.latest ?? '—'}</span>
+                Latest month: <span className="tabular-nums text-ink">{incidentTrend?.latest ?? '—'}</span>
                 {incidentTrend ? ` · ${fmtMonth(incidentTrend.month)}` : ''}
               </p>
             </BentoCard>
@@ -159,13 +159,13 @@ export function AnalyticsScreen() {
             </BentoCard>
 
             <BentoCard span={2} eyebrow="Field evidence" title="Report funnel">
-              <p className="font-mono text-3xl font-semibold tabular-nums text-ink">{data.field_report_stats.verified}</p>
+              <p className="text-3xl font-semibold tabular-nums text-ink">{data.field_report_stats.verified}</p>
               <p className="mt-1 text-xs text-faint">verified reports</p>
               <p className="mt-4 text-xs text-muted">{data.field_report_stats.unverified} awaiting verification</p>
             </BentoCard>
 
             <BentoCard span={2} eyebrow="Dispatch" title="Delivery health">
-              <p className="font-mono text-3xl font-semibold tabular-nums text-ink">{ackRate != null ? `${ackRate}%` : '—'}</p>
+              <p className="text-3xl font-semibold tabular-nums text-ink">{ackRate != null ? `${ackRate}%` : '—'}</p>
               <p className="mt-1 text-xs text-faint">acknowledged</p>
               <p className="mt-4 text-xs text-muted">{data.delivery_stats.total} calls placed</p>
             </BentoCard>

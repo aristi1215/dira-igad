@@ -295,7 +295,7 @@ function Badge({
               </span>
               <span className="flex items-center gap-1.5">
                 <span
-                  className="font-mono text-lg leading-none font-semibold tabular-nums"
+                  className="text-lg leading-none font-semibold tabular-nums"
                   style={{ color }}
                 >
                   {fmtRiskScore(entry.risk)}
@@ -331,7 +331,7 @@ function Delta({ value }: { value: number | null }) {
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-0.5 font-mono text-2xs font-medium tabular-nums',
+        'inline-flex items-center gap-0.5 text-2xs font-medium tabular-nums',
         rising ? 'text-err-fg' : 'text-ok-fg',
       )}
     >

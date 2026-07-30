@@ -14,7 +14,7 @@ export function DateStamp({
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 font-mono text-xs font-medium tabular-nums text-muted',
+        'inline-flex items-center gap-1.5 text-xs font-medium tabular-nums text-muted',
         className,
       )}
       title={title}

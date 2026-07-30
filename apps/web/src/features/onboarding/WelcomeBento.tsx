@@ -137,7 +137,7 @@ function ZoneThumbnail() {
           <div className="h-full w-[72%] rounded-full bg-band-high" />
         </div>
         <div className="mt-2 flex justify-between text-2xs text-faint">
-          <span>Conflict pressure</span><span className="font-mono text-muted">72 / 100</span>
+          <span>Conflict pressure</span><span className="tabular-nums text-muted">72 / 100</span>
         </div>
       </div>
       <p className="mt-auto text-xs leading-relaxed text-muted">One sentence first. The evidence is there when you need it.</p>
@@ -197,7 +197,7 @@ function DataSources() {
     <Tile eyebrow="Where the data comes from" title="Many lenses, one picture">
       <div className="grid grid-cols-3 gap-2">
         {['ACLED', 'CHIRPS', 'IPC', 'DTM', 'WFP', 'WHO'].map((source) => (
-          <span key={source} className="rounded-md border border-line bg-surface-2 px-2 py-2 text-center font-mono text-2xs font-semibold tracking-wide text-muted">
+          <span key={source} className="rounded-md border border-line bg-surface-2 px-2 py-2 text-center tabular-nums text-2xs font-semibold tracking-wide text-muted">
             {source}
           </span>
         ))}

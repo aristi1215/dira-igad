@@ -149,7 +149,7 @@ export function MapLegend({
                   <span className="flex-1">{BAND_LABELS[band]}</span>
                   <span
                     className={cx(
-                      'font-mono tabular-nums',
+                      'tabular-nums',
                       count === 0 ? 'text-line-strong' : 'text-muted',
                     )}
                   >
@@ -217,7 +217,7 @@ export function MapLegend({
         <p className="mt-2 border-t border-line pt-1.5 text-2xs leading-relaxed text-faint">
           {eventWindow?.start && eventWindow.end ? (
             <>
-              <span className="font-mono tabular-nums text-muted">
+              <span className="tabular-nums text-muted">
                 {eventWindow.count.toLocaleString()}
               </span>{' '}
               events, {fmtDate(eventWindow.start)} – {fmtDate(eventWindow.end)}.{' '}
@@ -277,7 +277,7 @@ export function MapLegend({
       </span>
 
       {distribution ? (
-        <span className="mt-1 flex justify-between font-mono text-2xs tabular-nums text-faint">
+        <span className="mt-1 flex justify-between text-2xs tabular-nums text-faint">
           <span>{ramp.format(distribution.min)}</span>
           <span className="text-muted" title="Median across all zones">
             {ramp.format(distribution.median)}

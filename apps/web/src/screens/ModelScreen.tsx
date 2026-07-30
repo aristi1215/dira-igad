@@ -111,7 +111,7 @@ export function ModelScreen() {
       header: 'Split',
       width: '5rem',
       render: (run) => (
-        <span className="font-mono tabular-nums">
+        <span className="tabular-nums">
           {Math.round(run.split_fraction * 100)}/{Math.round((1 - run.split_fraction) * 100)}
         </span>
       ),
@@ -121,7 +121,7 @@ export function ModelScreen() {
       key: 'period',
       header: 'Test period',
       render: (run) => (
-        <span className="font-mono text-2xs text-muted">
+        <span className="tabular-nums text-2xs text-muted">
           {run.test_cycles[0]} → {run.test_cycles[1]}
         </span>
       ),
@@ -132,7 +132,7 @@ export function ModelScreen() {
       align: 'right',
       width: '6rem',
       render: (run) => (
-        <span className="font-mono text-ink">
+        <span className="tabular-nums text-ink">
           {fmtMetric(run.lightgbm?.brier ?? run.transparent_index?.brier)}
         </span>
       ),
@@ -143,7 +143,7 @@ export function ModelScreen() {
       align: 'right',
       width: '7rem',
       render: (run) => (
-        <span className="font-mono text-faint">
+        <span className="tabular-nums text-faint">
           {fmtMetric(run.baselines?.climatology?.brier)}
         </span>
       ),
@@ -201,11 +201,11 @@ export function ModelScreen() {
             </div>
           </BentoCard>
           <BentoCard span={2} eyebrow="Horizon" title={`${card.horizon_days} days`}>
-            <p className="font-mono text-3xl font-semibold tabular-nums">~{card.horizon_days}</p>
+            <p className="text-3xl font-semibold tabular-nums">~{card.horizon_days}</p>
             <p className="mt-2 text-sm text-muted">{card.horizon_dekads} ten-day periods ahead</p>
           </BentoCard>
           <BentoCard span={2} eyebrow="Training" title="How it was trained">
-            <p className="font-mono text-3xl font-semibold tabular-nums">{card.train_rows}</p>
+            <p className="text-3xl font-semibold tabular-nums">{card.train_rows}</p>
             <p className="mt-2 text-sm text-muted">rows used for training</p>
           </BentoCard>
           </BentoGrid>
@@ -341,7 +341,7 @@ export function ModelScreen() {
                 <div key={group} className="rounded-md border border-line bg-surface-2 p-3">
                   <h3 className="mb-2 flex items-baseline gap-1.5 text-eyebrow text-faint uppercase">
                     {titleCase(group)}
-                    <span className="font-mono tabular-nums text-line-strong">
+                    <span className="tabular-nums text-line-strong">
                       {features.length}
                     </span>
                   </h3>

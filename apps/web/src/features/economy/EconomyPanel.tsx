@@ -79,28 +79,28 @@ function CountryCard({
     <article className={focused ? 'rounded-md border border-accent bg-accent-soft p-3' : 'rounded-md border border-line bg-surface p-3'}>
       <header className="flex items-center justify-between gap-2">
         <strong className="text-sm text-ink">{country.name}</strong>
-        <span className="rounded border border-line-strong px-1.5 py-0.5 font-mono text-[0.7rem] text-muted">{iso2}</span>
+        <span className="rounded border border-line-strong px-1.5 py-0.5 tabular-nums text-[0.7rem] text-muted">{iso2}</span>
       </header>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div>
           <dt className="text-muted">GDP</dt>
-          <dd className="font-mono text-ink">{gdp != null ? `$${gdp.toFixed(1)}B` : '—'}</dd>
+          <dd className="tabular-nums text-ink">{gdp != null ? `$${gdp.toFixed(1)}B` : '—'}</dd>
         </div>
         <div>
           <dt>Growth</dt>
-          <dd className={growth != null && growth < 0 ? 'font-mono text-err-fg' : 'font-mono text-ok-fg'}>
+          <dd className={growth != null && growth < 0 ? 'tabular-nums text-err-fg' : 'tabular-nums text-ok-fg'}>
             {growth != null ? `${growth.toFixed(1)}%` : '—'}
           </dd>
         </div>
         <div>
           <dt>Inflation</dt>
-          <dd className={inflation != null && inflation > 15 ? 'font-mono text-err-fg' : 'font-mono text-ink'}>
+          <dd className={inflation != null && inflation > 15 ? 'tabular-nums text-err-fg' : 'tabular-nums text-ink'}>
             {inflation != null ? `${inflation.toFixed(1)}%` : '—'}
           </dd>
         </div>
         <div>
           <dt>Population</dt>
-          <dd className="font-mono text-ink">{population != null ? `${population.toFixed(1)}M` : '—'}</dd>
+          <dd className="tabular-nums text-ink">{population != null ? `${population.toFixed(1)}M` : '—'}</dd>
         </div>
       </dl>
       <Sparkline values={country.gdp_growth_pct} years={years} />

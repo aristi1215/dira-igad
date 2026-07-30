@@ -30,7 +30,7 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
         >
           <div className="mb-1 flex items-baseline justify-between gap-2">
             <span className="text-sm font-medium text-ink">Model forecast</span>
-            <span className="font-mono text-sm tabular-nums text-ink">{fmtRisk(assessment.model_risk)}</span>
+            <span className="text-sm tabular-nums text-ink">{fmtRisk(assessment.model_risk)}</span>
           </div>
           <Meter value={assessment.model_risk} color={CHART.cat1} ticks={BAND_TICKS} height="lg" label="Model forecast" />
           <p className="mt-1 text-2xs text-faint">Climate and conflict history only</p>
@@ -42,7 +42,7 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
         >
           <div className="mb-1 flex items-baseline justify-between gap-2">
             <Term term="corroboration">What people are reporting</Term>
-            <span className="font-mono text-sm tabular-nums text-ink">{fmtRisk(assessment.corroboration)}</span>
+            <span className="text-sm tabular-nums text-ink">{fmtRisk(assessment.corroboration)}</span>
           </div>
           <Meter value={assessment.corroboration} color={CHART.cat2} ticks={BAND_TICKS} height="lg" label="What people are reporting" />
           <p className="mt-1 text-2xs text-faint">Reports in the news and verified field reports</p>
@@ -60,7 +60,7 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
           <text x="155" y="21" className="fill-ink text-[9px]">combined score</text>
           <text x="155" y="39" className="fill-muted text-[9px]">{operationalScore.toFixed(3)}</text>
         </svg>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-2xs text-muted">
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 tabular-nums text-2xs text-muted">
           <span>Model · {fmtRisk(assessment.model_risk)}</span>
           <span>News · {fmtRisk(newsCorroboration ?? 0)}</span>
           <span>Field · {fmtRisk(fieldCorroboration ?? 0)}</span>
@@ -71,7 +71,7 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
       <div>
         <div className="mb-2 flex items-center justify-between">
           <p className="text-eyebrow text-faint">Risk ladder</p>
-          <span className="font-mono text-2xs text-muted">{BAND_LABELS[assessment.operational_band]}</span>
+          <span className="text-2xs text-muted">{BAND_LABELS[assessment.operational_band]}</span>
         </div>
         <div className="relative flex flex-col gap-1.5">
           {LADDER.map((band, index) => (
@@ -85,7 +85,7 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                  className="ml-auto rounded-full bg-surface-3 px-2 py-0.5 font-mono text-2xs text-ink"
+                  className="ml-auto rounded-full bg-surface-3 px-2 py-0.5 tabular-nums text-2xs text-ink"
                 >
                   {operationalScore.toFixed(3)}
                 </motion.span>
@@ -109,7 +109,7 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
         <summary className="cursor-pointer text-xs font-medium text-muted hover:text-ink">
           Show the exact stored rule
         </summary>
-        <p className="mt-2 break-words font-mono text-xs leading-relaxed text-muted">
+        <p className="mt-2 break-words tabular-nums text-xs leading-relaxed text-muted">
           {assessment.combination_rule}
         </p>
       </details>

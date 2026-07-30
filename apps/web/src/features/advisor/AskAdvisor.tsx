@@ -202,7 +202,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
             {band ? (
               <span className="flex shrink-0 items-baseline gap-1.5">
                 <span
-                  className="font-mono text-lg leading-none font-semibold tabular-nums"
+                  className="text-lg leading-none font-semibold tabular-nums"
                   style={{ color: BAND_COLORS[band] }}
                 >
                   {fmtRiskScore(zone.model_risk)}
@@ -418,7 +418,7 @@ function Citations({ citations }: { citations: AdvisorCitation[] }) {
                 <Icon size={10} strokeWidth={2} />
               </span>
               <span className="min-w-0 text-muted">
-                <span className="font-mono text-2xs text-faint">[{index + 1}]</span>{' '}
+                <span className="tabular-nums text-2xs text-faint">[{index + 1}]</span>{' '}
                 {citation.title}
                 {citation.source ? (
                   <span className="text-faint"> — {citation.source}</span>

@@ -133,7 +133,7 @@ export function SituationsScreen() {
             height="sm"
             className="w-14"
           />
-          <span className="w-9 text-right font-mono tabular-nums">
+          <span className="w-9 text-right tabular-nums">
             {fmtRisk(situation.model_risk)}
           </span>
         </span>
@@ -173,7 +173,7 @@ export function SituationsScreen() {
       header: 'What people report',
       align: 'right',
       render: (situation) => (
-        <span className="font-mono tabular-nums">{fmtRisk(situation.corroboration)}</span>
+        <span className="tabular-nums">{fmtRisk(situation.corroboration)}</span>
       ),
       sortBy: (situation) => situation.corroboration ?? -1,
     },
@@ -294,7 +294,7 @@ export function SituationsScreen() {
             ))}
           </Select>
         </Field>
-        <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">
+        <span className="mb-1.5 text-xs tabular-nums text-faint">
           {filtered.length} / {all.length}
         </span>
       </div>

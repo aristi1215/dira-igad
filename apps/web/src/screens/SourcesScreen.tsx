@@ -72,7 +72,7 @@ export function SourcesScreen() {
         <span className="flex flex-col">
           <span className="font-medium text-ink">{source.name}</span>
           {source.live_endpoint ? (
-            <span className="font-mono text-2xs break-all text-faint">
+            <span className="tabular-nums text-2xs break-all text-faint">
               {source.live_endpoint}
             </span>
           ) : null}
@@ -106,7 +106,7 @@ export function SourcesScreen() {
       header: 'Updated',
       width: '8rem',
       render: (source) => (
-        <span className="font-mono text-2xs text-muted">
+        <span className="tabular-nums text-2xs text-muted">
           {freshness(source.freshest_available_at)}
         </span>
       ),
@@ -127,7 +127,7 @@ export function SourcesScreen() {
       header: 'Rows',
       align: 'right',
       width: '6rem',
-      render: (source) => <span className="font-mono">{fmtNumber(source.rows)}</span>,
+      render: (source) => <span className="tabular-nums">{fmtNumber(source.rows)}</span>,
       sortBy: (source) => source.rows ?? -1,
     },
     {
@@ -266,7 +266,7 @@ export function SourcesScreen() {
                 ))}
               </Select>
             </Field>
-            <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">
+            <span className="mb-1.5 text-xs tabular-nums text-faint">
               {visibleSources.length} / {sources.length}
             </span>
           </div>
@@ -281,7 +281,7 @@ export function SourcesScreen() {
           </BentoCard>
 
           <p className="mt-4 text-xs text-faint">
-            Freshness is the newest <span className="font-mono">available_at</span> in each feed —
+            Freshness is the newest <span className="font-medium text-ink">available_at</span> in each feed —
             when Dira could first have known the record, not the date the record describes.
           </p>
         </>

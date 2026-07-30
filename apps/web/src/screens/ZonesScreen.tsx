@@ -121,7 +121,7 @@ export function ZonesScreen() {
             animate={false}
             className="w-14"
           />
-          <span className="w-6 text-right font-mono font-medium tabular-nums">
+          <span className="w-6 text-right font-medium tabular-nums">
             {fmtRiskScore(zone.model_risk)}
           </span>
         </span>
@@ -209,15 +209,15 @@ export function ZonesScreen() {
             onSelect={setBandFilter}
           />
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div><Eyebrow>Zones</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{zones.length}</p></div>
-            <div><Eyebrow>High+</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{attentionZones.length}</p></div>
-            <div><Eyebrow>Filtered</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{filtered.length}</p></div>
-            <div><Eyebrow>Countries</Eyebrow><p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{countries.length}</p></div>
+            <div><Eyebrow>Zones</Eyebrow><p className="mt-1 text-2xl font-semibold tabular-nums">{zones.length}</p></div>
+            <div><Eyebrow>High+</Eyebrow><p className="mt-1 text-2xl font-semibold tabular-nums">{attentionZones.length}</p></div>
+            <div><Eyebrow>Filtered</Eyebrow><p className="mt-1 text-2xl font-semibold tabular-nums">{filtered.length}</p></div>
+            <div><Eyebrow>Countries</Eyebrow><p className="mt-1 text-2xl font-semibold tabular-nums">{countries.length}</p></div>
           </div>
         </BentoCard>
 
         <BentoCard span={2} tone="inverse" eyebrow="Priority signal" title="Needs attention now">
-          <p className="font-mono text-4xl font-semibold tabular-nums">{attentionZones.length}</p>
+          <p className="text-4xl font-semibold tabular-nums">{attentionZones.length}</p>
           <ul className="mt-4 flex flex-col gap-1 text-sm text-muted">
             {attentionZones.slice(0, 4).map((zone) => <li key={zone.zone_id}>{zone.zone_name}</li>)}
             {attentionZones.length > 4 ? <li className="text-xs text-faint">+{attentionZones.length - 4} more</li> : null}
@@ -228,7 +228,7 @@ export function ZonesScreen() {
           <BentoCard key={zone.zone_id} span={1} interactive>
             <div className="flex items-start justify-between gap-2">
               <BandDot band={zone.operational_band} />
-              <span className="font-mono text-xl font-semibold tabular-nums">{fmtRiskScore(zone.model_risk)}</span>
+              <span className="text-xl font-semibold tabular-nums">{fmtRiskScore(zone.model_risk)}</span>
             </div>
             <p className="mt-4 truncate text-sm font-semibold text-ink">{zone.zone_name}</p>
             <Sparkline
@@ -256,7 +256,7 @@ export function ZonesScreen() {
                 {countries.map((iso2) => <option key={iso2} value={iso2}>{COUNTRY_NAMES[iso2] ?? iso2}</option>)}
               </Select>
             </Field>
-            <span className="mb-1.5 font-mono text-xs tabular-nums text-faint">{filtered.length} / {zones.length}</span>
+            <span className="mb-1.5 text-xs tabular-nums text-faint">{filtered.length} / {zones.length}</span>
           </div>
         </BentoCard>
         <BentoCard span={6} padded={false} title="All monitored zones">

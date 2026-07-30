@@ -122,7 +122,7 @@ export function MapStatusStrip({
           )}
         >
           <Megaphone size={13} strokeWidth={1.75} aria-hidden />
-          <span className="font-mono tabular-nums">{pendingAlerts}</span>
+          <span className="tabular-nums">{pendingAlerts}</span>
           awaiting approval
           <ArrowRight size={12} strokeWidth={2} aria-hidden />
         </Link>
@@ -145,7 +145,7 @@ function Readout({
       <span className="text-eyebrow text-faint uppercase">
         {label}
       </span>
-      <span className="font-mono text-sm font-semibold tabular-nums text-ink">{value}</span>
+      <span className="text-sm font-semibold tabular-nums text-ink">{value}</span>
       <span className="hidden text-2xs text-faint lg:inline">{detail}</span>
     </span>
   )

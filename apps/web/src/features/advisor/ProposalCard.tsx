@@ -147,7 +147,7 @@ export function ProposalCard({
                       }
                       placeholder="+2547XXXXXXXX"
                       aria-label={`Target phone number ${index + 1}`}
-                      className="min-w-0 flex-1 rounded-md border border-line bg-surface px-2.5 py-2 text-sm font-mono text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+                      className="min-w-0 flex-1 rounded-md border border-line bg-surface px-2.5 py-2 text-sm tabular-nums text-ink placeholder:text-faint focus:border-accent focus:outline-none"
                     />
                     {dispatchNumbers.length > 1 ? (
                       <Button

@@ -180,7 +180,7 @@ function DeliveryFunnel({
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
       <span className="flex items-baseline gap-1.5">
-        <span className="font-mono text-lg font-semibold tabular-nums text-ink">
+        <span className="text-lg font-semibold tabular-nums text-ink">
           {rate(delivered)}
         </span>
         <span className="text-eyebrow text-faint uppercase">
@@ -188,7 +188,7 @@ function DeliveryFunnel({
         </span>
       </span>
       <span className="flex items-baseline gap-1.5">
-        <span className="font-mono text-lg font-semibold tabular-nums text-ink">
+        <span className="text-lg font-semibold tabular-nums text-ink">
           {rate(acked)}
         </span>
         <span className="text-eyebrow text-faint uppercase">
@@ -207,7 +207,7 @@ function DeliveryFunnel({
             />
           ))}
         </span>
-        <span className="flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-2xs tabular-nums text-faint">
+        <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-2xs tabular-nums text-faint">
           {segments.map((segment) => (
             <span key={segment.status} className="flex items-center gap-1">
               <span aria-hidden className={cx('size-1.5 rounded-full', segment.bar)} />
@@ -368,7 +368,7 @@ export function DispatchScreen() {
       header: 'Phone',
       width: '9rem',
       render: (recipient) => (
-        <span className="font-mono text-2xs text-muted">{recipient.phone_e164}</span>
+        <span className="tabular-nums text-2xs text-muted">{recipient.phone_e164}</span>
       ),
     },
     {
@@ -376,7 +376,7 @@ export function DispatchScreen() {
       header: 'Lang',
       width: '4rem',
       render: (recipient) => (
-        <span className="font-mono text-2xs text-muted">
+        <span className="tabular-nums text-2xs text-muted">
           {recipient.language.toUpperCase()}
         </span>
       ),
@@ -611,7 +611,7 @@ export function DispatchScreen() {
               <div className="mt-4 rounded-md border border-line bg-surface-2 px-3 py-2.5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h3 className="text-sm font-semibold text-ink">Recipients for this alert</h3>
-                  <span className="font-mono text-xs tabular-nums text-muted">
+                  <span className="text-xs tabular-nums text-muted">
                     {expectedDeliveryCount} deliveries expected
                   </span>
                 </div>
@@ -715,7 +715,7 @@ export function DispatchScreen() {
                 <h3 className="mb-2 flex items-center gap-1.5 text-eyebrow text-faint uppercase">
                   <Icon size={13} strokeWidth={1.75} aria-hidden className={column.tint} />
                   {column.label}
-                  <span className="ml-auto font-mono text-sm font-semibold tabular-nums text-ink">
+                  <span className="ml-auto text-sm font-semibold tabular-nums text-ink">
                     {items.length}
                   </span>
                 </h3>
@@ -762,7 +762,7 @@ export function DispatchScreen() {
                     </DeliveryCard>
                   ))}
                   {items.length > 12 ? (
-                    <li className="py-1 font-mono text-2xs text-faint">
+                    <li className="py-1 tabular-nums text-2xs text-faint">
                       +{items.length - 12} more
                     </li>
                   ) : null}

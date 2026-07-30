@@ -122,7 +122,7 @@ function Column({
         </h3>
         <span
           className={cx(
-            'font-mono text-2xs tabular-nums',
+            'text-2xs tabular-nums',
             count === 0 ? 'text-line-strong' : 'text-ink',
           )}
         >
@@ -217,12 +217,12 @@ function SignalsColumn({
                     height="sm"
                     className="flex-1"
                   />
-                  <span className="font-mono text-2xs tabular-nums text-faint">
+                  <span className="text-2xs tabular-nums text-faint">
                     {Math.round(signal.confidence * 100)}%
                   </span>
                 </span>
 
-                <span className="mt-1 block truncate font-mono text-2xs text-faint">
+                <span className="mt-1 block truncate tabular-nums text-2xs text-faint">
                   {[signal.source, signal.published_at ? fmtDate(signal.published_at) : null]
                     .filter(Boolean)
                     .join(' · ') || 'Source pending'}
@@ -302,7 +302,7 @@ function ReportsColumn({
                 <span className="mt-1 line-clamp-2 block text-xs leading-snug text-muted">
                   {report.narrative}
                 </span>
-                <span className="mt-1 block truncate font-mono text-2xs text-faint">
+                <span className="mt-1 block truncate tabular-nums text-2xs text-faint">
                   {titleCase(report.reporter_role)} · {fmtDate(report.reported_at)} · severity {report.severity}/3
                 </span>
               </button>
@@ -380,7 +380,7 @@ function HazardsColumn({
                   <span className="mt-1 line-clamp-2 block text-xs leading-snug text-muted">
                     {bulletin.headline}
                   </span>
-                  <span className="mt-1 block truncate font-mono text-2xs text-faint">
+                  <span className="mt-1 block truncate tabular-nums text-2xs text-faint">
                     {fmtDate(bulletin.valid_from)} →{' '}
                     {bulletin.valid_to ? fmtDate(bulletin.valid_to) : 'open'} ·{' '}
                     {bulletin.source}

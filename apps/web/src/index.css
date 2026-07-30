@@ -68,8 +68,15 @@
   --color-info-fg: #0043ce;
 
   /* --- Type --- */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  /*
+   * There is no monospaced family. Numerals are set in Geist with
+   * `tabular-nums`, which aligns columns without dragging a second typeface
+   * (and a terminal register) onto every screen. `--font-mono` is aliased to
+   * the sans stack so a stray `font-mono` renders Geist rather than falling
+   * through to Tailwind's default monospace.
+   */
+  --font-mono: var(--font-sans);
 
   /* Replaces the old ad-hoc font sizes scattered through the application. */
   --text-2xs: 0.6875rem;
@@ -78,8 +85,8 @@
   --text-xs--line-height: 1.125rem;
   --text-sm: 0.8125rem;
   --text-sm--line-height: 1.25rem;
-  --text-base:0.875rem;
-  --text-base--line-height:1.5rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
   --text-md: 0.9375rem;
   --text-md--line-height: 1.5625rem;
   --text-lg: 1.0625rem;
@@ -255,6 +262,24 @@ html.dark {
     box-sizing: border-box;
   }
 
+  /*
+   * Load-bearing. Preflight is what normally applies the theme font to the
+   * document root; with it disabled, `--font-sans` was declared but never used
+   * and the entire application rendered in the UA default serif. Everything
+   * that looked "off" downstream of that was a symptom.
+   *
+   * It goes on `html` rather than `body` so form controls, which inherit from
+   * their nearest styled ancestor, pick it up too.
+   */
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+  }
+
   button {
     border: 0;
     padding: 0;
@@ -287,7 +312,12 @@ html.dark {
     margin: 0;
     min-height: 100vh;
     font-size: 14px;
-    font-feature-settings: 'tnum' 1, 'cv05' 1, 'ss01' 1;
+    /*
+     * No 'tnum' here. Tabular figures belong in columns and metrics, not in
+     * running prose, where the wide `1` opens visible gaps. Every place that
+     * wants them says `tabular-nums` at the call site.
+     */
+    font-feature-settings: 'cv05' 1, 'ss01' 1;
   }
 
   h1,

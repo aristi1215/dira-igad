@@ -5,12 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Geist is the only family. Numerals are set in Geist with `tabular-nums`
+      rather than in a second monospaced face, so there is one typeface to
+      load and one to maintain.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0c" />
     <meta
       name="description"
       content="Dira is a transparent climate, conflict, and context situation room for IGAD."

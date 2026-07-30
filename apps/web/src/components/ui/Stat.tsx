@@ -36,7 +36,7 @@ export function MetricDelta({
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1 font-mono text-2xs font-medium tabular-nums',
+        'inline-flex items-center gap-1 text-2xs font-medium tabular-nums',
         tone,
         className,
       )}
@@ -90,7 +90,7 @@ export function Stat({
       />
       <Eyebrow>{label}</Eyebrow>
       <span className="flex items-end justify-between gap-2">
-        <span className="font-mono text-metric font-semibold tabular-nums text-ink">{value}</span>
+        <span className="text-metric font-semibold tabular-nums text-ink">{value}</span>
         {series ? (
           <Sparkline
             values={series}

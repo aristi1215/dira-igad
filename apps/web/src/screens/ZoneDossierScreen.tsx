@@ -109,7 +109,7 @@ export function ZoneDossierScreen() {
       header: 'Phone',
       width: '10rem',
       render: (recipient) => (
-        <span className="font-mono text-2xs text-muted">{recipient.phone_e164}</span>
+        <span className="tabular-nums text-2xs text-muted">{recipient.phone_e164}</span>
       ),
     },
     {
@@ -117,7 +117,7 @@ export function ZoneDossierScreen() {
       header: 'Language',
       width: '6rem',
       render: (recipient) => (
-        <span className="font-mono text-2xs text-muted">
+        <span className="tabular-nums text-2xs text-muted">
           {recipient.language.toUpperCase()}
         </span>
       ),
