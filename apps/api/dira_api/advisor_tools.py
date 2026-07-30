@@ -153,6 +153,28 @@ TOOL_SPECS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "propose_dispatch",
+            "description": (
+                "Suggest dispatching a voice call or SMS alert to specific phone "
+                "numbers, for an operator to confirm and send."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "situation_id": {"type": "string"},
+                    "channel": {"type": "string", "enum": ["voice", "sms", "both"]},
+                    "phone_numbers": {"type": "array", "items": {"type": "string"}},
+                    "language": {"type": "string"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["situation_id"],
+                "additionalProperties": False,
+            },
+        },
+    },
 ]
 
 
@@ -310,6 +332,17 @@ def _propose_alert_draft(conn: Any, args: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _propose_dispatch(conn: Any, args: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "dispatch",
+        "situation_id": args["situation_id"],
+        "channel": args.get("channel", "voice"),
+        "phone_numbers": args.get("phone_numbers") or [],
+        "language": args.get("language", "sw"),
+        "reason": args.get("reason"),
+    }
+
+
 TOOL_HANDLERS: dict[str, Any] = {
     "search_corpus": _search_corpus,
     "read_situation": _read_situation,
@@ -322,4 +355,5 @@ TOOL_HANDLERS: dict[str, Any] = {
     "read_model_card": _read_model_card,
     "propose_verify_field_report": _propose_verify_field_report,
     "propose_alert_draft": _propose_alert_draft,
+    "propose_dispatch": _propose_dispatch,
 }

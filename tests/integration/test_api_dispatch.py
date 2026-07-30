@@ -110,6 +110,114 @@ def test_alert_edit_pending_approval(api_client: TestClient, make_alert) -> None
     assert response.json()["language"] == "en"
 
 
+def test_advisor_dispatch_is_human_gated_and_queues_direct_numbers(
+    api_client: TestClient,
+    db_conn,
+    make_situation,
+) -> None:
+    situation_id = make_situation()
+    with db_conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) AS count FROM deliveries WHERE alert_id IN "
+            "(SELECT id FROM alerts WHERE situation_id = %s)",
+            (situation_id,),
+        )
+        assert int(cur.fetchone()["count"]) == 0
+
+    response = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["+254700000091", "+254700000092"],
+            "channel": "voice",
+            "approved_by": "Named operator",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "approved"
+    assert payload["approved_by"] == "Named operator"
+    assert payload["deliveries"] == 2
+
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT a.status AS alert_status, a.approved_by,
+                   d.status AS delivery_status, r.phone_e164
+            FROM alerts a
+            JOIN deliveries d ON d.alert_id = a.id
+            JOIN recipients r ON r.id = d.recipient_id
+            WHERE a.id = %s
+            ORDER BY r.phone_e164
+            """,
+            (payload["alert_id"],),
+        )
+        rows = cur.fetchall()
+    assert len(rows) == 2
+    assert {row["phone_e164"] for row in rows} == {"+254700000091", "+254700000092"}
+    assert all(row["alert_status"] == "approved" for row in rows)
+    assert all(row["delivery_status"] == "queued" for row in rows)
+
+
+def test_advisor_dispatch_expands_both_channel(
+    api_client: TestClient,
+    db_conn,
+    make_situation,
+) -> None:
+    situation_id = make_situation()
+    response = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["+254700000093"],
+            "channel": "both",
+            "approved_by": "Named operator",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["deliveries"] == 2
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT d.channel, d.status
+            FROM deliveries d
+            WHERE d.alert_id = %s
+            ORDER BY d.channel
+            """,
+            (response.json()["alert_id"],),
+        )
+        assert cur.fetchall() == [
+            {"channel": "sms", "status": "queued"},
+            {"channel": "voice", "status": "queued"},
+        ]
+
+
+def test_advisor_dispatch_validates_signer_and_phone(
+    api_client: TestClient,
+    make_situation,
+) -> None:
+    situation_id = make_situation()
+    empty_signer = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["+254700000094"],
+            "approved_by": "",
+        },
+    )
+    assert empty_signer.status_code == 422
+    bad_phone = api_client.post(
+        "/advisor/dispatch",
+        json={
+            "situation_id": str(situation_id),
+            "phone_numbers": ["0700000095"],
+            "approved_by": "Named operator",
+        },
+    )
+    assert bad_phone.status_code == 400
+    assert "0700000095" in bad_phone.json()["detail"]
+
+
 def test_approve_is_atomic(
     api_client: TestClient,
     db_conn,

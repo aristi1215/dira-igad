@@ -177,3 +177,16 @@ This file records honest deviations from the authoritative specification for hum
 **What we did:** Added a real SMS path (`SmsChannel` port, `TwilioSmsAdapter`, MockDispatcher SMS support) and made the recipient `channel` (`voice`/`sms`/`both`) drive dispatch: the worker branches on `delivery.channel`, and the approve transaction expands a `both` recipient into two deliveries (voice + sms), each with its own idempotency key, with the atomic per-recipient delivery-count assertion preserved. Operators can now edit a pending alert's message/language (`PATCH /alerts/{id}`, pending-only) and manage recipients (`POST/PATCH/DELETE /recipients`, soft-delete). The human gate is untouched: deliveries are still created only inside the named-approver approve transaction, and no network call happens inside an open transaction. The UI states honestly that real SMS depends on the Twilio account tier (trial accounts block custom-body SMS); SMS works end-to-end in seeded/mock mode and voice is the verified live channel.
 
 **Why:** `docs/improvements.md` D2–D5. The advisor still cannot approve/dispatch/deliver/send (red line intact, `docs/improvements.md` L4 documented) — only humans dispatch, from the Dispatch page.
+
+## D-026 — Advisor-proposed direct dispatch remains human-gated
+
+**Spec said:** The advisor can never approve or dispatch alerts.
+
+**What we did:** Per explicit user request, the advisor can now propose a direct voice/SMS
+dispatch to specific phone numbers. The proposal is rendered as an in-panel confirmation card;
+the advisor tool itself is inert and performs no database writes or provider calls. Dispatch occurs
+only through `POST /advisor/dispatch` after a human supplies `approved_by`, and the endpoint queues
+deliveries for the existing dispatch worker.
+
+**Why:** This refines the earlier red line without weakening the human gate: only a named human
+can confirm and dispatch, while the advisor remains unable to dispatch server-side.

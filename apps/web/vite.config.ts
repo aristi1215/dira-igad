@@ -12,7 +12,7 @@ export default defineConfig({
   ],
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
   /*
    * No dev proxy: lib/api.ts already calls the API on an absolute origin

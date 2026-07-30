@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -83,6 +84,17 @@ class RecipientPatchBody(BaseModel):
     active: bool | None = None
 
 
+class AdvisorDispatchBody(BaseModel):
+    situation_id: UUID
+    phone_numbers: list[str]
+    channel: Literal["voice", "sms", "both"] = "voice"
+    language: str = Field(
+        default="sw", pattern=r"^[a-z]{2}(?:-[A-Z]{2})?$", max_length=12
+    )
+    body_text: str | None = Field(default=None, min_length=1, max_length=4000)
+    approved_by: str = Field(min_length=1, max_length=200)
+
+
 class RetryBody(BaseModel):
     pass
 
@@ -119,6 +131,7 @@ def health() -> dict[str, str]:
 
 
 AUDIO_DIR = Path(__file__).resolve().parents[3] / "artifacts" / "audio"
+E164_PATTERN = re.compile(r"^\+[1-9][0-9]{7,14}$")
 
 
 @app.get("/audio/{filename}")
@@ -203,36 +216,50 @@ def situation_detail(situation_id: UUID) -> dict[str, Any]:
     }
 
 
+def _latest_alert_assessment(
+    conn: Any, situation_id: UUID
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, zone_id FROM situations WHERE id = %s", (situation_id,))
+        sit = cur.fetchone()
+        if sit is None:
+            raise HTTPException(404, "Situation not found")
+        cur.execute(
+            """
+            SELECT explanation, operational_band, window_start, window_end
+            FROM assessments
+            WHERE situation_id = %s ORDER BY cycle DESC LIMIT 1
+            """,
+            (situation_id,),
+        )
+        latest = cur.fetchone()
+    return dict(sit), (dict(latest) if latest is not None else None)
+
+
+def _draft_alert_text(
+    conn: Any, situation_id: UUID, language: str
+) -> tuple[str, dict[str, Any]]:
+    sit, latest = _latest_alert_assessment(conn, situation_id)
+    conn.commit()
+    prompt = (
+        f"Draft alert for zone {sit['zone_id']} "
+        f"band={latest and latest['operational_band']}. "
+        f"Model explanation: {latest and latest['explanation']}. "
+        f'Return JSON {{"language": "{language}", "body_text": "..."}} '
+        f"with body_text in language code '{language}', under 320 characters."
+    )
+    try:
+        draft = _language_model().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
+    except Exception:
+        logger.exception("LLM draft failed; using canned fallback")
+        draft = CannedResponseAdapter().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
+    return str(draft.get("body_text") or draft.get("text") or "Tahadhari ya hali."), latest or {}
+
+
 @app.post("/situations/{situation_id}/alert")
 def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, Any]:
     with connect(_settings().database_url) as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, zone_id FROM situations WHERE id = %s", (situation_id,))
-            sit = cur.fetchone()
-            if sit is None:
-                raise HTTPException(404, "Situation not found")
-            cur.execute(
-                """
-                SELECT explanation, operational_band, window_start, window_end
-                FROM assessments
-                WHERE situation_id = %s ORDER BY cycle DESC LIMIT 1
-                """,
-                (situation_id,),
-            )
-            latest = cur.fetchone()
-        prompt = (
-            f"Draft alert for zone {sit['zone_id']} "
-            f"band={latest and latest['operational_band']}. "
-            f"Model explanation: {latest and latest['explanation']}. "
-            f'Return JSON {{"language": "{body.language}", "body_text": "..."}} '
-            f"with body_text in language code '{body.language}', under 320 characters."
-        )
-        try:
-            draft = _language_model().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
-        except Exception:
-            logger.exception("LLM draft failed; using canned fallback")
-            draft = CannedResponseAdapter().complete_json(prompt, system=ALERT_DRAFT_SYSTEM)
-        text = str(draft.get("body_text") or draft.get("text") or "Tahadhari ya hali.")
+        text, latest = _draft_alert_text(conn, situation_id, body.language)
         with conn.transaction():
             with conn.cursor() as cur:
                 cur.execute(
@@ -250,8 +277,8 @@ def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, An
                         body.language,
                         text,
                         body.created_by,
-                        latest and latest["window_start"],
-                        latest and latest["window_end"],
+                        latest.get("window_start"),
+                        latest.get("window_end"),
                     ),
                 )
                 row = cur.fetchone()
@@ -353,6 +380,114 @@ def delete_recipient(recipient_id: UUID) -> dict[str, Any]:
                 if row is None:
                     raise HTTPException(404, "Recipient not found")
     return _jsonable(dict(row))
+
+
+@app.post("/advisor/dispatch")
+def advisor_dispatch(body: AdvisorDispatchBody) -> dict[str, Any]:
+    signer = body.approved_by.strip()
+    if not signer:
+        raise HTTPException(400, "approved_by required")
+    if not body.phone_numbers:
+        raise HTTPException(400, "phone_numbers must contain at least one number")
+    if len(body.phone_numbers) > 10:
+        raise HTTPException(400, "phone_numbers cannot contain more than 10 numbers")
+
+    invalid = [number for number in body.phone_numbers if not E164_PATTERN.fullmatch(number)]
+    if invalid:
+        raise HTTPException(
+            400,
+            f"Invalid E.164 phone number(s): {', '.join(invalid)}",
+        )
+    phone_numbers = list(dict.fromkeys(body.phone_numbers))
+
+    with connect(_settings().database_url) as conn:
+        if body.body_text is None:
+            text, latest = _draft_alert_text(conn, body.situation_id, body.language)
+        else:
+            _, latest_row = _latest_alert_assessment(conn, body.situation_id)
+            conn.commit()
+            text = body.body_text
+            latest = latest_row or {}
+
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT zone_id FROM situations WHERE id = %s",
+                    (body.situation_id,),
+                )
+                situation = cur.fetchone()
+                if situation is None:
+                    raise HTTPException(404, "Situation not found")
+
+                cur.execute(
+                    """
+                    INSERT INTO alerts (
+                      situation_id, status, language, body_text, created_by,
+                      approved_by, approved_at, window_start, window_end
+                    )
+                    VALUES (%s, 'approved', %s, %s, 'advisor', %s, now(), %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        body.situation_id,
+                        body.language,
+                        text,
+                        signer,
+                        latest.get("window_start"),
+                        latest.get("window_end"),
+                    ),
+                )
+                alert_id = cur.fetchone()["id"]
+                deliveries = 0
+                channels = (
+                    ("voice", "sms")
+                    if body.channel == "both"
+                    else (body.channel,)
+                )
+                for phone_number in phone_numbers:
+                    cur.execute(
+                        """
+                        INSERT INTO recipients (
+                          name, zone_id, phone_e164, language, channel, active
+                        )
+                        VALUES (%s, %s, %s, %s, %s, FALSE)
+                        RETURNING id
+                        """,
+                        (
+                            f"Direct dispatch · {phone_number}",
+                            situation["zone_id"],
+                            phone_number,
+                            body.language,
+                            body.channel,
+                        ),
+                    )
+                    recipient_id = cur.fetchone()["id"]
+                    for channel in channels:
+                        idem = derive_idempotency_key(
+                            str(alert_id), str(recipient_id), channel
+                        )
+                        cur.execute(
+                            """
+                            INSERT INTO deliveries (
+                              alert_id, recipient_id, channel, idempotency_key, status
+                            )
+                            VALUES (%s, %s, %s, %s, 'queued')
+                            ON CONFLICT (idempotency_key) DO NOTHING
+                            RETURNING id
+                            """,
+                            (alert_id, recipient_id, channel, idem),
+                        )
+                        if cur.fetchone() is not None:
+                            deliveries += 1
+
+    return {
+        "alert_id": str(alert_id),
+        "status": "approved",
+        "approved_by": signer,
+        "channel": body.channel,
+        "phone_numbers": phone_numbers,
+        "deliveries": deliveries,
+    }
 
 
 @app.post("/alerts/{alert_id}/approve")
@@ -854,7 +989,7 @@ def _advisor_tool_loop(
             tools.append(call.name)
             if on_tool is not None:
                 on_tool(call.name, call.arguments)
-            if result.get("type") in {"verify-field-report", "alert-draft"}:
+            if result.get("type") in {"verify-field-report", "alert-draft", "dispatch"}:
                 proposals.append(result)
                 if on_proposal is not None:
                     on_proposal(result)

@@ -186,11 +186,13 @@ export type AdvisorResponse = {
 }
 
 export type AdvisorProposal = {
-  type: 'verify-field-report' | 'alert-draft'
+  type: 'verify-field-report' | 'alert-draft' | 'dispatch'
   report_id?: string
   situation_id?: string
   reason?: string
   language?: string
+  channel?: 'voice' | 'sms' | 'both'
+  phone_numbers?: string[]
 }
 
 export type AdvisorCitation = {

@@ -373,7 +373,7 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
         <div className="mt-2 flex items-center justify-between gap-2">
           <span className="flex items-center gap-1 text-2xs text-faint">
             <Radar size={11} strokeWidth={1.75} aria-hidden />
-            Can suggest actions · only you can approve or dispatch
+            Can propose calls & SMS · only you can dispatch
           </span>
         </div>
         {error ? (

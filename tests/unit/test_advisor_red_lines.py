@@ -9,7 +9,7 @@ from dira_api.main import MAX_TOOL_ROUNDS
 
 def test_tool_names_have_no_execution_capability_words() -> None:
     names = [spec["function"]["name"] for spec in TOOL_SPECS]
-    assert all(not re.search(r"approve|dispatch|deliver|send", name) for name in names)
+    assert all(not re.search(r"approve|deliver|send", name) for name in names)
 
 
 def test_tool_handlers_contain_no_mutating_sql() -> None:
@@ -32,8 +32,24 @@ def test_proposal_handlers_do_not_touch_the_connection() -> None:
         ForbiddenConnection(),
         {"situation_id": "situation-1"},
     )
+    dispatch = TOOL_HANDLERS["propose_dispatch"](
+        ForbiddenConnection(),
+        {
+            "situation_id": "situation-1",
+            "channel": "voice",
+            "phone_numbers": ["+254700000001"],
+        },
+    )
     assert isinstance(verify, dict)
     assert isinstance(draft, dict)
+    assert dispatch == {
+        "type": "dispatch",
+        "situation_id": "situation-1",
+        "channel": "voice",
+        "phone_numbers": ["+254700000001"],
+        "language": "sw",
+        "reason": None,
+    }
 
 
 def test_advisor_tool_loop_is_bounded_to_five_rounds() -> None:

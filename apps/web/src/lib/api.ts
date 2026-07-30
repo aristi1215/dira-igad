@@ -57,7 +57,10 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: JsonBody
 }
 
-type JsonBody = Record<string, string | number | boolean | null | undefined>
+type JsonBody = Record<
+  string,
+  string | number | boolean | string[] | null | undefined
+>
 
 export class ApiError extends Error {
   readonly status: number
@@ -163,6 +166,29 @@ export function approveAlert(
     body: {
       approved_by: approvedBy,
     },
+  })
+}
+
+export type AdvisorDispatchResponse = {
+  alert_id: string
+  status: string
+  approved_by: string
+  channel: string
+  phone_numbers: string[]
+  deliveries: number
+}
+
+export function advisorDispatch(input: {
+  situation_id: string
+  phone_numbers: string[]
+  channel: 'voice' | 'sms' | 'both'
+  language?: string
+  body_text?: string
+  approved_by: string
+}): Promise<AdvisorDispatchResponse> {
+  return requestJson<AdvisorDispatchResponse>('/advisor/dispatch', {
+    method: 'POST',
+    body: input,
   })
 }
 
