@@ -5,6 +5,7 @@ import type {
   LayerSpecification,
   Map,
   MapLayerMouseEvent,
+  MapMouseEvent,
 } from 'maplibre-gl'
 import { BAND_MAP_COLORS, CHART, IPC_COLORS } from '../../lib/format'
 import type {
@@ -184,6 +185,8 @@ type UseMapLayersOptions = {
   /** Bands currently visible. Null means no filter is applied. */
   bandFilter: Set<OperationalBand> | null
   onSelect: (zoneId: string, situationId: string | null) => void
+  /** Clicking the basemap away from any zone clears the selection. */
+  onDismiss?: () => void
 }
 
 export function useMapLayers({
@@ -197,6 +200,7 @@ export function useMapLayers({
   hoveredZoneId,
   bandFilter,
   onSelect,
+  onDismiss,
 }: UseMapLayersOptions): void {
   const installedRef = useRef(false)
   /** Incremented once the layers exist, so dependent effects re-run. */
@@ -398,11 +402,22 @@ export function useMapLayers({
       }
     }
 
+    // Clicking the basemap — ocean, a neighbouring country, anywhere that is
+    // not a zone — dismisses the panel. Escape and the close button already
+    // did, but the instinct on a map is to click away from the thing.
+    const handleBackgroundClick = (event: MapMouseEvent) => {
+      if (!onDismiss || !map.getLayer(ZONE_FILL_LAYER_ID)) return
+      const hits = map.queryRenderedFeatures(event.point, { layers: [ZONE_FILL_LAYER_ID] })
+      if (hits.length === 0) onDismiss()
+    }
+
     map.on('click', ZONE_FILL_LAYER_ID, handleClick)
+    map.on('click', handleBackgroundClick)
     return () => {
       map.off('click', ZONE_FILL_LAYER_ID, handleClick)
+      map.off('click', handleBackgroundClick)
     }
-  }, [map, onSelect])
+  }, [map, onSelect, onDismiss])
 }
 
 /**

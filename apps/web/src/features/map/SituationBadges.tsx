@@ -14,14 +14,29 @@ import { Sparkline } from '../../components/ui'
 import { cx } from '../../lib/cx'
 import { eventWeightedAnchors, featureCenter } from './geometry'
 
-/** Below this, badges collapse to pips — 22 cards at continental zoom is noise. */
+/**
+ * Below this, badges collapse to pips — 22 cards at continental zoom is noise.
+ *
+ * Do not raise this to quieten the map: the default view fits the whole
+ * operating area and lands just above it, so a higher threshold empties the
+ * opening screen of every score. Shrink the badge instead.
+ */
 const PIP_ONLY_ZOOM = 5.2
 
+/**
+ * Below this the badge drops its zone name and keeps only the number.
+ *
+ * The name is the widest thing in the badge and the least useful at distance:
+ * at continental zoom you are reading the map for where the heat is, and the
+ * name is one click (or one hover) away.
+ */
+const NAME_ZOOM = 6.5
+
 /** Approximate rendered badge box, used for collision only. */
-const BADGE_W = 168
-const BADGE_H = 46
+const BADGE_W = 124
+const BADGE_H = 32
 /** Vertical gap between the anchor and the badge's bottom edge. */
-const LEADER_LENGTH = 26
+const LEADER_LENGTH = 18
 
 type Placed = {
   zoneId: string
@@ -35,6 +50,8 @@ type Placed = {
   delta: number | null
   /** False when a higher-risk badge already occupies this space. */
   expanded: boolean
+  /** False when the camera is too far out for the name to earn its width. */
+  showName: boolean
 }
 
 type SituationBadgesProps = {
@@ -80,7 +97,7 @@ export function SituationBadges({
   const anchors = useMemo(() => eventWeightedAnchors(events), [events])
 
   /** One entry per open situation, richest-first, before collision. */
-  const candidates = useMemo<Omit<Placed, 'expanded'>[]>(() => {
+  const candidates = useMemo<Omit<Placed, 'expanded' | 'showName'>[]>(() => {
     const zoneById = new globalThis.Map(
       (indicators?.features ?? []).map((feature) => [feature.properties.zone_id, feature]),
     )
@@ -147,8 +164,10 @@ export function SituationBadges({
     })
 
     return ordered.map((candidate) => {
-      if (zoom < PIP_ONLY_ZOOM && candidate.zoneId !== selectedZoneId) {
-        return { ...candidate, expanded: false }
+      const selected = candidate.zoneId === selectedZoneId
+      const showName = selected || zoom >= NAME_ZOOM
+      if (zoom < PIP_ONLY_ZOOM && !selected) {
+        return { ...candidate, expanded: false, showName }
       }
       const point = map.project(candidate.lngLat)
       const clash = taken.some(
@@ -156,10 +175,10 @@ export function SituationBadges({
           Math.abs(other.x - point.x) < BADGE_W && Math.abs(other.y - point.y) < BADGE_H * 1.6,
       )
       if (clash) {
-        return { ...candidate, expanded: false }
+        return { ...candidate, expanded: false, showName }
       }
       taken.push({ x: point.x, y: point.y })
-      return { ...candidate, expanded: true }
+      return { ...candidate, expanded: true, showName }
     })
   }, [candidates, map, placementTick, selectedZoneId])
 
@@ -263,7 +282,7 @@ function Badge({
           />
         ) : null}
         <span
-          className="block size-2.5 rounded-full border-2 border-white"
+          className="block size-2 rounded-full border border-white"
           style={{ background: color, boxShadow: '0 0 0 1px rgba(22,22,22,0.18)' }}
         />
       </span>
@@ -280,7 +299,7 @@ function Badge({
             onClick={() => onSelect(entry.zoneId, entry.situationId)}
             aria-label={`${entry.zoneName} — ${BAND_LABELS[entry.band]}, risk ${fmtRiskScore(entry.risk)}`}
             className={cx(
-              'pointer-events-auto absolute flex -translate-x-1/2 items-stretch overflow-hidden rounded-xl',
+              'pointer-events-auto absolute flex -translate-x-1/2 items-stretch overflow-hidden rounded-lg',
               'border border-line bg-surface/92 shadow-lg backdrop-blur-xl',
               'transition-[box-shadow,border-color] duration-[140ms] ease-standard',
               'hover:border-line-strong hover:shadow-lg',
@@ -288,22 +307,24 @@ function Badge({
             )}
             style={{ bottom: LEADER_LENGTH + 4, left: 0 }}
           >
-            <span aria-hidden className="w-[2.5px] shrink-0 rounded-l-xl" style={{ background: color }} />
-            <span className="flex flex-col gap-0.5 px-2 py-1.5 text-left">
-              <span className="max-w-[9rem] truncate text-eyebrow leading-none text-faint uppercase">
-                {entry.zoneName}
-              </span>
+            <span aria-hidden className="w-[2px] shrink-0 rounded-l-lg" style={{ background: color }} />
+            <span className="flex flex-col gap-0.5 px-1.5 py-1 text-left">
+              {entry.showName ? (
+                <span className="max-w-[7rem] truncate text-eyebrow leading-none text-faint uppercase">
+                  {entry.zoneName}
+                </span>
+              ) : null}
               <span className="flex items-center gap-1.5">
                 <span
-                  className="text-lg leading-none font-semibold tabular-nums"
+                  className="text-sm leading-none font-semibold tabular-nums"
                   style={{ color }}
                 >
                   {fmtRiskScore(entry.risk)}
                 </span>
                 <Sparkline
                   values={entry.trend}
-                  width={30}
-                  height={13}
+                  width={24}
+                  height={10}
                   color={color}
                   cap={false}
                 />

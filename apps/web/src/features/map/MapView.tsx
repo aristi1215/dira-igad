@@ -53,6 +53,8 @@ type MapViewProps = {
   onOverlayChange: (overlay: MapOverlay) => void
   selectedZoneId: string | null
   onSelect: (zoneId: string, situationId: string | null) => void
+  /** Clicking the basemap away from any zone clears the selection. */
+  onDismiss?: () => void
   onMapReady?: (map: Map | null) => void
 }
 
@@ -67,6 +69,7 @@ export function MapView({
   onOverlayChange,
   selectedZoneId,
   onSelect,
+  onDismiss,
   onMapReady,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -218,6 +221,7 @@ export function MapView({
     hoveredZoneId,
     bandFilter,
     onSelect,
+    onDismiss,
   })
 
   const hover = useMapHover(map)

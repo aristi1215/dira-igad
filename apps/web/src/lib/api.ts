@@ -140,14 +140,28 @@ export function fetchDeliveries(): Promise<Delivery[]> {
   return requestJson<Delivery[]>('/deliveries')
 }
 
-export async function prepareAlert(situationId: string): Promise<Alert> {
+/**
+ * Draft an alert for a situation.
+ *
+ * Omitting `bodyText` has the advisor write it, which is how the map's
+ * "Prepare alert" has always worked. Passing text skips the model entirely —
+ * an operator who has already typed the words should not wait for, or pay
+ * for, a draft they are about to throw away.
+ */
+export async function prepareAlert(
+  situationId: string,
+  input: { createdBy?: string; language?: string; bodyText?: string } = {},
+): Promise<Alert> {
+  const createdBy = input.createdBy?.trim() || 'demo-advisor'
+  const language = input.language ?? 'sw'
   const response = await requestJson<AlertDraftResponse>(
     `/situations/${situationId}/alert`,
     {
       method: 'POST',
       body: {
-        created_by: 'demo-advisor',
-        language: 'sw',
+        created_by: createdBy,
+        language,
+        ...(input.bodyText ? { body_text: input.bodyText } : {}),
       },
     },
   )
@@ -155,7 +169,7 @@ export async function prepareAlert(situationId: string): Promise<Alert> {
   return {
     ...response,
     situation_id: situationId,
-    created_by: 'demo-advisor',
+    created_by: createdBy,
     approved_by: null,
     approved_at: null,
     updated_at: null,

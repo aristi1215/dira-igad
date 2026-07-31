@@ -79,6 +79,10 @@ class VariantEditBody(BaseModel):
 class AlertDraftBody(BaseModel):
     created_by: str = "advisor"
     language: str = "sw"
+    # Supplied when the operator writes the alert themselves. Drafting is the
+    # default, not the only way in: asking the LLM for words that are about to
+    # be thrown away costs a round trip and, in live mode, money.
+    body_text: str | None = Field(default=None, min_length=1, max_length=4000)
 
 
 class AlertEditBody(BaseModel):
@@ -233,7 +237,15 @@ def situation_detail(situation_id: UUID) -> dict[str, Any]:
 @app.post("/situations/{situation_id}/alert")
 def create_alert_draft(situation_id: UUID, body: AlertDraftBody) -> dict[str, Any]:
     with connect(_settings().database_url) as conn:
-        text, latest, _zone_name = _draft_alert_text(conn, situation_id, body.language)
+        if body.body_text is None:
+            text, latest, _zone_name = _draft_alert_text(conn, situation_id, body.language)
+        else:
+            # Still read the assessment: the forecast window belongs to the
+            # situation, not to whoever typed the words.
+            _sit, latest_row = _latest_alert_assessment(conn, situation_id)
+            conn.commit()
+            text = body.body_text
+            latest = latest_row or {}
         with conn.transaction():
             with conn.cursor() as cur:
                 cur.execute(
