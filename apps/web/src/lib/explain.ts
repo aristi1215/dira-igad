@@ -328,23 +328,32 @@ export function bandFromScore(score: number): OperationalBand {
   return 'low'
 }
 
+/** Ascending severity — mirrors dira_core.risk._BAND_ORDER exactly. */
+const BAND_SEVERITY: OperationalBand[] = ['low', 'watch', 'elevated', 'high', 'very_high']
+
 export type CombinationBreakdown = {
   newsCorroboration: number | null
   fieldCorroboration: number | null
   operationalScore: number
   preBumpBand: OperationalBand
   bumped: boolean
+  floored: boolean
 }
 
 /**
  * Reconstruct the two corroboration channels from the persisted rule text
  * (e.g. "corroboration=max(news 0.72, verified_field_reports 0.50)") and
  * recompute the weighted score with the same constants the backend uses.
+ *
+ * `modelBand` mirrors the floor in `dira_core.risk.combine_scores`: a weak
+ * or absent corroboration score must never render as a calmer band than the
+ * model's own read, so `preBumpBand` is never shown below it.
  */
 export function parseCombination(
   rule: string | null | undefined,
   modelRisk: number,
   corroboration: number,
+  modelBand: OperationalBand,
 ): CombinationBreakdown {
   let news: number | null = null
   let field: number | null = null
@@ -356,12 +365,15 @@ export function parseCombination(
     field = Number(match[2])
   }
   const operationalScore = 0.7 * modelRisk + 0.3 * corroboration
-  const preBumpBand = bandFromScore(operationalScore)
+  let preBumpBand = bandFromScore(operationalScore)
+  const floored = BAND_SEVERITY.indexOf(modelBand) > BAND_SEVERITY.indexOf(preBumpBand)
+  if (floored) preBumpBand = modelBand
   const bumped = Boolean(rule?.includes('corroboration_bump'))
   return {
     newsCorroboration: news,
     fieldCorroboration: field,
     operationalScore,
+    floored,
     preBumpBand,
     bumped,
   }

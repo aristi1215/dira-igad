@@ -66,6 +66,22 @@ def test_combine_scores_corroboration_bump() -> None:
     assert band != RiskBand.LOW
 
 
+def test_combine_scores_never_downgrades_below_model_band() -> None:
+    # model_risk=0.31 bands to WATCH on its own (>= 0.25); with zero
+    # corroboration the 0.7/0.3 blend alone would score 0.217 → LOW. The
+    # model's own read must act as a floor, not get diluted away.
+    band, rule = combine_scores(0.31, 0.0)
+    assert band == RiskBand.WATCH
+    assert "floored_to_model_band" in rule
+
+
+def test_combine_scores_corroboration_can_still_raise_band() -> None:
+    # model_risk=0.19 bands to LOW alone, but sufficient corroboration should
+    # still be able to raise it to WATCH — the floor only prevents downgrades.
+    band, _ = combine_scores(0.19, 0.5)
+    assert band == RiskBand.WATCH
+
+
 def test_band_from_score_bounds() -> None:
     assert band_from_score(-1) == RiskBand.LOW
     assert band_from_score(0.9) == RiskBand.VERY_HIGH

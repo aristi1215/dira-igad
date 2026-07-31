@@ -115,6 +115,18 @@ def combine_scores(
     operational_score = 0.7 * mr + 0.3 * corr
     band = band_from_score(operational_score)
 
+    # A quiet news/field channel is absence of evidence, not evidence of
+    # safety: corroboration may raise the band toward higher pressure (the
+    # bump below) but the 0.7/0.3 blend must never let a weak or zero
+    # corroboration score drag the band below what the model alone already
+    # found. Without this floor, a model_risk that already crosses a
+    # threshold on its own (e.g. 0.31 → watch) could still render as a
+    # calmer band than the model itself reported.
+    floored = False
+    if _BAND_ORDER.index(mb) > _BAND_ORDER.index(band):
+        band = mb
+        floored = True
+
     bumped = False
     if corr >= 0.7 and mb in {RiskBand.ELEVATED, RiskBand.HIGH, RiskBand.VERY_HIGH}:
         before = band
@@ -125,6 +137,8 @@ def combine_scores(
         f"{COMBINATION_RULE_VERSION}: operational_score=0.7*model_risk({mr:.3f})"
         f"+0.3*corroboration({corr:.3f})={operational_score:.3f}→{band_from_score(operational_score)}"
     )
+    if floored:
+        rule += f"; floored_to_model_band({mb})"
     if bumped:
         rule += f"; corroboration_bump→{band}"
     else:
