@@ -18,6 +18,7 @@ from dira_core.time import dispatch_backoff_delta
 from dira_data.db import connect
 from dira_dispatch import (
     MockDispatcher,
+    PermanentDispatchError,
     PrerecordedAudioAdapter,
     TwilioSmsAdapter,
     TwilioVoiceAdapter,
@@ -134,6 +135,30 @@ def record_failure(
                 )
 
 
+def record_permanent_failure(
+    conn: Any,
+    delivery_id: UUID,
+    attempt_count: int,
+    error: str,
+) -> None:
+    """Tx B: the provider rejected the request itself (unverified number,
+    geo-permission, trial restriction) — retrying cannot fix it, so the
+    delivery goes straight to 'failed' with the provider's reason."""
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE deliveries
+                SET status = 'failed',
+                    attempt_count = %s,
+                    last_error = %s,
+                    updated_at = now()
+                WHERE id = %s
+                """,
+                (attempt_count + 1, error, delivery_id),
+            )
+
+
 def sweep_zombies(conn: Any, settings: Settings) -> int:
     cutoff = datetime.now(UTC) - timedelta(minutes=settings.zombie_timeout_minutes)
     with conn.transaction():
@@ -234,6 +259,11 @@ def process_one(
                 timer.daemon = True
                 timer.start()
         logger.info("Dispatched delivery=%s provider=%s", delivery_id, ref.provider_message_id)
+    except PermanentDispatchError as exc:
+        logger.warning(
+            "Dispatch permanently rejected delivery=%s: %s", delivery_id, exc
+        )
+        record_permanent_failure(conn, delivery_id, attempts, str(exc))
     except Exception as exc:  # noqa: BLE001
         logger.warning("Dispatch failed delivery=%s: %s", delivery_id, exc)
         record_failure(conn, delivery_id, attempts, str(exc), settings)

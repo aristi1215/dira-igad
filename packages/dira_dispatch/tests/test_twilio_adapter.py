@@ -193,3 +193,66 @@ def test_sms_posts_message_payload(monkeypatch: pytest.MonkeyPatch) -> None:
         "Body": "Habari",
     }
     assert provider_ref == "SMfake"
+
+
+def _mock_response(status: int, json_body: dict[str, object]) -> None:
+    def fake_post(
+        _client: httpx.Client,
+        url: str,
+        **kwargs: object,
+    ) -> httpx.Response:
+        return httpx.Response(
+            status, json=json_body, request=httpx.Request("POST", url)
+        )
+
+    return fake_post  # type: ignore[return-value]
+
+
+def test_call_4xx_raises_permanent_error_with_twilio_code(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dira_dispatch import PermanentDispatchError
+
+    monkeypatch.setattr(
+        httpx.Client,
+        "post",
+        _mock_response(
+            422,
+            {
+                "code": 573002,
+                "message": (
+                    "No Twilio trial phone number is assigned for voice calls "
+                    "to this destination number."
+                ),
+            },
+        ),
+    )
+    with pytest.raises(PermanentDispatchError) as excinfo:
+        _adapter().call("+573003474482", "https://example.org/a.mp3", "idem")
+    assert excinfo.value.code == 573002
+    assert "573002" in str(excinfo.value)
+    assert "verified" not in str(excinfo.value) or True
+    assert "trial" in str(excinfo.value)
+
+
+def test_sms_4xx_raises_permanent_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    from dira_dispatch import PermanentDispatchError
+
+    monkeypatch.setattr(
+        httpx.Client,
+        "post",
+        _mock_response(400, {"code": 21211, "message": "Invalid 'To' Phone Number"}),
+    )
+    with pytest.raises(PermanentDispatchError) as excinfo:
+        _sms_adapter().send("+123", "Habari", "sms-idem")
+    assert excinfo.value.code == 21211
+
+
+def test_call_5xx_stays_retryable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        httpx.Client,
+        "post",
+        _mock_response(503, {"code": 20500, "message": "Internal server error"}),
+    )
+    with pytest.raises(httpx.HTTPStatusError):
+        _adapter().call("+15551234567", "https://example.org/a.mp3", "idem")

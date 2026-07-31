@@ -5,10 +5,9 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
+from dira_data.db_url import resolve_database_url
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from dira_data.db_url import resolve_database_url
 
 
 class Settings(BaseSettings):

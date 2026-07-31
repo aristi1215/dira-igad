@@ -18,6 +18,8 @@ from xml.sax.saxutils import escape
 import httpx
 from dira_core.ports import ProviderRef
 
+from dira_dispatch.errors import raise_for_provider_status
+
 logger = logging.getLogger("dira.dispatch.twilio")
 
 DEFAULT_API_BASE = "https://api.twilio.com"
@@ -190,7 +192,7 @@ class TwilioVoiceAdapter:
                 auth=self._auth,
                 headers={"Idempotency-Key": idem_key},
             )
-            response.raise_for_status()
+            raise_for_provider_status(response)
             raw: dict[str, Any] = response.json()
         provider_id = str(raw.get("sid") or raw.get("call_sid") or idem_key)
         return ProviderRef(provider_message_id=provider_id, raw=raw)
