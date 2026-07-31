@@ -115,9 +115,11 @@ export function MapScreen() {
 
   const prepareAlertMutation = useMutation({
     mutationFn: (situationId: string) => prepareAlert(situationId),
-    onSuccess: () => {
+    onSuccess: (alert) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.pendingAlerts })
-      void navigate('/dispatch')
+      // Name the alert in the URL. A bare /dispatch put you in front of
+      // whichever draft sorted first, which is not the one you just wrote.
+      void navigate(`/dispatch?alert=${alert.id}`)
     },
   })
 
@@ -125,6 +127,8 @@ export function MapScreen() {
     (zoneId: string) => selectZone(zoneId),
     [selectZone],
   )
+
+  const handleMapDismiss = useCallback(() => selectZone(null), [selectZone])
 
   const handleRailSelect = useCallback(
     (zone: ZoneSummary) => selectZone(zone.zone_id),
@@ -161,6 +165,7 @@ export function MapScreen() {
         onOverlayChange={setOverlay}
         selectedZoneId={selectedZoneId}
         onSelect={handleMapSelect}
+        onDismiss={handleMapDismiss}
         onMapReady={setMap}
       />
 

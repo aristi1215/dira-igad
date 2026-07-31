@@ -150,7 +150,7 @@ function HazardPin({
           type="button"
           aria-label={`${label} in ${entry.properties.zone_name}`}
           className={cx(
-            'pointer-events-auto grid size-7 place-items-center rounded-full border-2 bg-surface shadow-md',
+            'pointer-events-auto grid size-5 place-items-center rounded-full border bg-surface shadow-md',
             'transition-transform duration-150 ease-standard hover:scale-110',
             SEVERITY_RING[entry.properties.severity] ?? 'border-line-strong',
           )}
@@ -162,7 +162,7 @@ function HazardPin({
             })
           }}
         >
-          <Icon size={14} strokeWidth={1.9} aria-hidden style={{ color: meta.color }} />
+          <Icon size={11} strokeWidth={2} aria-hidden style={{ color: meta.color }} />
         </button>
 
         {/* Label on hover only, so 22 bulletins do not paper over the map. */}

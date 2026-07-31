@@ -100,6 +100,8 @@ export type AlertDraftResponse = {
   language: string
   body_text: string
   created_at: string
+  window_start?: string | null
+  window_end?: string | null
 }
 
 export type ApproveAlertResponse = {

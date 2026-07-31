@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { Modal } from '../../components/Modal'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'motion/react'
 import {
   Brain,
+  ChevronDown,
   ClipboardCheck,
   Activity,
   Flame,
@@ -15,9 +15,7 @@ import {
   Sigma,
   Users,
   UsersRound,
-  Waves,
   Wheat,
-  X,
 } from 'lucide-react'
 import {
   BAND_COLORS,
@@ -38,12 +36,19 @@ import type {
   ZoneSummary,
   ZoneTrendPoint,
 } from '../../lib/types'
-import { BandChip, Button, DateStamp, IconButton, IpcChip, Meter, Sparkline } from '../../components/ui'
+import {
+  BandChip,
+  Button,
+  DateStamp,
+  IpcChip,
+  Meter,
+  Sheet,
+  Sparkline,
+} from '../../components/ui'
 import { cx } from '../../lib/cx'
 import { Term } from '../../components/ui/Term'
 import { ScoreFlow } from '../situations'
 import { AskAboutButton } from '../advisor'
-import { T } from '../../lib/motion'
 import { TOUR_ANCHORS } from '../tour/tourAnchors'
 
 type Assessment = SituationDetail['assessments'][number]
@@ -83,6 +88,20 @@ function toAssessment(situation: SituationFeatureProperties): Assessment | null 
   }
 }
 
+/**
+ * The zone panel.
+ *
+ * It was a card pinned inside the map container, ~750px tall on a good day —
+ * so on a laptop it ran off the bottom, and its close button sat wherever the
+ * map's top edge happened to be. It is now the shared `Sheet`, docked to the
+ * viewport edge: the X is always in the same corner, Escape works, and clicking
+ * the map dismisses it. The veil is deliberately off — you read a zone in order
+ * to keep looking at the map, so the map stays visible and draggable.
+ *
+ * Depth follows: the answer and the number are open, the reasoning is one click
+ * away, and the long tail of exposure indicators lives in the dossier that was
+ * always one button below.
+ */
 export function ZoneCard({
   zone,
   situation,
@@ -107,6 +126,7 @@ export function ZoneCard({
 }) {
   const navigate = useNavigate()
   const [explaining, setExplaining] = useState(false)
+  const [showWhy, setShowWhy] = useState(false)
 
   const band: OperationalBand | 'none' = zone.operational_band ?? 'none'
   const urgent = band === 'high' || band === 'very_high'
@@ -171,36 +191,25 @@ export function ZoneCard({
 
   return (
     <>
-      <motion.section
-        aria-label={`${zone.zone_name} summary`}
-        data-tour={TOUR_ANCHORS.mapZoneCard}
-        initial={{ opacity: 0, x: 12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={T.enter}
-        className="pointer-events-auto absolute top-3 right-3 z-map-panel flex max-h-[calc(100%-1.5rem)] w-[22.5rem] max-w-[88vw] flex-col overflow-hidden rounded-bento border border-line bg-surface shadow-panel"
+      <Sheet
+        open
+        onClose={onClose}
+        overlay="none"
+        modal={false}
+        width="23rem"
+        title={zone.zone_name}
+        subtitle={`${COUNTRY_NAMES[zone.country_iso2] ?? zone.country_iso2} · ${zone.cluster_name}`}
       >
-        <header className="flex shrink-0 items-start justify-between gap-2 px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="truncate text-lg leading-tight font-semibold tracking-[-0.01em] text-ink">
-              {zone.zone_name}
-            </h2>
-            <p className="mt-0.5 truncate text-2xs text-faint">
-              {COUNTRY_NAMES[zone.country_iso2] ?? zone.country_iso2} · {zone.cluster_name}
-            </p>
-          </div>
-          <IconButton icon={X} label="Clear selection" size="sm" onClick={onClose} />
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div data-tour={TOUR_ANCHORS.mapZoneCard} className="flex flex-col">
           {/* 1. What to do — the plain-language answer comes first. */}
           <div
-            className="grid gap-4 border-l-[3px] px-4 py-3 lg:grid-cols-2"
+            className="grid gap-3 border-l-[3px] px-4 py-3 lg:grid-cols-2"
             style={{
               borderLeftColor: BAND_COLORS[band],
               background: `color-mix(in srgb, ${BAND_COLORS[band]} 8%, var(--color-surface))`,
             }}
           >
-            <div className="mb-1.5 flex items-center gap-2">
+            <div className="col-span-2 flex items-center gap-2">
               <BandChip band={zone.operational_band} />
               <IpcChip phase={zone.ipc_phase} />
             </div>
@@ -215,32 +224,32 @@ export function ZoneCard({
             ) : null}
 
             {overlayBrief ? (
-              <div className="col-span-2 rounded-md border border-line bg-surface/70 px-3 py-2.5">
-                <div className="flex items-start gap-2">
-                  {OverlayIcon ? (
-                    <OverlayIcon size={15} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-muted" />
+              <div className="col-span-2 flex items-start gap-2 rounded-md border border-line bg-surface/70 px-3 py-2">
+                {OverlayIcon ? (
+                  <OverlayIcon
+                    size={15}
+                    strokeWidth={1.75}
+                    aria-hidden
+                    className="mt-0.5 shrink-0 text-muted"
+                  />
+                ) : null}
+                <p className="min-w-0 text-xs leading-relaxed text-muted">
+                  {overlayBrief.text}
+                  {overlay === 'hazards' ? (
+                    <button
+                      type="button"
+                      onClick={() => void navigate(`/zones/${zone.zone_id}`)}
+                      className="ml-1 font-medium text-accent hover:text-accent-hover"
+                    >
+                      Open hazard details
+                    </button>
                   ) : null}
-                  <div className="min-w-0">
-                    <p className="text-xs leading-relaxed text-muted">{overlayBrief.text}</p>
-                    <p className="mt-1 text-2xs font-medium text-ink">
-                      Conflict pressure remains the main read for this zone <span aria-hidden>→</span>
-                    </p>
-                    {overlay === 'hazards' ? (
-                      <button
-                        type="button"
-                        onClick={() => void navigate(`/zones/${zone.zone_id}`)}
-                        className="mt-1 text-2xs font-medium text-accent hover:text-accent-hover"
-                      >
-                        Open hazard details
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
+                </p>
               </div>
             ) : null}
 
             {/* 2. How much — and, just as importantly, which way. */}
-            <div className="flex items-end justify-between gap-3">
+            <div className="col-span-2 flex items-end justify-between gap-3">
               <span className="flex items-end gap-2.5">
                 <span
                   className="text-3xl leading-none font-semibold tabular-nums"
@@ -270,13 +279,10 @@ export function ZoneCard({
               track="var(--color-line)"
               ticks={BAND_TICKS}
               height="lg"
-              className="col-span-2 mt-1.5"
+              className="col-span-2"
               label={`Conflict pressure for ${zone.zone_name}`}
             />
-            <DateStamp
-              className="col-span-2"
-              title="Forecast window"
-            >
+            <DateStamp className="col-span-2" title="Forecast window">
               Conflict pressure ·{' '}
               {fmtForecastWindow(
                 situation?.window_start,
@@ -286,80 +292,90 @@ export function ZoneCard({
             </DateStamp>
           </div>
 
-          {/* 3. Why — evidence the map already had but never showed. */}
+          {/*
+            3. Why. Folded away by default: the band and the score answer the
+            question most of the time, and this section was pushing the actions
+            off the bottom of the screen for the times they did not.
+          */}
           {situation ? (
-            <div className="group border-b border-line px-4 py-3">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-eyebrow text-faint uppercase">
-                  Why
-                </p>
+            <div className="border-t border-line px-4 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  aria-expanded={showWhy}
+                  onClick={() => setShowWhy((shown) => !shown)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-ink"
+                >
+                  <ChevronDown
+                    size={14}
+                    strokeWidth={2}
+                    aria-hidden
+                    className={cx(
+                      'text-faint transition-transform duration-[140ms] ease-standard',
+                      showWhy && 'rotate-180',
+                    )}
+                  />
+                  Why this rating
+                </button>
                 <AskAboutButton
                   question={`Why is ${zone.zone_name} rated ${zone.operational_band ?? 'as it is'} this cycle? Walk me through the evidence.`}
                   className="-my-1"
                 />
               </div>
-              <ul className="flex flex-col gap-1.5">
-                <EvidenceRow
-                  icon={Brain}
-                  label="Model forecast"
-                  value={fmtRisk(situation.model_risk)}
-                />
-                <EvidenceRow
-                  icon={Newspaper}
-                  label={<Term term="corroboration">What people are reporting</Term>}
-                  value={
-                    breakdown?.newsCorroboration != null
-                      ? `${fmtRisk(situation.corroboration)} · news`
-                      : fmtRisk(situation.corroboration)
-                  }
-                />
-                <EvidenceRow
-                  icon={ClipboardCheck}
-                  label="Verified reports"
-                  value={String(zone.verified_field_reports_recent ?? 0)}
-                />
-              </ul>
 
-              {situation.explanation ? (
-                <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted">
-                  {situation.explanation}
-                </p>
-              ) : null}
+              {showWhy ? (
+                <>
+                  <ul className="mt-2 flex flex-col gap-1.5">
+                    <EvidenceRow
+                      icon={Brain}
+                      label="Model forecast"
+                      value={fmtRisk(situation.model_risk)}
+                    />
+                    <EvidenceRow
+                      icon={Newspaper}
+                      label={<Term term="corroboration">What people are reporting</Term>}
+                      value={
+                        breakdown?.newsCorroboration != null
+                          ? `${fmtRisk(situation.corroboration)} · news`
+                          : fmtRisk(situation.corroboration)
+                      }
+                    />
+                    <EvidenceRow
+                      icon={ClipboardCheck}
+                      label="Verified reports"
+                      value={String(zone.verified_field_reports_recent ?? 0)}
+                    />
+                  </ul>
 
-              {assessment ? (
-                <button
-                  type="button"
-                  onClick={() => setExplaining(true)}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-xs text-xs font-medium text-accent transition-colors hover:text-accent-hover"
-                >
-                  <Sigma size={12} strokeWidth={2} aria-hidden />
-                  How is this calculated?
-                </button>
+                  {situation.explanation ? (
+                    <p className="mt-2 text-xs leading-relaxed text-muted">
+                      {situation.explanation}
+                    </p>
+                  ) : null}
+
+                  {assessment ? (
+                    <button
+                      type="button"
+                      onClick={() => setExplaining(true)}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-xs text-xs font-medium text-accent transition-colors hover:text-accent-hover"
+                    >
+                      <Sigma size={12} strokeWidth={2} aria-hidden />
+                      How is this calculated?
+                    </button>
+                  ) : null}
+                </>
               ) : null}
             </div>
           ) : null}
 
           {/*
-            4. Who is exposed.
-            Nine readings rather than four. The card had room for them all
-            along — the lower third was simply empty — and every one of these
-            was already travelling in the /zones payload.
+            4. Who is exposed — the four readings that change what you do.
+            The other four were a scroll of trivia this panel could not afford;
+            the dossier one button away carries all of them, in context.
           */}
-          <div className="grid grid-cols-3 gap-px bg-line">
+          <div className="grid grid-cols-2 gap-px border-t border-line bg-line">
             <ExposureCell icon={UsersRound} label="People" value={fmtCompact(zone.population)} />
             <ExposureCell icon={Users} label="Displaced" value={fmtCompact(zone.idps)} />
-            <ExposureCell icon={UsersRound} label="Refugees" value={fmtCompact(zone.refugees)} />
-            <ExposureCell
-              icon={Wheat}
-              label="Pastoralist"
-              value={
-                zone.pastoralist_share == null
-                  ? '—'
-                  : `${Math.round(zone.pastoralist_share * 100)}%`
-              }
-            />
-            <ExposureCell icon={Waves} label="Water points" value={fmtCompact(zone.water_points)} />
-            <ExposureCell icon={ShoppingBasket} label="Markets" value={fmtCompact(zone.markets)} />
             <ExposureCell
               icon={FileCheck2}
               label="Verified reports"
@@ -375,7 +391,7 @@ export function ZoneCard({
             a cell that could only show the magnitude.
           */}
           {zone.staple_pct_vs_3m_avg != null ? (
-            <p className="flex items-baseline justify-between gap-2 border-t border-line px-4 py-2.5 text-xs">
+            <p className="flex items-baseline justify-between gap-2 border-t border-line px-4 py-2 text-xs">
               <span className="text-muted">
                 {zone.staple_commodity ?? 'Staple'} vs 3-month average
               </span>
@@ -394,63 +410,63 @@ export function ZoneCard({
               </span>
             </p>
           ) : null}
-        </div>
 
-        {/* 5. Act. The primary action follows the band. */}
-        <div className="flex shrink-0 flex-col gap-2 border-t border-line px-4 py-3">
-          {zone.situation_id && urgent ? (
-            <Button
-              variant="primary"
-              icon={Megaphone}
-              block
-              loading={preparingAlert}
-              onClick={() => onPrepareAlert(zone.situation_id!)}
-            >
-              {preparingAlert ? 'Drafting alert…' : 'Prepare alert'}
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              iconRight={ExternalLink}
-              block
-              onClick={() => void navigate(`/zones/${zone.zone_id}`)}
-            >
-              Open dossier
-            </Button>
-          )}
-
-          <div className="flex gap-2">
+          {/* 5. Act. The primary action follows the band. */}
+          <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
             {zone.situation_id && urgent ? (
               <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={() => void navigate(`/zones/${zone.zone_id}`)}
-              >
-                Dossier
-              </Button>
-            ) : null}
-            {zone.situation_id ? (
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={() => void navigate(`/situations/${zone.situation_id}`)}
-              >
-                Situation
-              </Button>
-            ) : null}
-            {zone.situation_id && !urgent ? (
-              <Button
-                variant="secondary"
-                className="flex-1"
+                variant="primary"
+                icon={Megaphone}
+                block
                 loading={preparingAlert}
                 onClick={() => onPrepareAlert(zone.situation_id!)}
               >
-                Prepare alert
+                {preparingAlert ? 'Drafting alert…' : 'Prepare alert'}
               </Button>
-            ) : null}
+            ) : (
+              <Button
+                variant="primary"
+                iconRight={ExternalLink}
+                block
+                onClick={() => void navigate(`/zones/${zone.zone_id}`)}
+              >
+                Open dossier
+              </Button>
+            )}
+
+            <div className="flex gap-2">
+              {zone.situation_id && urgent ? (
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => void navigate(`/zones/${zone.zone_id}`)}
+                >
+                  Dossier
+                </Button>
+              ) : null}
+              {zone.situation_id ? (
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => void navigate(`/situations/${zone.situation_id}`)}
+                >
+                  Situation
+                </Button>
+              ) : null}
+              {zone.situation_id && !urgent ? (
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  loading={preparingAlert}
+                  onClick={() => onPrepareAlert(zone.situation_id!)}
+                >
+                  Prepare alert
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
-      </motion.section>
+      </Sheet>
 
       {explaining && assessment ? (
         <Modal

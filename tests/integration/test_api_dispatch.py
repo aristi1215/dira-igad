@@ -112,6 +112,35 @@ def test_alert_edit_pending_approval(api_client: TestClient, make_alert) -> None
     assert response.json()["language"] == "en"
 
 
+def test_alert_draft_accepts_operator_written_text_without_calling_the_llm(
+    api_client: TestClient,
+    make_situation,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An operator who types the words should not pay for a draft they discard."""
+    from dira_api import main as api_main
+
+    def _explode(*_args: Any, **_kwargs: Any) -> None:
+        raise AssertionError("the language model must not be called for authored text")
+
+    monkeypatch.setattr(api_main, "_draft_alert_text", _explode)
+
+    situation_id = make_situation(None)
+    response = api_client.post(
+        f"/situations/{situation_id}/alert",
+        json={
+            "created_by": "operator",
+            "language": "en",
+            "body_text": "Move livestock away from the Daua river crossing today.",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "pending_approval"
+    assert payload["body_text"] == "Move livestock away from the Daua river crossing today."
+    assert payload["language"] == "en"
+
+
 def test_advisor_dispatch_is_human_gated_and_queues_direct_numbers(
     api_client: TestClient,
     db_conn,

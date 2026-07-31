@@ -91,10 +91,10 @@ export function SituationDetailScreen() {
 
   const prepareAlertMutation = useMutation({
     mutationFn: () => prepareAlert(id),
-    onSuccess: () => {
+    onSuccess: (alert) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.pendingAlerts })
       void queryClient.invalidateQueries({ queryKey: queryKeys.allAlerts })
-      void navigate('/dispatch')
+      void navigate(`/dispatch?alert=${alert.id}`)
     },
   })
 
