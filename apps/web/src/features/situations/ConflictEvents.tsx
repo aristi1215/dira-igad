@@ -21,17 +21,28 @@ type EventWithContribution = AcledEventRow & {
   windowShare: number | null
 }
 
+const ACLED_HOME = 'https://acleddata.com/'
+
+function sourceLink(href: string, label: string) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1.5 font-medium text-accent hover:text-accent-hover"
+    >
+      <ExternalLink size={13} strokeWidth={1.75} aria-hidden />
+      {label}
+    </a>
+  )
+}
+
 function eventSource(value: string | null | undefined) {
   if (!value) return <span className="text-muted">Source not recorded</span>
-  if (/^https?:\/\//.test(value)) {
-    return (
-      <a href={value} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium text-accent hover:text-accent-hover">
-        <ExternalLink size={13} strokeWidth={1.75} aria-hidden />
-        Open source
-      </a>
-    )
-  }
-  return value.toLowerCase() === 'acled' ? 'ACLED' : value
+  if (/^https?:\/\//.test(value)) return sourceLink(value, 'Open source')
+  // ACLED's API has no per-event report URL — link the dataset home instead.
+  if (value.toLowerCase() === 'acled') return sourceLink(ACLED_HOME, 'ACLED')
+  return value
 }
 
 /**
