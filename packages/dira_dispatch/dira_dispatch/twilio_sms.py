@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 
+from .errors import raise_for_provider_status
 from .twilio_adapter import DEFAULT_API_BASE
 
 
@@ -58,7 +59,7 @@ class TwilioSmsAdapter:
                 auth=self._auth,
                 headers={"Idempotency-Key": idempotency_key},
             )
-            response.raise_for_status()
+            raise_for_provider_status(response)
             raw: dict[str, Any] = response.json()
         provider_id = str(raw.get("sid") or raw.get("message_sid") or idempotency_key)
         return provider_id
