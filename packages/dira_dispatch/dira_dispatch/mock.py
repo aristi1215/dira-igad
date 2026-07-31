@@ -20,6 +20,7 @@ class MockCall:
     audio_url: str
     idem_key: str
     provider_message_id: str
+    language: str = "sw"
 
 
 @dataclass
@@ -40,13 +41,21 @@ class MockDispatcher:
     calls: list[MockCall] = field(default_factory=list)
     messages: list[MockMessage] = field(default_factory=list)
 
-    def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef:
+    def call(
+        self,
+        phone: str,
+        audio_url: str,
+        idem_key: str,
+        *,
+        language: str = "sw",
+    ) -> ProviderRef:
         provider_message_id = f"mock-{uuid.uuid5(uuid.NAMESPACE_URL, idem_key)}"
         call = MockCall(
             phone=phone,
             audio_url=audio_url,
             idem_key=idem_key,
             provider_message_id=provider_message_id,
+            language=language,
         )
         self.calls.append(call)
         ref = ProviderRef(provider_message_id=provider_message_id, raw=_raw(call))

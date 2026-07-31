@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import {
   Check,
   CornerDownLeft,
+  ExternalLink,
   FileText,
   Loader2,
   Newspaper,
@@ -19,17 +20,28 @@ import { Button, Callout } from '../../components/ui'
 import { cx } from '../../lib/cx'
 import { T } from '../../lib/motion'
 import { useAdvisorStore } from './advisorStore'
-import { renderMarkish } from './markish'
+import { citationRowId, renderMarkish } from './markish'
 import { ProposalCard } from './ProposalCard'
 
-/** Human labels for the retrieval tools the backend actually names. */
+/** Human labels for the retrieval tools the backend actually names. An
+ * unlabelled tool falls through as its raw snake_case name. */
 const TOOL_LABELS: Record<string, string> = {
+  regional_briefing: 'Reading the regional briefing',
   read_situation: 'Reading the open situation',
   read_zone_context: 'Reading zone context',
   query_news_signals: 'Searching news signals',
   query_hazards: 'Checking hazard bulletins',
   query_field_reports: 'Reading field reports',
   read_watchlist: 'Scanning the regional watchlist',
+  read_neighbours: "Reading the zone's neighbours",
+  compare_zones: 'Comparing zones',
+  read_zone_profile: 'Reading the full zone dossier',
+  read_trends: 'Reading the risk trajectory',
+  read_regional_overview: 'Reading regional analytics',
+  read_economy: 'Reading economy indicators',
+  search_corpus: 'Searching grounded sources',
+  list_pending_alerts: 'Checking pending alerts',
+  read_model_card: 'Reading the model card',
 }
 
 const CITATION_STYLE: Record<string, { icon: typeof Newspaper; className: string }> = {
@@ -267,7 +279,13 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
                 >
                   {turn.text ? (
                     <div className="flex flex-col gap-2 leading-relaxed text-ink">
-                      {renderMarkish(turn.text)}
+                      {renderMarkish(turn.text, turn.citations ?? [])}
+                    </div>
+                  ) : turn.role === 'assistant' && pending && index === turns.length - 1 ? (
+                    <div className="flex flex-col gap-1.5" aria-hidden>
+                      <span className="h-3 w-11/12 animate-pulse rounded bg-line/60" />
+                      <span className="h-3 w-4/5 animate-pulse rounded bg-line/60" />
+                      <span className="h-3 w-2/3 animate-pulse rounded bg-line/60" />
                     </div>
                   ) : null}
 
@@ -387,27 +405,39 @@ export function AskAdvisor({ situationId, zone }: AskAdvisorProps) {
 }
 
 /**
- * Sources, numbered so the answer can point at them.
+ * Sources — only the ones the answer actually cited (the backend filters
+ * before this ever arrives), each numbered to match its inline `[S3]` chip.
  *
  * Colored and iconed by kind, because "a news article said this" and "a
  * verified field report said this" carry very different weight in this domain
  * and a uniform grey list flattened that distinction away.
  */
 function Citations({ citations }: { citations: AdvisorCitation[] }) {
+  if (citations.length === 0) return null
   return (
     <div className="mt-2.5 border-t border-line pt-2.5">
       <p className="mb-1.5 text-eyebrow text-faint uppercase">
         Sources
       </p>
       <ul className="flex flex-col gap-1">
-        {citations.slice(0, 6).map((citation, index) => {
+        {citations.map((citation) => {
           const style = CITATION_STYLE[citation.kind] ?? {
             icon: FileText,
             className: 'bg-canvas text-muted',
           }
           const Icon = style.icon
+          const label = (
+            <>
+              {citation.title}
+              {citation.source ? <span className="text-faint"> — {citation.source}</span> : null}
+            </>
+          )
           return (
-            <li key={`${citation.title}-${index}`} className="flex items-start gap-2 text-xs">
+            <li
+              key={citation.id}
+              id={citationRowId(citation.id)}
+              className="flex items-start gap-2 rounded-xs text-xs transition-shadow duration-300"
+            >
               <span
                 className={cx(
                   'mt-px flex size-4 shrink-0 items-center justify-center rounded-xs',
@@ -418,11 +448,26 @@ function Citations({ citations }: { citations: AdvisorCitation[] }) {
                 <Icon size={10} strokeWidth={2} />
               </span>
               <span className="min-w-0 text-muted">
-                <span className="tabular-nums text-2xs text-faint">[{index + 1}]</span>{' '}
-                {citation.title}
-                {citation.source ? (
-                  <span className="text-faint"> — {citation.source}</span>
-                ) : null}
+                <span className="tabular-nums text-2xs text-faint">
+                  [{citation.id.replace(/^S/, '')}]
+                </span>{' '}
+                {citation.url ? (
+                  <a
+                    href={citation.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-accent hover:text-accent-hover"
+                  >
+                    {label}
+                    <ExternalLink size={10} strokeWidth={2} aria-hidden />
+                  </a>
+                ) : citation.href ? (
+                  <Link to={citation.href} className="text-accent hover:text-accent-hover">
+                    {label}
+                  </Link>
+                ) : (
+                  label
+                )}
               </span>
             </li>
           )

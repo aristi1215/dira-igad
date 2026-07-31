@@ -5,6 +5,7 @@
     "zone_id": "mandera_ke_north",
     "channel": "voice",
     "language": "sw",
+    "role": "chief",
     "active": true
   },
   {
@@ -12,15 +13,17 @@
     "phone_e164": "+254700100002",
     "zone_id": "mandera_ke_south",
     "channel": "voice",
-    "language": "sw",
+    "language": "so",
+    "role": "livestock_officer",
     "active": true
   },
   {
     "name": "Fatuma Noor",
     "phone_e164": "+254700100003",
     "zone_id": "mandera_ke_north",
-    "channel": "voice",
-    "language": "sw",
+    "channel": "both",
+    "language": "so",
+    "role": "health_worker",
     "active": true
   },
   {
@@ -29,6 +32,16 @@
     "zone_id": "mandera_ke_south",
     "channel": "voice",
     "language": "sw",
+    "role": "livestock_officer",
+    "active": true
+  },
+  {
+    "name": "Grace Wanjiru",
+    "phone_e164": "+254700100005",
+    "zone_id": null,
+    "channel": "sms",
+    "language": "en",
+    "role": "ngo",
     "active": true
   }
 ]

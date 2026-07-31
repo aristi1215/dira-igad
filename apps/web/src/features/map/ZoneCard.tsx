@@ -209,8 +209,8 @@ export function ZoneCard({
             </p>
             {band === 'none' ? (
               <p className="col-span-2 text-xs leading-relaxed text-muted">
-                No active assessment this cycle — not enough corroborating signal to open a
-                situation here. The zone is still monitored.
+                No assessment for this cycle yet — the zone is still monitored. Run the
+                dekadal pipeline to populate a band.
               </p>
             ) : null}
 

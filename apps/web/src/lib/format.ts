@@ -18,7 +18,7 @@ export const BAND_MAP_COLORS: Record<string, string> = {
 }
 
 export const BAND_LABELS: Record<OperationalBand | 'none', string> = {
-  low: 'Low',
+  low: 'Stable',
   watch: 'Watch',
   elevated: 'Elevated',
   high: 'High',
@@ -31,7 +31,7 @@ export const BAND_GUIDANCE: Record<OperationalBand | 'none', string> = {
   high: 'Elevated risk — ready contacts and review the situation.',
   elevated: 'Pressure rising — monitor this zone closely.',
   watch: 'Some pressure building — keep watch.',
-  low: 'Stable — routine monitoring.',
+  low: 'No elevated conflict pressure — the model is not detecting danger here.',
   none: 'Not yet assessed this cycle.',
 }
 
@@ -255,4 +255,19 @@ export function titleCase(value: string): string {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+/**
+ * A phone number with everything but the last four digits replaced.
+ *
+ * The dispatch board gets projected on a wall during an incident; full contact
+ * numbers for chiefs and field officers do not belong there. Four digits is
+ * enough for an operator to confirm they are looking at the right person.
+ */
+export function maskPhone(value: string | null | undefined): string {
+  if (!value) return '—'
+  const tail = value.slice(-4)
+  if (value.length <= 4) return tail
+  const prefix = value.startsWith('+') ? '+' : ''
+  return `${prefix}••• ${tail}`
 }

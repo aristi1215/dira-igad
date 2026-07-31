@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
+    advisor_model: str = "gpt-4.1"
     acled_email: str | None = None
     acled_password: str | None = None
     public_base_url: str = "http://localhost:8000"

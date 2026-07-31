@@ -239,14 +239,20 @@ def main() -> int:
     events.sort(key=lambda e: (e["event_date"], e["event_id"]))
     write("acled/events.json", events)
 
+    # Language follows the country, not a coin flip: these are fixtures, but a
+    # Somali-speaking zone listing Swahili contacts would be a lie the variant
+    # resolver then faithfully reproduces.
+    country_language = {"SO": "so", "ET": "am", "DJ": "ar", "SD": "ar", "SS": "en"}
     recipients = []
-    for idx, (zid, _c, name, _co, *_rest) in enumerate(ZONES, start=1):
+    for idx, (zid, _c, name, country, *_rest) in enumerate(ZONES, start=1):
+        language = country_language.get(country, "sw")
         recipients.append({
             "name": f"{name} Peace Committee",
             "phone_e164": f"+2547009{idx:05d}",
             "zone_id": zid,
             "channel": "voice",
-            "language": "sw",
+            "language": language,
+            "role": "chief",
             "active": True,
         })
         recipients.append({
@@ -254,7 +260,8 @@ def main() -> int:
             "phone_e164": f"+2547008{idx:05d}",
             "zone_id": zid,
             "channel": "sms",
-            "language": "sw",
+            "language": language,
+            "role": "ngo",
             "active": True,
         })
     write("recipients.json", recipients)

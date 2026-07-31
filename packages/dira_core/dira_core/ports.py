@@ -121,7 +121,14 @@ class EmbeddingModel(Protocol):
 
 @runtime_checkable
 class VoiceChannel(Protocol):
-    def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef: ...
+    def call(
+        self,
+        phone: str,
+        audio_url: str,
+        idem_key: str,
+        *,
+        language: str = "sw",
+    ) -> ProviderRef: ...
 
 
 @runtime_checkable

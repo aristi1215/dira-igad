@@ -150,7 +150,13 @@ export function MapScreen() {
         events={eventsQuery.data}
         trends={trendsQuery.data}
         ackBySituation={ackQuery.data}
-        isLoading={indicatorsQuery.isLoading || situationsQuery.isLoading}
+        isLoading={
+          indicatorsQuery.isLoading ||
+          situationsQuery.isLoading ||
+          eventsQuery.isLoading ||
+          trendsQuery.isLoading ||
+          hazardsQuery.isLoading
+        }
         overlay={overlay}
         onOverlayChange={setOverlay}
         selectedZoneId={selectedZoneId}
@@ -188,7 +194,7 @@ export function MapScreen() {
       <MapStatusStrip
         zones={watchlist}
         cycle={latestCycle}
-        pendingAlerts={pendingAlertsQuery.data?.length ?? 0}
+        pendingAlerts={pendingAlertsQuery.isLoading ? null : (pendingAlertsQuery.data?.length ?? 0)}
         bandFilter={bandFilter}
         onToggleBand={toggleBand}
       />

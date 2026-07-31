@@ -83,4 +83,18 @@ describe('renderMarkish', () => {
   it('returns nothing for empty input', () => {
     expect(renderMarkish('')).toHaveLength(0)
   })
+
+  it('renders a [S1] marker as a citation chip, not literal text', () => {
+    const output = renderMarkish('Prices rose sharply [S1] this cycle.', [
+      { id: 'S1', kind: 'news', title: 'Market report' },
+    ])
+    expect(tags(output)).toContain('button')
+    expect(text(output)).toBe('Prices rose sharply 1 this cycle.')
+  })
+
+  it('still renders a citation marker with no matching source, but disabled', () => {
+    const output = renderMarkish('Unverified claim [S9].', [])
+    const button = tags(output).includes('button')
+    expect(button).toBe(true)
+  })
 })

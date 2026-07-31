@@ -19,7 +19,11 @@ def test_tool_handlers_contain_no_mutating_sql() -> None:
         assert "UPDATE" not in source, name
 
 
-def test_proposal_handlers_do_not_touch_the_connection() -> None:
+def test_verify_proposal_handler_does_not_touch_the_connection() -> None:
+    """Unlike propose_alert_draft / propose_dispatch (which read the latest
+    assessment to draft real body text — see the integration-level red-line
+    test), propose_verify_field_report needs nothing from the database."""
+
     class ForbiddenConnection:
         def __getattr__(self, name: str) -> object:
             raise AssertionError(f"proposal used connection: {name}")
@@ -28,27 +32,10 @@ def test_proposal_handlers_do_not_touch_the_connection() -> None:
         ForbiddenConnection(),
         {"report_id": "report-1", "reason": "Review requested"},
     )
-    draft = TOOL_HANDLERS["propose_alert_draft"](
-        ForbiddenConnection(),
-        {"situation_id": "situation-1"},
-    )
-    dispatch = TOOL_HANDLERS["propose_dispatch"](
-        ForbiddenConnection(),
-        {
-            "situation_id": "situation-1",
-            "channel": "voice",
-            "phone_numbers": ["+254700000001"],
-        },
-    )
-    assert isinstance(verify, dict)
-    assert isinstance(draft, dict)
-    assert dispatch == {
-        "type": "dispatch",
-        "situation_id": "situation-1",
-        "channel": "voice",
-        "phone_numbers": ["+254700000001"],
-        "language": "sw",
-        "reason": None,
+    assert verify == {
+        "type": "verify-field-report",
+        "report_id": "report-1",
+        "reason": "Review requested",
     }
 
 

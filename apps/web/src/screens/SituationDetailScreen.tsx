@@ -25,6 +25,7 @@ import {
   PageHeader,
   Screen,
   ScreenSkeleton,
+  SkeletonRows,
   StatusChip,
 } from '../components/ui'
 import { TimeSeriesChart } from '../components/charts'
@@ -276,12 +277,18 @@ export function SituationDetailScreen() {
             <AskAboutButton question="Summarise the evidence for this situation and say where it is thin." />
           }
         >
-          <EvidenceBoard
-            zoneId={detail.situation.zone_id}
-            zoneName={zone?.zone_name}
-            reports={reportsQuery.data ?? []}
-            hazards={hazards}
-          />
+          {reportsQuery.isLoading || profileQuery.isLoading ? (
+            <div className="p-4">
+              <SkeletonRows rows={4} />
+            </div>
+          ) : (
+            <EvidenceBoard
+              zoneId={detail.situation.zone_id}
+              zoneName={zone?.zone_name}
+              reports={reportsQuery.data ?? []}
+              hazards={hazards}
+            />
+          )}
         </BentoCard>
 
         <BentoCard
@@ -289,7 +296,9 @@ export function SituationDetailScreen() {
           title="Alert timeline"
           subtitle="Every alert drafted for this situation and where it stands"
         >
-          {situationAlerts.length > 0 ? (
+          {alertsQuery.isLoading ? (
+            <SkeletonRows rows={3} />
+          ) : situationAlerts.length > 0 ? (
             <ul className="flex flex-col gap-3">
               {situationAlerts.map((alert) => (
                 <li key={alert.id} className="border-l-2 border-line pl-3">

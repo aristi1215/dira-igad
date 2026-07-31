@@ -4,6 +4,8 @@ import type {
   AdvisorProposal,
   Alert,
   AlertDraftResponse,
+  AlertRecipient,
+  AlertVariant,
   AnalyticsOverview,
   ApproveAlertResponse,
   Delivery,
@@ -14,6 +16,7 @@ import type {
   ModelCard,
   Recipient,
   RegionalIndicators,
+  RejectAlertResponse,
   RetryDeliveryResponse,
   SituationDetail,
   SituationFeatureCollection,
@@ -50,6 +53,8 @@ export const queryKeys = {
   sources: ['sources'] as const,
   analytics: ['analytics', 'overview'] as const,
   recipients: ['recipients'] as const,
+  alertRecipients: (alertId: string) => ['alerts', alertId, 'recipients'] as const,
+  alertVariants: (alertId: string) => ['alerts', alertId, 'variants'] as const,
   modelCard: ['model', 'card'] as const,
 }
 
@@ -157,15 +162,75 @@ export async function prepareAlert(situationId: string): Promise<Alert> {
   }
 }
 
+/**
+ * Approve an alert.
+ *
+ * Omitting `recipientIds` keeps the server's default fan-out — every active
+ * recipient matching the alert's zone. Passing a list is an explicit operator
+ * choice and is used verbatim, including contacts outside the zone.
+ */
 export function approveAlert(
   alertId: string,
   approvedBy: string,
+  recipientIds?: string[],
 ): Promise<ApproveAlertResponse> {
   return requestJson<ApproveAlertResponse>(`/alerts/${alertId}/approve`, {
     method: 'POST',
     body: {
       approved_by: approvedBy,
+      ...(recipientIds ? { recipient_ids: recipientIds } : {}),
     },
+  })
+}
+
+export function rejectAlert(
+  alertId: string,
+  rejectedBy: string,
+  reason?: string,
+): Promise<RejectAlertResponse> {
+  return requestJson<RejectAlertResponse>(`/alerts/${alertId}/reject`, {
+    method: 'POST',
+    body: { rejected_by: rejectedBy, reason: reason || null },
+  })
+}
+
+/** The default target set, as the server computes it. */
+export function fetchAlertRecipients(alertId: string): Promise<AlertRecipient[]> {
+  return requestJson<AlertRecipient[]>(`/alerts/${alertId}/recipients`)
+}
+
+export function fetchAlertVariants(alertId: string): Promise<AlertVariant[]> {
+  return requestJson<AlertVariant[]>(`/alerts/${alertId}/variants`)
+}
+
+/** Omit `body_text` to have the language model draft this wording. */
+export function createAlertVariant(
+  alertId: string,
+  input: { language: string; role?: string | null; body_text?: string },
+): Promise<AlertVariant> {
+  return requestJson<AlertVariant>(`/alerts/${alertId}/variants`, {
+    method: 'POST',
+    body: {
+      language: input.language,
+      role: input.role ?? null,
+      ...(input.body_text ? { body_text: input.body_text } : {}),
+    },
+  })
+}
+
+export function updateAlertVariant(
+  variantId: string,
+  bodyText: string,
+): Promise<AlertVariant> {
+  return requestJson<AlertVariant>(`/alert-variants/${variantId}`, {
+    method: 'PATCH',
+    body: { body_text: bodyText },
+  })
+}
+
+export function deleteAlertVariant(variantId: string): Promise<{ id: string }> {
+  return requestJson<{ id: string }>(`/alert-variants/${variantId}`, {
+    method: 'DELETE',
   })
 }
 

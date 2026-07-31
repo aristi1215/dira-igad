@@ -4,7 +4,8 @@
     "phone_e164": "+254700900001",
     "zone_id": "shabelle_corridor",
     "channel": "voice",
-    "language": "sw",
+    "language": "so",
+    "role": "chief",
     "active": true
   },
   {
@@ -12,7 +13,8 @@
     "phone_e164": "+254700800001",
     "zone_id": "shabelle_corridor",
     "channel": "sms",
-    "language": "sw",
+    "language": "so",
+    "role": "ngo",
     "active": true
   },
   {
@@ -20,7 +22,8 @@
     "phone_e164": "+254700900002",
     "zone_id": "shabelle_coast",
     "channel": "voice",
-    "language": "sw",
+    "language": "so",
+    "role": "chief",
     "active": true
   },
   {
@@ -28,7 +31,8 @@
     "phone_e164": "+254700800002",
     "zone_id": "shabelle_coast",
     "channel": "sms",
-    "language": "sw",
+    "language": "so",
+    "role": "ngo",
     "active": true
   },
   {
@@ -36,7 +40,8 @@
     "phone_e164": "+254700900003",
     "zone_id": "jubaland_coast",
     "channel": "voice",
-    "language": "sw",
+    "language": "so",
+    "role": "chief",
     "active": true
   },
   {
@@ -44,7 +49,8 @@
     "phone_e164": "+254700800003",
     "zone_id": "jubaland_coast",
     "channel": "sms",
-    "language": "sw",
+    "language": "so",
+    "role": "ngo",
     "active": true
   },
   {
@@ -52,7 +58,8 @@
     "phone_e164": "+254700900004",
     "zone_id": "jubaland_inland",
     "channel": "voice",
-    "language": "sw",
+    "language": "so",
+    "role": "chief",
     "active": true
   },
   {
@@ -60,7 +67,8 @@
     "phone_e164": "+254700800004",
     "zone_id": "jubaland_inland",
     "channel": "sms",
-    "language": "sw",
+    "language": "so",
+    "role": "ngo",
     "active": true
   },
   {
@@ -68,7 +76,8 @@
     "phone_e164": "+254700900005",
     "zone_id": "gambella_lowlands",
     "channel": "voice",
-    "language": "sw",
+    "language": "am",
+    "role": "chief",
     "active": true
   },
   {
@@ -76,7 +85,8 @@
     "phone_e164": "+254700800005",
     "zone_id": "gambella_lowlands",
     "channel": "sms",
-    "language": "sw",
+    "language": "am",
+    "role": "ngo",
     "active": true
   },
   {
@@ -84,7 +94,8 @@
     "phone_e164": "+254700900006",
     "zone_id": "gambella_east",
     "channel": "voice",
-    "language": "sw",
+    "language": "am",
+    "role": "chief",
     "active": true
   },
   {
@@ -92,7 +103,8 @@
     "phone_e164": "+254700800006",
     "zone_id": "gambella_east",
     "channel": "sms",
-    "language": "sw",
+    "language": "am",
+    "role": "ngo",
     "active": true
   },
   {
@@ -100,7 +112,8 @@
     "phone_e164": "+254700900007",
     "zone_id": "abyei_belt",
     "channel": "voice",
-    "language": "sw",
+    "language": "en",
+    "role": "chief",
     "active": true
   },
   {
@@ -108,7 +121,8 @@
     "phone_e164": "+254700800007",
     "zone_id": "abyei_belt",
     "channel": "sms",
-    "language": "sw",
+    "language": "en",
+    "role": "ngo",
     "active": true
   },
   {
@@ -116,7 +130,8 @@
     "phone_e164": "+254700900008",
     "zone_id": "abyei_north",
     "channel": "voice",
-    "language": "sw",
+    "language": "ar",
+    "role": "chief",
     "active": true
   },
   {
@@ -124,7 +139,8 @@
     "phone_e164": "+254700800008",
     "zone_id": "abyei_north",
     "channel": "sms",
-    "language": "sw",
+    "language": "ar",
+    "role": "ngo",
     "active": true
   },
   {
@@ -133,6 +149,7 @@
     "zone_id": "marsabit_frontier",
     "channel": "voice",
     "language": "sw",
+    "role": "chief",
     "active": true
   },
   {
@@ -141,6 +158,7 @@
     "zone_id": "marsabit_frontier",
     "channel": "sms",
     "language": "sw",
+    "role": "ngo",
     "active": true
   },
   {
@@ -148,7 +166,8 @@
     "phone_e164": "+254700900010",
     "zone_id": "moyale_border",
     "channel": "voice",
-    "language": "sw",
+    "language": "am",
+    "role": "chief",
     "active": true
   },
   {
@@ -156,7 +175,8 @@
     "phone_e164": "+254700800010",
     "zone_id": "moyale_border",
     "channel": "sms",
-    "language": "sw",
+    "language": "am",
+    "role": "ngo",
     "active": true
   },
   {
@@ -165,6 +185,7 @@
     "zone_id": "karamoja_cluster",
     "channel": "voice",
     "language": "sw",
+    "role": "chief",
     "active": true
   },
   {
@@ -173,6 +194,7 @@
     "zone_id": "karamoja_cluster",
     "channel": "sms",
     "language": "sw",
+    "role": "ngo",
     "active": true
   },
   {
@@ -181,6 +203,7 @@
     "zone_id": "turkana_west",
     "channel": "voice",
     "language": "sw",
+    "role": "chief",
     "active": true
   },
   {
@@ -189,6 +212,7 @@
     "zone_id": "turkana_west",
     "channel": "sms",
     "language": "sw",
+    "role": "ngo",
     "active": true
   },
   {
@@ -196,7 +220,8 @@
     "phone_e164": "+254700900013",
     "zone_id": "blue_nile_escarpment",
     "channel": "voice",
-    "language": "sw",
+    "language": "ar",
+    "role": "chief",
     "active": true
   },
   {
@@ -204,7 +229,8 @@
     "phone_e164": "+254700800013",
     "zone_id": "blue_nile_escarpment",
     "channel": "sms",
-    "language": "sw",
+    "language": "ar",
+    "role": "ngo",
     "active": true
   },
   {
@@ -212,7 +238,8 @@
     "phone_e164": "+254700900014",
     "zone_id": "blue_nile_south",
     "channel": "voice",
-    "language": "sw",
+    "language": "ar",
+    "role": "chief",
     "active": true
   },
   {
@@ -220,7 +247,8 @@
     "phone_e164": "+254700800014",
     "zone_id": "blue_nile_south",
     "channel": "sms",
-    "language": "sw",
+    "language": "ar",
+    "role": "ngo",
     "active": true
   },
   {
@@ -228,7 +256,8 @@
     "phone_e164": "+254700900015",
     "zone_id": "afar_triangle",
     "channel": "voice",
-    "language": "sw",
+    "language": "am",
+    "role": "chief",
     "active": true
   },
   {
@@ -236,7 +265,8 @@
     "phone_e164": "+254700800015",
     "zone_id": "afar_triangle",
     "channel": "sms",
-    "language": "sw",
+    "language": "am",
+    "role": "ngo",
     "active": true
   },
   {
@@ -244,7 +274,8 @@
     "phone_e164": "+254700900016",
     "zone_id": "afar_coast",
     "channel": "voice",
-    "language": "sw",
+    "language": "ar",
+    "role": "chief",
     "active": true
   },
   {
@@ -252,7 +283,8 @@
     "phone_e164": "+254700800016",
     "zone_id": "afar_coast",
     "channel": "sms",
-    "language": "sw",
+    "language": "ar",
+    "role": "ngo",
     "active": true
   }
 ]

@@ -106,6 +106,52 @@ export type ApproveAlertResponse = {
   id: string
   status: 'approved'
   approved_by: string
+  recipients: number
+  deliveries: number
+}
+
+export type RejectAlertResponse = {
+  id: string
+  status: 'rejected'
+  rejected_by: string
+  rejected_at: string
+  rejection_reason: string | null
+}
+
+/**
+ * A recipient the server says this alert reaches by default, with the reason it
+ * matched. The matching rule lives on the server precisely so this screen never
+ * has to reimplement it.
+ */
+export type AlertRecipient = {
+  id: string
+  name: string
+  phone_e164: string
+  channel: Recipient['channel']
+  language: string
+  role: string | null
+  zone_id: string | null
+  zone_name: string | null
+  match_reason: 'zone match' | 'all zones'
+  /** Which wording this person hears, resolved by the server. */
+  variant_language: string
+  variant_match: 'language+role' | 'language' | 'alert-language' | 'default'
+  /** True when nobody wrote anything in their language — worth surfacing. */
+  variant_is_fallback: boolean
+}
+
+/** One drafted wording of an alert, for a language and optionally a role. */
+export type AlertVariant = {
+  id: string
+  alert_id: string
+  language: string
+  role: string | null
+  body_text: string
+  source: 'llm' | 'human_edited' | 'human_authored'
+  /** What the model originally wrote, kept from the first human edit onward. */
+  llm_draft: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type Delivery = {
@@ -118,7 +164,15 @@ export type Delivery = {
   attempt_count: number
   provider_message_id: string | null
   last_error: string | null
+  created_at?: string
   updated_at: string
+  /** Joined from `recipients` — optional so older cached rows still typecheck. */
+  recipient_name?: string
+  phone_e164?: string
+  recipient_language?: string
+  zone_id?: string | null
+  zone_name?: string | null
+  alert_language?: string
 }
 
 export type RetryDeliveryResponse = {
@@ -194,13 +248,23 @@ export type AdvisorProposal = {
   language?: string
   channel?: 'voice' | 'sms' | 'both'
   phone_numbers?: string[]
+  /** Drafted alert body — shown editable in the proposal card before it is
+   * sent, so a human signs for words they have actually read. */
+  body_text?: string
+  zone_name?: string
 }
 
 export type AdvisorCitation = {
+  id: string
   kind: string
   title: string
   source?: string | null
   reference?: string | null
+  /** External source link (news/hazard) — opens in a new tab. */
+  url?: string | null
+  /** In-app route (zone/situation) — navigated with react-router's Link. */
+  href?: string | null
+  similarity?: number
 }
 
 export type ModelCard = {

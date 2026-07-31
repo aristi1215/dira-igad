@@ -4,7 +4,7 @@ import { ArrowRight, Megaphone } from 'lucide-react'
 import { BAND_LABELS, BAND_MAP_COLORS, BAND_ORDER, fmtCompact } from '../../lib/format'
 import type { OperationalBand, ZoneSummary } from '../../lib/types'
 import { cx } from '../../lib/cx'
-import { DateStamp } from '../../components/ui'
+import { DateStamp, Skeleton } from '../../components/ui'
 
 /**
  * The bottom edge of the map.
@@ -26,7 +26,9 @@ export function MapStatusStrip({
 }: {
   zones: ZoneSummary[]
   cycle: string | null
-  pendingAlerts: number
+  /** `null` while the query is still in flight — never asserted as 0, which
+   * would read as a confident "nothing pending" that might be wrong. */
+  pendingAlerts: number | null
   bandFilter: Set<OperationalBand> | null
   onToggleBand: (band: OperationalBand) => void
 }) {
@@ -112,7 +114,9 @@ export function MapStatusStrip({
         </DateStamp>
       ) : null}
 
-      {pendingAlerts > 0 ? (
+      {pendingAlerts === null ? (
+        <Skeleton className="h-6 w-32 shrink-0 rounded-full" />
+      ) : pendingAlerts > 0 ? (
         <Link
           to="/dispatch"
           className={cx(

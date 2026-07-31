@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Check, MessageSquare, PhoneOutgoing, Plus, Radio, X } from 'lucide-react'
-import { Button, Callout } from '../../components/ui'
+import { Button, Callout, Field } from '../../components/ui'
 import { advisorDispatch, prepareAlert, verifyFieldReport } from '../../lib/api'
 import type { AdvisorProposal } from '../../lib/types'
+import { cx } from '../../lib/cx'
 
 export function ProposalCard({
   proposal,
@@ -22,6 +23,10 @@ export function ProposalCard({
   const [dispatchChannel, setDispatchChannel] = useState<'voice' | 'sms' | 'both'>(
     proposal.channel ?? 'voice',
   )
+  // Seeded from the drafted text the backend already generated, so the
+  // operator reviews and can edit the actual words before they sign for
+  // them — never words drafted invisibly at send time.
+  const [bodyText, setBodyText] = useState(proposal.body_text ?? '')
 
   const confirm = async () => {
     setPending(true)
@@ -37,6 +42,7 @@ export function ProposalCard({
           phone_numbers: dispatchNumbers.map((number) => number.trim()),
           channel: dispatchChannel,
           language: proposal.language,
+          body_text: bodyText.trim() || undefined,
           approved_by: operator.trim(),
         })
         setDispatchDeliveries(result.deliveries)
@@ -104,6 +110,7 @@ export function ProposalCard({
               : verifying
                 ? 'Review this field report'
                 : 'Prepare an alert draft'}
+            {proposal.zone_name ? ` · ${proposal.zone_name}` : ''}
           </p>
           {proposal.reason ? <p className="mt-1 text-xs text-muted">{proposal.reason}</p> : null}
         </div>
@@ -116,6 +123,26 @@ export function ProposalCard({
           <X size={14} aria-hidden />
         </button>
       </div>
+      {proposal.body_text !== undefined ? (
+        <Field label={dispatching ? 'Alert message (edit before sending)' : 'Drafted alert message'}>
+          <textarea
+            value={bodyText}
+            maxLength={4000}
+            rows={3}
+            readOnly={!dispatching}
+            onChange={(event) => setBodyText(event.target.value)}
+            aria-label="Drafted alert body"
+            className={cx(
+              'w-full rounded-md border border-line bg-surface px-2.5 py-2 text-sm leading-relaxed text-ink outline-none transition-colors placeholder:text-faint',
+              dispatching ? 'focus:border-accent focus:ring-4 focus:ring-accent-ring/40' : 'text-muted',
+            )}
+          />
+          <span className={cx('text-2xs', bodyText.length > 320 ? 'text-warn-fg' : 'text-faint')}>
+            {bodyText.length}/4000 characters
+            {bodyText.length > 320 ? ' · Long for a voice-readable alert' : ''}
+          </span>
+        </Field>
+      ) : null}
       {dispatching ? (
         <>
           <div className="grid gap-2">

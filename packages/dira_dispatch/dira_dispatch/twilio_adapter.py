@@ -9,36 +9,104 @@ POST /webhooks/twilio/status. Both webhooks are idempotent server-side.
 
 from __future__ import annotations
 
+import logging
 import os
-from typing import Any
+from typing import Any, NamedTuple
 from urllib.parse import urlencode
 from xml.sax.saxutils import escape
 
 import httpx
 from dira_core.ports import ProviderRef
 
+logger = logging.getLogger("dira.dispatch.twilio")
+
 DEFAULT_API_BASE = "https://api.twilio.com"
 
-FALLBACK_SAY = (
-    "Tahadhari ya Dira. Hali ya hatari imeongezeka katika eneo lako. "
-    "Tafadhali chukua hatua za maandalizi."
-)
+DEFAULT_LANGUAGE = "sw"
 
 
-def build_voice_twiml(audio_url: str, gather_action: str) -> str:
+class SayVoice(NamedTuple):
+    """The three things a <Say> needs, kept together on purpose.
+
+    Locale and text must agree: speaking Amharic words with an English voice is
+    worse than speaking English words with an English voice. So an unsupported
+    language falls back on *both* at once, never on the locale alone.
+    """
+
+    locale: str
+    alert_text: str
+    ack_prompt: str
+
+
+# Only languages Twilio's <Say> actually voices. Everything else in the alert
+# language dropdown (Amharic, Somali) has no TTS voice here and degrades to
+# English with a logged warning — a silent degrade is the bug this map exists
+# to fix.
+SAY_VOICES: dict[str, SayVoice] = {
+    "sw": SayVoice(
+        "sw-KE",
+        "Tahadhari ya Dira. Hali ya hatari imeongezeka katika eneo lako. "
+        "Tafadhali chukua hatua za maandalizi.",
+        "Bonyeza moja kuthibitisha kupokea tahadhari hii.",
+    ),
+    "en": SayVoice(
+        "en-GB",
+        "Dira alert. Risk has increased in your area. "
+        "Please take preparatory action.",
+        "Press one to confirm you received this alert.",
+    ),
+    "ar": SayVoice(
+        "arb",
+        "تنبيه ديرا. ازداد الخطر في منطقتك. يرجى اتخاذ إجراءات احترازية.",
+        "اضغط واحد لتأكيد استلام هذا التنبيه.",
+    ),
+}
+
+FALLBACK_VOICE_LANGUAGE = "en"
+
+# Kept for backwards compatibility — the Swahili generic alert text.
+FALLBACK_SAY = SAY_VOICES["sw"].alert_text
+
+
+def say_voice(language: str | None) -> SayVoice:
+    """Resolve a language code to a <Say> voice, loudly."""
+    code = (language or DEFAULT_LANGUAGE).split("-")[0].lower()
+    voice = SAY_VOICES.get(code)
+    if voice is None:
+        logger.warning(
+            "Twilio <Say> has no voice for language %r; speaking %s instead. "
+            "Recipients in this language get an English fallback until "
+            "a TTS provider supplies audio.",
+            language,
+            FALLBACK_VOICE_LANGUAGE,
+        )
+        return SAY_VOICES[FALLBACK_VOICE_LANGUAGE]
+    return voice
+
+
+def build_voice_twiml(
+    audio_url: str, gather_action: str, language: str | None = None
+) -> str:
     """Build the outbound-call TwiML: play the alert audio (or <Say> fallback),
-    then gather one DTMF digit to the acknowledgement webhook."""
+    then gather one DTMF digit to the acknowledgement webhook.
+
+    The <Say> branch speaks a *generic* alert, not the drafted body: this TwiML
+    is served from a public unauthenticated URL, so the alert text stays out of
+    it. Real alert wording reaches recipients through the synthesized <Play>
+    audio.
+    """
+    voice = say_voice(language)
     if audio_url.startswith(("http://", "https://")):
         payload = f"<Play>{escape(audio_url)}</Play>"
     else:
-        payload = f'<Say language="sw-KE">{escape(FALLBACK_SAY)}</Say>'
+        payload = f'<Say language="{voice.locale}">{escape(voice.alert_text)}</Say>'
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response>"
         f"{payload}"
         f'<Gather action="{escape(gather_action, {chr(34): "&quot;"})}" '
         'method="POST" numDigits="1" timeout="8">'
-        '<Say language="sw-KE">Bonyeza moja kuthibitisha kupokea tahadhari hii.</Say>'
+        f'<Say language="{voice.locale}">{escape(voice.ack_prompt)}</Say>'
         "</Gather>"
         "</Response>"
     )
@@ -83,19 +151,25 @@ class TwilioVoiceAdapter:
                 "is required for TwilioVoiceAdapter."
             )
 
-    def twiml(self, audio_url: str) -> str:
+    def twiml(self, audio_url: str, language: str | None = None) -> str:
         return build_voice_twiml(
             audio_url,
             f"{self.public_base_url}/webhooks/twilio/gather",
+            language,
         )
 
-    def voice_url(self, audio_url: str) -> str:
-        return (
-            f"{self.public_base_url}/webhooks/twilio/voice?"
-            f"{urlencode({'audio_url': audio_url})}"
-        )
+    def voice_url(self, audio_url: str, language: str | None = None) -> str:
+        params = {"audio_url": audio_url, "language": language or DEFAULT_LANGUAGE}
+        return f"{self.public_base_url}/webhooks/twilio/voice?{urlencode(params)}"
 
-    def call(self, phone: str, audio_url: str, idem_key: str) -> ProviderRef:
+    def call(
+        self,
+        phone: str,
+        audio_url: str,
+        idem_key: str,
+        *,
+        language: str = DEFAULT_LANGUAGE,
+    ) -> ProviderRef:
         status_callback = f"{self.public_base_url}/webhooks/twilio/status"
         # Twilio defaults both the TwiML `Url` fetch and the `StatusCallback`
         # POST to HTTP POST, so we omit the explicit `Method`/`StatusCallbackMethod`
@@ -104,7 +178,7 @@ class TwilioVoiceAdapter:
         payload = {
             "To": phone,
             "From": self.from_number,
-            "Url": self.voice_url(audio_url),
+            "Url": self.voice_url(audio_url, language),
             "StatusCallback": status_callback,
             "StatusCallbackEvent": "completed",
         }

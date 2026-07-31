@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
+
 import httpx
 import pytest
 from dira_dispatch import TwilioSmsAdapter, TwilioVoiceAdapter
+from dira_dispatch.twilio_adapter import SAY_VOICES, say_voice
 
 
 def _adapter() -> TwilioVoiceAdapter:
@@ -70,6 +73,59 @@ def test_voice_url_encodes_audio() -> None:
     assert "/webhooks/twilio/voice?audio_url=" in voice_url
     assert "%3A%2F%2F" in voice_url
     assert "://" not in voice_url.split("?", 1)[1]
+
+
+def test_voice_url_carries_language() -> None:
+    """Twilio fetches the TwiML from this URL, so the language has to ride along."""
+    assert "language=so" in _adapter().voice_url("file:///tmp/a.mp3", "so")
+
+
+@pytest.mark.parametrize("language", sorted(SAY_VOICES))
+def test_say_speaks_each_supported_language(language: str) -> None:
+    voice = SAY_VOICES[language]
+    twiml = _adapter().twiml("file:///tmp/alert.mp3", language)
+    assert f'<Say language="{voice.locale}">' in twiml
+    # Both the alert text and the keypad prompt, not just the first one.
+    assert twiml.count(f'language="{voice.locale}"') == 2
+
+
+def test_unsupported_language_falls_back_loudly(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Somali has no Twilio <Say> voice.
+
+    The fallback itself is fine; a *silent* fallback is the bug — it is how the
+    hardcoded sw-KE went unnoticed. Assert the warning, not just the locale.
+    """
+    with caplog.at_level(logging.WARNING, logger="dira.dispatch.twilio"):
+        twiml = _adapter().twiml("file:///tmp/alert.mp3", "so")
+
+    assert f'language="{SAY_VOICES["en"].locale}"' in twiml
+    assert "no voice for language 'so'" in caplog.text
+
+
+def test_say_voice_ignores_region_suffix() -> None:
+    assert say_voice("sw-KE") == SAY_VOICES["sw"]
+    assert say_voice(None) == SAY_VOICES["sw"]
+
+
+def test_call_passes_language_to_the_fetched_twiml(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_post(_client: httpx.Client, url: str, **kwargs: object) -> httpx.Response:
+        captured.update(kwargs)
+        return httpx.Response(
+            201, json={"sid": "CAfake"}, request=httpx.Request("POST", url)
+        )
+
+    monkeypatch.setattr(httpx.Client, "post", fake_post)
+    _adapter().call("+15551234567", "file:///tmp/a.mp3", "idem-lang", language="en")
+
+    payload = captured["data"]
+    assert isinstance(payload, dict)
+    assert "language=en" in payload["Url"]
 
 
 def test_call_uses_url_not_inline_twiml(

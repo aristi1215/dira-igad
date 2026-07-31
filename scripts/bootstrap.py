@@ -310,14 +310,17 @@ def upsert_recipients(cur: psycopg.Cursor[Any], recipients: list[dict[str, Any]]
     for recipient in recipients:
         cur.execute(
             """
-            INSERT INTO recipients (id, name, phone_e164, zone_id, channel, language, active)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO recipients (
+              id, name, phone_e164, zone_id, channel, language, role, active
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE
             SET name = EXCLUDED.name,
                 phone_e164 = EXCLUDED.phone_e164,
                 zone_id = EXCLUDED.zone_id,
                 channel = EXCLUDED.channel,
                 language = EXCLUDED.language,
+                role = EXCLUDED.role,
                 active = EXCLUDED.active
             """,
             (
@@ -327,6 +330,7 @@ def upsert_recipients(cur: psycopg.Cursor[Any], recipients: list[dict[str, Any]]
                 recipient["zone_id"],
                 recipient["channel"],
                 recipient["language"],
+                recipient.get("role"),
                 recipient["active"],
             ),
         )

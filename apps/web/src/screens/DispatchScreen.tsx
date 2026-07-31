@@ -1,10 +1,12 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  Ban,
   CircleCheck,
   CircleX,
   Clock,
   Inbox,
+  Languages,
   Lock,
   MessageSquare,
   Pencil,
@@ -15,22 +17,29 @@ import {
   PhoneOutgoing,
   Send,
   TriangleAlert,
+  UserPlus,
   type LucideIcon,
 } from 'lucide-react'
 import {
   approveAlert,
+  createAlertVariant,
   createRecipient,
+  deleteAlertVariant,
   deleteRecipient,
+  fetchAlertRecipients,
+  fetchAlertVariants,
   fetchDeliveries,
   fetchPendingAlerts,
   fetchRecipients,
   fetchZones,
   queryKeys,
+  rejectAlert,
   retryDelivery,
   updateAlert,
+  updateAlertVariant,
   updateRecipient,
 } from '../lib/api'
-import { BAND_MAP_COLORS, fmtDateTime, titleCase } from '../lib/format'
+import { BAND_MAP_COLORS, fmtDateTime, maskPhone, titleCase } from '../lib/format'
 import {
   Button,
   Callout,
@@ -56,9 +65,28 @@ import { Modal } from '../components/Modal'
 import { TOUR_ANCHORS } from '../features/tour/tourAnchors'
 import { useJustUpdated } from '../stores/live'
 import { cx } from '../lib/cx'
-import type { Alert, Delivery, DeliveryStatus, Recipient } from '../lib/types'
+import type {
+  Alert,
+  AlertVariant,
+  Delivery,
+  DeliveryStatus,
+  Recipient,
+} from '../lib/types'
 
 const PHONE_PATTERN = /^\+[1-9][0-9]{7,14}$/
+/** The alert languages this room offers, in one place rather than four. */
+const LANGUAGES = [
+  { code: 'sw', label: 'Swahili (sw)' },
+  { code: 'en', label: 'English (en)' },
+  { code: 'am', label: 'Amharic (am)' },
+  { code: 'so', label: 'Somali (so)' },
+  { code: 'ar', label: 'Arabic (ar)' },
+]
+const VARIANT_SOURCE_LABEL: Record<AlertVariant['source'], string> = {
+  llm: 'Drafted by AI',
+  human_edited: 'Edited by you',
+  human_authored: 'Written by you',
+}
 const CHANNEL_LABEL: Record<Recipient['channel'], string> = {
   voice: 'Voice',
   sms: 'SMS',
@@ -86,6 +114,78 @@ const EMPTY_RECIPIENT_FORM: RecipientForm = {
   language: 'sw',
   channel: 'voice',
   active: true,
+}
+
+const SIGNER_STORAGE_KEY = 'dira.dispatch.signer'
+
+/**
+ * The approver's name, remembered between visits.
+ *
+ * It was retyped from scratch on every single approval, which is friction on
+ * the one action nobody should be rushing. Remembering it does not weaken the
+ * gate — the name is still written to `alerts.approved_by` with a timestamp on
+ * every approval, and "not you?" clears it.
+ */
+function useStoredSigner(): [string, (value: string) => void] {
+  const [signer, setSignerState] = useState(() => {
+    try {
+      return window.localStorage.getItem(SIGNER_STORAGE_KEY) ?? ''
+    } catch {
+      return ''
+    }
+  })
+
+  const setSigner = (value: string) => {
+    setSignerState(value)
+    try {
+      if (value.trim()) window.localStorage.setItem(SIGNER_STORAGE_KEY, value)
+      else window.localStorage.removeItem(SIGNER_STORAGE_KEY)
+    } catch {
+      // Private-browsing quota errors must not block an approval.
+    }
+  }
+
+  return [signer, setSigner]
+}
+
+/** A row in the selection list: a default target, or one the operator added. */
+type TargetRow = {
+  id: string
+  name: string
+  phone_e164: string
+  channel: Recipient['channel']
+  language: string
+  zone_name: string | null
+  reason: string
+  /** True when no wording exists in their language and they get the default. */
+  isFallback: boolean
+}
+
+function deliveriesFor(rows: TargetRow[]): { voice: number; sms: number } {
+  let voice = 0
+  let sms = 0
+  for (const row of rows) {
+    if (row.channel === 'voice' || row.channel === 'both') voice += 1
+    if (row.channel === 'sms' || row.channel === 'both') sms += 1
+  }
+  return { voice, sms }
+}
+
+/**
+ * The one place the Twilio SMS limitation is stated.
+ *
+ * It used to be pasted verbatim in three places on this screen, which is three
+ * places to update and two chances to disagree with itself. It belongs beside
+ * the channel controls, where it is actionable.
+ */
+function SmsCaveat({ className }: { className?: string }) {
+  return (
+    <Callout tone="info" className={className}>
+      SMS delivery depends on the Twilio account: trial accounts block custom-body SMS.
+      In this build SMS works end-to-end in seeded/mock mode; voice is the verified live
+      channel.
+    </Callout>
+  )
 }
 
 /**
@@ -222,7 +322,7 @@ function DeliveryFunnel({
 
 export function DispatchScreen() {
   const queryClient = useQueryClient()
-  const [signer, setSigner] = useState('')
+  const [signer, setSigner] = useStoredSigner()
   const [editingAlert, setEditingAlert] = useState(false)
   const [alertBody, setAlertBody] = useState('')
   const [alertLanguage, setAlertLanguage] = useState('sw')
@@ -231,6 +331,22 @@ export function DispatchScreen() {
     recipient?: Recipient
   } | null>(null)
   const [recipientForm, setRecipientForm] = useState<RecipientForm>(EMPTY_RECIPIENT_FORM)
+  // Keyed by alert id so the selection resets itself when the queue advances,
+  // without an effect that could leave one alert's choices applied to the next.
+  const [selection, setSelection] = useState<{ alertId: string; ids: string[] } | null>(
+    null,
+  )
+  const [recipientFilter, setRecipientFilter] = useState('')
+  // null = the alert's own body, which is always the last-resort wording.
+  const [activeVariantId, setActiveVariantId] = useState<string | null>(null)
+  const [editingVariant, setEditingVariant] = useState(false)
+  const [variantBody, setVariantBody] = useState('')
+  const [showDraftDiff, setShowDraftDiff] = useState(false)
+  const [addingLanguage, setAddingLanguage] = useState(false)
+  const [picking, setPicking] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [rejecting, setRejecting] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
 
   const alertsQuery = useQuery({
     queryKey: queryKeys.pendingAlerts,
@@ -249,15 +365,42 @@ export function DispatchScreen() {
     queryKey: queryKeys.zones,
     queryFn: fetchZones,
   })
+  const pendingAlertId = (alertsQuery.data ?? [])[0]?.id
+  const alertRecipientsQuery = useQuery({
+    queryKey: queryKeys.alertRecipients(pendingAlertId ?? 'none'),
+    queryFn: () => fetchAlertRecipients(pendingAlertId as string),
+    enabled: Boolean(pendingAlertId),
+  })
+  const variantsQuery = useQuery({
+    queryKey: queryKeys.alertVariants(pendingAlertId ?? 'none'),
+    queryFn: () => fetchAlertVariants(pendingAlertId as string),
+    enabled: Boolean(pendingAlertId),
+  })
 
   const approveMutation = useMutation({
-    mutationFn: (alertId: string) => approveAlert(alertId, signer.trim()),
+    mutationFn: (input: { alertId: string; recipientIds: string[] }) =>
+      approveAlert(input.alertId, signer.trim(), input.recipientIds),
     onSuccess: (response) => {
       queryClient.setQueryData<Alert[]>(queryKeys.pendingAlerts, (current = []) =>
         current.filter((alert) => alert.id !== response.id),
       )
       void queryClient.invalidateQueries({ queryKey: queryKeys.deliveries })
       void queryClient.invalidateQueries({ queryKey: queryKeys.allAlerts })
+      setSelection(null)
+      setConfirming(false)
+    },
+  })
+  const rejectMutation = useMutation({
+    mutationFn: (input: { alertId: string; reason: string }) =>
+      rejectAlert(input.alertId, signer.trim(), input.reason),
+    onSuccess: (response) => {
+      queryClient.setQueryData<Alert[]>(queryKeys.pendingAlerts, (current = []) =>
+        current.filter((alert) => alert.id !== response.id),
+      )
+      void queryClient.invalidateQueries({ queryKey: queryKeys.allAlerts })
+      setSelection(null)
+      setRejecting(false)
+      setRejectReason('')
     },
   })
   const retryMutation = useMutation({
@@ -306,6 +449,38 @@ export function DispatchScreen() {
     },
   })
 
+  // Variant writes always refresh the recipient list too: adding a Somali
+  // wording changes which recipients are still falling through to the default,
+  // and that flag is what tells the operator the work is finished.
+  const invalidateAlert = (alertId: string) => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.alertVariants(alertId) })
+    void queryClient.invalidateQueries({ queryKey: queryKeys.alertRecipients(alertId) })
+  }
+  const draftVariantMutation = useMutation({
+    mutationFn: (input: { alertId: string; language: string }) =>
+      createAlertVariant(input.alertId, { language: input.language }),
+    onSuccess: (variant) => {
+      invalidateAlert(variant.alert_id)
+      setActiveVariantId(variant.id)
+    },
+  })
+  const editVariantMutation = useMutation({
+    mutationFn: (input: { variantId: string; body_text: string }) =>
+      updateAlertVariant(input.variantId, input.body_text),
+    onSuccess: (variant) => {
+      invalidateAlert(variant.alert_id)
+      setEditingVariant(false)
+    },
+  })
+  const deleteVariantMutation = useMutation({
+    mutationFn: (input: { variantId: string; alertId: string }) =>
+      deleteAlertVariant(input.variantId),
+    onSuccess: (_result, input) => {
+      invalidateAlert(input.alertId)
+      setActiveVariantId(null)
+    },
+  })
+
   const deliveries = useMemo(() => deliveriesQuery.data ?? [], [deliveriesQuery.data])
   const byStatus = useMemo(() => {
     const groups = new Map<DeliveryStatus, Delivery[]>()
@@ -333,18 +508,80 @@ export function DispatchScreen() {
   // deserves undivided attention, not a scrollable stack.
   const [current, ...queued] = pendingAlerts
   const recipients = recipientsQuery.data ?? []
-  const recipientsForCurrent = current?.zone_id
-    ? recipients.filter(
-        (recipient) =>
-          recipient.active &&
-          (recipient.zone_id === current.zone_id || recipient.zone_id === null),
-      )
-    : recipients.filter((recipient) => recipient.active)
-  const expectedDeliveryCount = recipientsForCurrent.reduce(
-    (total, recipient) => total + (recipient.channel === 'both' ? 2 : 1),
-    0,
-  )
   const zones = zonesQuery.data ?? []
+
+  // The zone-matching rule lives on the server. This screen used to keep its
+  // own copy in TypeScript, so the set an operator saw and the set that got
+  // called could drift apart — and only the server's copy was real.
+  const defaultTargets = alertRecipientsQuery.data ?? []
+  const defaultIds = defaultTargets.map((target) => target.id)
+  const selectedIds =
+    selection && current && selection.alertId === current.id
+      ? selection.ids
+      : defaultIds
+  const selectedSet = new Set(selectedIds)
+
+  const defaultRows: TargetRow[] = defaultTargets.map((target) => ({
+    id: target.id,
+    name: target.name,
+    phone_e164: target.phone_e164,
+    channel: target.channel,
+    language: target.language,
+    zone_name: target.zone_name,
+    reason: target.match_reason,
+    isFallback: target.variant_is_fallback,
+  }))
+  const addedRows: TargetRow[] = recipients
+    .filter(
+      (recipient) =>
+        selectedSet.has(recipient.id) &&
+        !defaultTargets.some((target) => target.id === recipient.id),
+    )
+    .map((recipient) => ({
+      id: recipient.id,
+      name: recipient.name,
+      phone_e164: recipient.phone_e164,
+      channel: recipient.channel,
+      language: recipient.language,
+      zone_name: recipient.zone_name ?? null,
+      reason: 'added by you',
+      // Resolved server-side only for the default set; assume covered rather
+      // than cry wolf about someone the operator deliberately added.
+      isFallback: false,
+    }))
+  const targetRows = [...defaultRows, ...addedRows]
+  const visibleRows = recipientFilter.trim()
+    ? targetRows.filter((row) =>
+        `${row.name} ${row.phone_e164} ${row.zone_name ?? ''} ${row.language}`
+          .toLowerCase()
+          .includes(recipientFilter.trim().toLowerCase()),
+      )
+    : targetRows
+
+  const variants = variantsQuery.data ?? []
+  const activeVariant = variants.find((variant) => variant.id === activeVariantId) ?? null
+  const missingLanguages = LANGUAGES.filter(
+    (language) =>
+      language.code !== current?.language &&
+      !variants.some((variant) => variant.language === language.code),
+  )
+  const fallbackCount = defaultTargets.filter((target) => target.variant_is_fallback).length
+
+  const selectedRows = targetRows.filter((row) => selectedSet.has(row.id))
+  const channelMix = deliveriesFor(selectedRows)
+  const expectedDeliveryCount = channelMix.voice + channelMix.sms
+
+  const setSelectedIds = (ids: string[]) => {
+    if (!current) return
+    setSelection({ alertId: current.id, ids })
+  }
+  const toggleRecipient = (id: string) => {
+    setSelectedIds(
+      selectedSet.has(id)
+        ? selectedIds.filter((value) => value !== id)
+        : [...selectedIds, id],
+    )
+  }
 
   const recipientColumns: Column<Recipient>[] = [
     {
@@ -573,11 +810,11 @@ export function DispatchScreen() {
                       value={alertLanguage}
                       onChange={(event) => setAlertLanguage(event.target.value)}
                     >
-                      <option value="sw">Swahili (sw)</option>
-                      <option value="en">English (en)</option>
-                      <option value="am">Amharic (am)</option>
-                      <option value="so">Somali (so)</option>
-                      <option value="ar">Arabic (ar)</option>
+                      {LANGUAGES.map((language) => (
+                        <option key={language.code} value={language.code}>
+                          {language.label}
+                        </option>
+                      ))}
                     </Select>
                   </Field>
                   {editAlertMutation.isError ? <ErrorNote error={editAlertMutation.error} /> : null}
@@ -592,62 +829,327 @@ export function DispatchScreen() {
                 </form>
               ) : (
                 <>
-                  {/* The alert body is the product. It gets to be the biggest thing here. */}
-                  <blockquote className="rounded-md border border-line border-l-[3px] border-l-accent bg-surface-2 px-4 py-3 text-md leading-relaxed text-ink">
-                    {current.body_text}
-                  </blockquote>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <p className="text-xs text-faint">
-                      Read it as the recipient will hear it.
-                    </p>
-                    {current.status === 'pending_approval' ? (
+                  {/*
+                    One alert, several wordings. `recipients.language` used to
+                    be collected and read by nothing — a contact registered as
+                    Somali received the Swahili text. These tabs are where that
+                    stops being invisible.
+                  */}
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveVariantId(null)
+                        setEditingVariant(false)
+                      }}
+                      className={cx(
+                        'rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors',
+                        activeVariantId === null
+                          ? 'border-accent bg-accent-soft text-ink'
+                          : 'border-line text-muted hover:text-ink',
+                      )}
+                    >
+                      {current.language.toUpperCase()} · default
+                    </button>
+                    {variants.map((variant) => (
+                      <button
+                        key={variant.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveVariantId(variant.id)
+                          setEditingVariant(false)
+                          setShowDraftDiff(false)
+                        }}
+                        className={cx(
+                          'rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors',
+                          activeVariantId === variant.id
+                            ? 'border-accent bg-accent-soft text-ink'
+                            : 'border-line text-muted hover:text-ink',
+                        )}
+                      >
+                        {variant.language.toUpperCase()}
+                        {variant.role ? ` · ${titleCase(variant.role)}` : ''}
+                      </button>
+                    ))}
+                    {current.status === 'pending_approval' && missingLanguages.length > 0 ? (
                       <Button
                         size="sm"
                         variant="ghost"
-                        icon={Pencil}
-                        onClick={() => {
-                          setAlertBody(current.body_text)
-                          setAlertLanguage(current.language)
-                          setEditingAlert(true)
-                        }}
+                        icon={Languages}
+                        loading={draftVariantMutation.isPending}
+                        onClick={() => setAddingLanguage(true)}
                       >
-                        Edit message
+                        Add language
                       </Button>
                     ) : null}
                   </div>
+
+                  {draftVariantMutation.isError ? (
+                    <ErrorNote error={draftVariantMutation.error} className="mb-2" />
+                  ) : null}
+
+                  {editingVariant && activeVariant ? (
+                    <form
+                      className="grid gap-3 rounded-md border border-line bg-surface-2 p-3"
+                      onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                        event.preventDefault()
+                        editVariantMutation.mutate({
+                          variantId: activeVariant.id,
+                          body_text: variantBody,
+                        })
+                      }}
+                    >
+                      <Field
+                        label={`${activeVariant.language.toUpperCase()} message`}
+                        htmlFor="variant-body"
+                      >
+                        <textarea
+                          id="variant-body"
+                          value={variantBody}
+                          maxLength={4000}
+                          rows={4}
+                          onChange={(event) => setVariantBody(event.target.value)}
+                          className="w-full rounded-md border border-line bg-surface px-2.5 py-2 text-sm leading-relaxed text-ink outline-none transition-colors placeholder:text-faint focus:border-accent focus:ring-4 focus:ring-accent-ring/40"
+                        />
+                      </Field>
+                      {editVariantMutation.isError ? (
+                        <ErrorNote error={editVariantMutation.error} />
+                      ) : null}
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          icon={Save}
+                          loading={editVariantMutation.isPending}
+                        >
+                          Save wording
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setEditingVariant(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      {/* The alert body is the product. It gets to be the biggest thing here. */}
+                      <blockquote className="rounded-md border border-line border-l-[3px] border-l-accent bg-surface-2 px-4 py-3 text-md leading-relaxed text-ink">
+                        {activeVariant ? activeVariant.body_text : current.body_text}
+                      </blockquote>
+
+                      {activeVariant?.llm_draft &&
+                      activeVariant.llm_draft !== activeVariant.body_text &&
+                      showDraftDiff ? (
+                        <blockquote className="mt-1.5 rounded-md border border-dashed border-line bg-surface px-4 py-2.5 text-xs leading-relaxed text-faint">
+                          <span className="mb-1 block text-eyebrow uppercase">
+                            AI draft, before your edit
+                          </span>
+                          {activeVariant.llm_draft}
+                        </blockquote>
+                      ) : null}
+
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                        <p className="flex flex-wrap items-center gap-2 text-xs text-faint">
+                          Read it as the recipient will hear it.
+                          {activeVariant ? (
+                            <StatusChip
+                              tone={
+                                activeVariant.source === 'llm' ? 'neutral' : 'success'
+                              }
+                            >
+                              {VARIANT_SOURCE_LABEL[activeVariant.source]}
+                            </StatusChip>
+                          ) : null}
+                        </p>
+                        {current.status === 'pending_approval' ? (
+                          <span className="flex flex-wrap items-center gap-1">
+                            {activeVariant?.llm_draft &&
+                            activeVariant.llm_draft !== activeVariant.body_text ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setShowDraftDiff((shown) => !shown)}
+                              >
+                                {showDraftDiff ? 'Hide AI draft' : 'Show AI draft'}
+                              </Button>
+                            ) : null}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              icon={Pencil}
+                              onClick={() => {
+                                if (activeVariant) {
+                                  setVariantBody(activeVariant.body_text)
+                                  setEditingVariant(true)
+                                } else {
+                                  setAlertBody(current.body_text)
+                                  setAlertLanguage(current.language)
+                                  setEditingAlert(true)
+                                }
+                              }}
+                            >
+                              Edit message
+                            </Button>
+                            {activeVariant ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                icon={Trash2}
+                                loading={deleteVariantMutation.isPending}
+                                onClick={() =>
+                                  deleteVariantMutation.mutate({
+                                    variantId: activeVariant.id,
+                                    alertId: current.id,
+                                  })
+                                }
+                              >
+                                Remove
+                              </Button>
+                            ) : null}
+                          </span>
+                        ) : null}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
               <div className="mt-4 rounded-md border border-line bg-surface-2 px-3 py-2.5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-ink">Recipients for this alert</h3>
+                  <h3 className="text-sm font-semibold text-ink">
+                    Who this reaches
+                  </h3>
                   <span className="text-xs tabular-nums text-muted">
-                    {expectedDeliveryCount} deliveries expected
+                    {selectedRows.length} of {targetRows.length} selected ·{' '}
+                    {expectedDeliveryCount} deliver
+                    {expectedDeliveryCount === 1 ? 'y' : 'ies'}
+                    {channelMix.voice && channelMix.sms
+                      ? ` (${channelMix.voice} voice, ${channelMix.sms} SMS)`
+                      : ''}
                   </span>
                 </div>
-                {recipientsForCurrent.length === 0 ? (
+
+                {alertRecipientsQuery.isError ? (
+                  <ErrorNote error={alertRecipientsQuery.error} className="mt-2" />
+                ) : null}
+
+                {/*
+                  The whole point of variants is that this is visible. Without
+                  it, a Somali speaker quietly receiving Swahili looks exactly
+                  like a successful delivery.
+                */}
+                {fallbackCount > 0 ? (
+                  <Callout tone="warning" className="mt-2">
+                    {fallbackCount} recipient{fallbackCount === 1 ? '' : 's'} hear
+                    {fallbackCount === 1 ? 's' : ''} the default{' '}
+                    {current.language.toUpperCase()} message because nothing is written
+                    in their language. Add a wording above, or send it knowingly.
+                  </Callout>
+                ) : null}
+
+                {targetRows.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <TextInput
+                      value={recipientFilter}
+                      placeholder="Filter by name, zone, number…"
+                      aria-label="Filter recipients"
+                      className="h-8 max-w-56 text-xs"
+                      onChange={(event) => setRecipientFilter(event.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedIds(targetRows.map((row) => row.id))}
+                      disabled={selectedRows.length === targetRows.length}
+                    >
+                      Select all
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedIds([])}
+                      disabled={selectedRows.length === 0}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={UserPlus}
+                      className="ml-auto"
+                      onClick={() => setPicking(true)}
+                    >
+                      Add from roster
+                    </Button>
+                  </div>
+                ) : null}
+
+                {alertRecipientsQuery.isLoading ? (
+                  <SkeletonText lines={2} className="mt-2" />
+                ) : targetRows.length === 0 ? (
                   <p className="mt-1.5 text-sm text-warn-fg">
-                    No matching active recipients. Approval will queue no delivery.
+                    No active recipients match this zone. Add someone from the roster,
+                    or reject the alert.
                   </p>
                 ) : (
-                  <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                    {recipientsForCurrent.map((recipient) => {
-                      const Icon = CHANNEL_ICON[recipient.channel]
+                  <ul className="mt-2 grid max-h-64 gap-1.5 overflow-y-auto sm:grid-cols-2">
+                    {visibleRows.map((row) => {
+                      const Icon = CHANNEL_ICON[row.channel]
+                      const checked = selectedSet.has(row.id)
                       return (
-                        <li
-                          key={recipient.id}
-                          className="flex items-center justify-between gap-2 rounded-sm border border-line bg-surface px-2.5 py-1.5 text-xs"
-                        >
-                          <span className="min-w-0 truncate font-medium text-ink">
-                            {recipient.name}
-                          </span>
-                          <span className="flex shrink-0 items-center gap-1 text-muted">
-                            <Icon size={13} strokeWidth={1.75} aria-hidden />
-                            {CHANNEL_LABEL[recipient.channel]}
-                          </span>
+                        <li key={row.id}>
+                          <label
+                            className={cx(
+                              'flex cursor-pointer items-center gap-2 rounded-sm border px-2.5 py-1.5 text-xs transition-colors',
+                              checked
+                                ? 'border-accent bg-surface'
+                                : 'border-line bg-surface opacity-60',
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleRecipient(row.id)}
+                              className="size-3.5 shrink-0 accent-[var(--color-accent)]"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium text-ink">
+                                {row.name}
+                              </span>
+                              <span className="block truncate text-2xs text-faint">
+                                {row.zone_name ?? 'All zones'} · {row.reason} ·{' '}
+                                <span className="tabular-nums">
+                                  {maskPhone(row.phone_e164)}
+                                </span>
+                              </span>
+                            </span>
+                            <span
+                              className={cx(
+                                'flex shrink-0 items-center gap-1 text-2xs',
+                                row.isFallback ? 'text-warn-fg' : 'text-muted',
+                              )}
+                              title={
+                                row.isFallback
+                                  ? `No ${row.language.toUpperCase()} wording — hears the default message`
+                                  : undefined
+                              }
+                            >
+                              <Icon size={13} strokeWidth={1.75} aria-hidden />
+                              {row.language.toUpperCase()}
+                              {row.isFallback ? '*' : ''}
+                            </span>
+                          </label>
                         </li>
                       )
                     })}
+                    {visibleRows.length === 0 ? (
+                      <li className="py-1 text-2xs text-faint">
+                        No recipient matches “{recipientFilter}”.
+                      </li>
+                    ) : null}
                   </ul>
                 )}
               </div>
@@ -665,27 +1167,46 @@ export function DispatchScreen() {
                 <Button
                   variant="primary"
                   icon={PhoneOutgoing}
-                  disabled={!canApprove}
-                  loading={approveMutation.isPending}
-                  title={canApprove ? undefined : 'Enter your name first'}
-                  onClick={() => approveMutation.mutate(current.id)}
+                  disabled={!canApprove || selectedRows.length === 0}
+                  title={
+                    !canApprove
+                      ? 'Enter your name first'
+                      : selectedRows.length === 0
+                        ? 'Select at least one recipient'
+                        : undefined
+                  }
+                  onClick={() => setConfirming(true)}
                   className="mb-0.5"
                 >
-                  {approveMutation.isPending
-                    ? 'Approving…'
-                    : `Approve & queue ${recipientsForCurrent.length} call${
-                        recipientsForCurrent.length === 1 ? '' : 's'
-                      }`}
+                  {/* "calls" was wrong for an SMS-only send. */}
+                  Approve & queue {expectedDeliveryCount} deliver
+                  {expectedDeliveryCount === 1 ? 'y' : 'ies'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  icon={Ban}
+                  disabled={!canApprove}
+                  title={canApprove ? undefined : 'Enter your name first'}
+                  onClick={() => setRejecting(true)}
+                  className="mb-0.5"
+                >
+                  Reject
                 </Button>
                 <p className="mb-2 flex items-center gap-1.5 text-2xs text-faint">
                   <Lock size={11} strokeWidth={1.75} aria-hidden />
-                  Recorded with your name and a timestamp
+                  Either way, recorded with your name and a timestamp
                 </p>
+                {signer.trim() ? (
+                  <button
+                    type="button"
+                    className="mb-2 text-2xs text-faint underline underline-offset-2 hover:text-ink"
+                    onClick={() => setSigner('')}
+                  >
+                    Not {signer.trim()}?
+                  </button>
+                ) : null}
               </div>
-              <p className="mt-2 text-2xs text-faint">
-                SMS delivery depends on the Twilio account: trial accounts block custom-body SMS.
-                In this build SMS works end-to-end in seeded/mock mode; voice is the verified live channel.
-              </p>
+              <SmsCaveat className="mt-3" />
             </>
           ) : !alertsQuery.isLoading ? (
             <EmptyState icon={Inbox} title="Nothing waiting at the gate">
@@ -733,22 +1254,39 @@ export function DispatchScreen() {
                 <ul className="flex flex-col gap-1.5">
                   {items.slice(0, 12).map((delivery) => (
                     <DeliveryCard key={delivery.id} delivery={delivery}>
+                      {/*
+                        Who the call was to comes first. This card used to lead
+                        with the channel — "Voice · 2 attempts" — which told an
+                        operator nothing about which contact had failed.
+                      */}
                       <div className="flex items-center gap-1.5">
-                        {(() => {
-                          const ChannelIcon = CHANNEL_ICON[delivery.channel]
-                          return (
-                            <span className="flex items-center gap-1 text-2xs font-medium text-ink">
-                              <ChannelIcon size={13} strokeWidth={1.75} aria-hidden />
-                              {CHANNEL_LABEL[delivery.channel]}
-                            </span>
-                          )
-                        })()}
+                        <span className="min-w-0 truncate text-2xs font-medium text-ink">
+                          {delivery.recipient_name ?? 'Unknown recipient'}
+                        </span>
                         {delivery.ack_status !== 'none' ? (
-                          <StatusChip tone="success" className="ml-auto">
+                          <StatusChip tone="success" className="ml-auto shrink-0">
                             {titleCase(delivery.ack_status)}
                           </StatusChip>
                         ) : null}
                       </div>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-2xs text-faint">
+                        {(() => {
+                          const ChannelIcon = CHANNEL_ICON[delivery.channel]
+                          return (
+                            <span className="flex items-center gap-1">
+                              <ChannelIcon size={11} strokeWidth={1.75} aria-hidden />
+                              {CHANNEL_LABEL[delivery.channel]}
+                            </span>
+                          )
+                        })()}
+                        {delivery.zone_name ? <span>· {delivery.zone_name}</span> : null}
+                        <span
+                          className="tabular-nums"
+                          title={delivery.phone_e164 ?? undefined}
+                        >
+                          · {maskPhone(delivery.phone_e164)}
+                        </span>
+                      </p>
                       <p className="mt-0.5 text-2xs text-faint">
                         {delivery.attempt_count} attempt
                         {delivery.attempt_count === 1 ? '' : 's'} ·{' '}
@@ -763,7 +1301,12 @@ export function DispatchScreen() {
                         <Button
                           size="sm"
                           className="mt-1.5"
-                          loading={retryMutation.isPending}
+                          // Scoped to this row: the shared mutation flag spun
+                          // every needs-review button on the board at once.
+                          loading={
+                            retryMutation.isPending &&
+                            retryMutation.variables === delivery.id
+                          }
                           onClick={() => retryMutation.mutate(delivery.id)}
                         >
                           Retry
@@ -803,71 +1346,248 @@ export function DispatchScreen() {
         ) : null}
       </Card>
 
-      <Card title="Reference" subtitle="How recipients answer, and who is on the list">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-          <div>
-            <h3 className="mb-2 text-2xs font-semibold tracking-[0.04em] text-muted uppercase">
-              Keypad acknowledgements
-            </h3>
-            <ul className="flex flex-col gap-2">
-              {[
-                { key: '1', title: 'Acknowledged', body: 'Message heard and understood' },
-                { key: '2', title: 'Conflict reported', body: 'It is already active where they are' },
-                { key: '3', title: 'Resolved', body: 'The local situation has calmed' },
-              ].map((entry) => (
-                <li key={entry.key} className="flex items-start gap-2.5">
-                  <Kbd className="mt-0.5">{entry.key}</Kbd>
-                  <span className="text-xs">
-                    <span className="font-medium text-ink">{entry.title}</span>
-                    <span className="block text-faint">{entry.body}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <Callout tone="info" className="mt-3">
-              Acknowledgements arrive by provider webhook and are idempotent — a repeated
-              callback never double-counts.
-            </Callout>
-          </div>
-
-          <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-eyebrow text-faint uppercase">Recipient roster</h3>
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={Plus}
-                onClick={() => {
-                  setRecipientForm(EMPTY_RECIPIENT_FORM)
-                  setRecipientEditor({ mode: 'create' })
-                }}
-              >
-                Add recipient
-              </Button>
-            </div>
-            {recipientsQuery.isError ? <ErrorNote error={recipientsQuery.error} /> : null}
-            {deleteRecipientMutation.isError ? (
-              <ErrorNote error={deleteRecipientMutation.error} className="mb-2" />
-            ) : null}
-            {/* Was a hand-rolled table with four unsized columns stretched
-                across the card. DataTable gives it widths and sorting. */}
-            <div className="max-h-80 overflow-y-auto">
-              <DataTable
-                columns={recipientColumns}
-                rows={recipients}
-                getRowId={(recipient) => recipient.id}
-                loading={recipientsQuery.isLoading}
-                caption="Alert recipients"
-                empty={<EmptyState>No recipients registered.</EmptyState>}
-              />
-            </div>
-            <Callout tone="info" className="mt-3">
-              SMS delivery depends on the Twilio account: trial accounts block custom-body SMS.
-              In this build SMS works end-to-end in seeded/mock mode; voice is the verified live channel.
-            </Callout>
-          </div>
+      {/*
+        The roster used to live inside a card titled "Reference", beside a
+        keypad legend. It is the operational half of this screen — the set of
+        people the gate above dispatches to — and gets its own card.
+      */}
+      <Card
+        title="Recipient roster"
+        subtitle="Everyone this room can reach. Deactivating keeps delivery history."
+        className="mb-5"
+        actions={
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={Plus}
+            onClick={() => {
+              setRecipientForm(EMPTY_RECIPIENT_FORM)
+              setRecipientEditor({ mode: 'create' })
+            }}
+          >
+            Add recipient
+          </Button>
+        }
+      >
+        {recipientsQuery.isError ? <ErrorNote error={recipientsQuery.error} /> : null}
+        {deleteRecipientMutation.isError ? (
+          <ErrorNote error={deleteRecipientMutation.error} className="mb-2" />
+        ) : null}
+        {/* Was a hand-rolled table with four unsized columns stretched
+            across the card. DataTable gives it widths and sorting. */}
+        <div className="max-h-80 overflow-y-auto">
+          <DataTable
+            columns={recipientColumns}
+            rows={recipients}
+            getRowId={(recipient) => recipient.id}
+            loading={recipientsQuery.isLoading}
+            caption="Alert recipients"
+            empty={<EmptyState>No recipients registered.</EmptyState>}
+          />
         </div>
       </Card>
+
+      <Card title="How recipients answer" subtitle="One keypad press, landed by webhook">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] sm:items-start">
+          <ul className="flex flex-col gap-2">
+            {[
+              { key: '1', title: 'Acknowledged', body: 'Message heard and understood' },
+              { key: '2', title: 'Conflict reported', body: 'It is already active where they are' },
+              { key: '3', title: 'Resolved', body: 'The local situation has calmed' },
+            ].map((entry) => (
+              <li key={entry.key} className="flex items-start gap-2.5">
+                <Kbd className="mt-0.5">{entry.key}</Kbd>
+                <span className="text-xs">
+                  <span className="font-medium text-ink">{entry.title}</span>
+                  <span className="block text-faint">{entry.body}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Callout tone="info">
+            Acknowledgements arrive by provider webhook and are idempotent — a repeated
+            callback never double-counts.
+          </Callout>
+        </div>
+      </Card>
+
+      {addingLanguage && current ? (
+        <Modal
+          title="Add a wording"
+          eyebrow="Alert languages"
+          onClose={() => setAddingLanguage(false)}
+        >
+          <p className="mb-3 text-sm text-muted">
+            The advisor drafts this alert again in the chosen language. You can edit it
+            afterwards — the original draft is kept either way.
+          </p>
+          <ul className="grid gap-1.5">
+            {missingLanguages.map((language) => (
+              <li key={language.code}>
+                <Button
+                  variant="secondary"
+                  className="w-full justify-start"
+                  loading={
+                    draftVariantMutation.isPending &&
+                    draftVariantMutation.variables?.language === language.code
+                  }
+                  onClick={() => {
+                    draftVariantMutation.mutate({
+                      alertId: current.id,
+                      language: language.code,
+                    })
+                    setAddingLanguage(false)
+                  }}
+                >
+                  {language.label}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </Modal>
+      ) : null}
+
+      {confirming && current ? (
+        <Modal
+          title="Send this alert?"
+          eyebrow="Confirm dispatch"
+          onClose={() => setConfirming(false)}
+        >
+          {/*
+            The one deliberate beat before real phones ring. It restates what is
+            about to happen in the operator's own terms — not a generic "are you
+            sure", which teaches people to click through.
+          */}
+          <div className="grid gap-3">
+            <StatRow>
+              <Stat label="Recipients" value={selectedRows.length} />
+              <Stat label="Voice calls" value={channelMix.voice} />
+              <Stat label="SMS" value={channelMix.sms} />
+            </StatRow>
+            <blockquote className="rounded-md border border-line border-l-[3px] border-l-accent bg-surface-2 px-3 py-2 text-sm leading-relaxed text-ink">
+              {current.body_text}
+            </blockquote>
+            <p className="text-xs text-faint">
+              Approving as <span className="font-medium text-ink">{signer.trim()}</span>{' '}
+              in {current.language.toUpperCase()}. This cannot be undone — queued
+              deliveries start dispatching immediately.
+            </p>
+            {approveMutation.isError ? <ErrorNote error={approveMutation.error} /> : null}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                icon={PhoneOutgoing}
+                loading={approveMutation.isPending}
+                onClick={() =>
+                  approveMutation.mutate({
+                    alertId: current.id,
+                    recipientIds: selectedIds,
+                  })
+                }
+              >
+                {approveMutation.isPending ? 'Approving…' : 'Yes, send it'}
+              </Button>
+              <Button variant="ghost" onClick={() => setConfirming(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
+
+      {rejecting && current ? (
+        <Modal
+          title="Reject this alert"
+          eyebrow="Human gate"
+          onClose={() => setRejecting(false)}
+        >
+          <form
+            className="grid gap-3"
+            onSubmit={(event: FormEvent<HTMLFormElement>) => {
+              event.preventDefault()
+              rejectMutation.mutate({ alertId: current.id, reason: rejectReason.trim() })
+            }}
+          >
+            <p className="text-sm text-muted">
+              Nothing is queued and nothing is sent. The alert is closed on the record
+              under your name, so a decision not to warn is as auditable as a decision
+              to warn.
+            </p>
+            <Field label="Why?" htmlFor="reject-reason" hint="Optional, but it is what the next reader sees.">
+              <textarea
+                id="reject-reason"
+                rows={3}
+                maxLength={2000}
+                value={rejectReason}
+                placeholder="Duplicate of this morning's alert…"
+                onChange={(event) => setRejectReason(event.target.value)}
+                className="w-full rounded-md border border-line bg-surface px-2.5 py-2 text-sm leading-relaxed text-ink outline-none transition-colors placeholder:text-faint focus:border-accent focus:ring-4 focus:ring-accent-ring/40"
+              />
+            </Field>
+            {rejectMutation.isError ? <ErrorNote error={rejectMutation.error} /> : null}
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" variant="primary" icon={Ban} loading={rejectMutation.isPending}>
+                Reject alert
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setRejecting(false)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
+
+      {picking && current ? (
+        <Modal
+          title="Add from roster"
+          eyebrow="Recipients for this alert"
+          onClose={() => setPicking(false)}
+        >
+          <p className="mb-3 text-sm text-muted">
+            Anyone active can be added, including contacts outside this alert's zone —
+            a neighbouring chief often needs the same warning.
+          </p>
+          <ul className="grid max-h-80 gap-1.5 overflow-y-auto">
+            {recipients
+              .filter((recipient) => recipient.active)
+              .map((recipient) => {
+                const checked = selectedSet.has(recipient.id)
+                const isDefault = defaultTargets.some(
+                  (target) => target.id === recipient.id,
+                )
+                return (
+                  <li key={recipient.id}>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-sm border border-line bg-surface px-2.5 py-1.5 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleRecipient(recipient.id)}
+                        className="size-3.5 shrink-0 accent-[var(--color-accent)]"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium text-ink">
+                          {recipient.name}
+                        </span>
+                        <span className="block truncate text-2xs text-faint">
+                          {recipient.zone_name ?? 'All zones'}
+                          {isDefault ? ' · already targeted' : ''}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-2xs text-muted">
+                        {CHANNEL_LABEL[recipient.channel]}
+                      </span>
+                    </label>
+                  </li>
+                )
+              })}
+          </ul>
+          <div className="mt-3">
+            <Button variant="primary" onClick={() => setPicking(false)}>
+              Done
+            </Button>
+          </div>
+        </Modal>
+      ) : null}
 
       {recipientEditor ? (
         <Modal
@@ -942,11 +1662,11 @@ export function DispatchScreen() {
                     setRecipientForm((form) => ({ ...form, language: event.target.value }))
                   }
                 >
-                  <option value="sw">Swahili (sw)</option>
-                  <option value="en">English (en)</option>
-                  <option value="am">Amharic (am)</option>
-                  <option value="so">Somali (so)</option>
-                  <option value="ar">Arabic (ar)</option>
+                  {LANGUAGES.map((language) => (
+                    <option key={language.code} value={language.code}>
+                      {language.label}
+                    </option>
+                  ))}
                 </Select>
               </Field>
               <Field label="Channel" htmlFor="recipient-channel">
@@ -981,10 +1701,7 @@ export function DispatchScreen() {
                 </Select>
               </Field>
             ) : null}
-            <p className="text-xs text-faint">
-              SMS delivery depends on the Twilio account: trial accounts block custom-body SMS.
-              In this build SMS works end-to-end in seeded/mock mode; voice is the verified live channel.
-            </p>
+            <SmsCaveat />
             {recipientMutation.isError ? <ErrorNote error={recipientMutation.error} /> : null}
             <div className="flex flex-wrap gap-2">
               <Button

@@ -124,6 +124,29 @@ transactions is a hard rule throughout this codebase. `idempotency_key` (our sid
 `/webhooks/twilio/gather` and `/webhooks/twilio/status`, not the dispatch worker itself, and are idempotent
 against repeated provider callbacks.
 
+The gate can also say **no**: `/alerts/{id}/reject` moves `pending_approval → rejected` and queues
+nothing, guarded by `alerts_rejection_chk`, the mirror of `alerts_human_gate_chk`. Approval records
+`approved_body_sha256` so an edit landing after approval is detectable.
+
+**Who gets an alert** is decided by one rule in one place — `_default_recipients` in
+`apps/api/dira_api/main.py`, exposed as `GET /alerts/{id}/recipients` so the dispatch screen renders
+the server's answer instead of recomputing it. It dedupes by phone (zone-specific beats all-zones;
+widest channel wins; a re-registration beats an older row). `approve` takes an optional
+`recipient_ids` list — omitted means that default set, a list is used verbatim and may include
+contacts outside the alert's zone. An empty list is a 422 pointing at reject.
+
+**What each person hears** comes from `alert_variants` (language × optional role), resolved by the
+pure `resolve_alert_body` in `dira_core.alerts` and frozen onto `deliveries.body_text` **at approval
+time, not dispatch time** — the approver is accountable for the exact string, so a later edit must
+not change it underneath them. `alerts.body_text` is the last-resort rung, so an alert with no
+variants behaves exactly as before variants existed. `ResolvedBody.is_fallback` means *nobody wrote
+anything in this recipient's language*, deliberately not "no variant row matched": a Swahili speaker
+receiving a Swahili alert is served correctly, and a warning that is always on is not a warning.
+
+Voice language reaches the provider through `SAY_VOICES` in `dira_dispatch.twilio_adapter`. Twilio
+`<Say>` has no voice for Somali or Amharic; those degrade to English **with a logged warning** —
+the silent degrade is the bug that hid the hardcoded `sw-KE` for so long.
+
 ### Frontend
 
 Multi-screen Apple-reskinned app (D-021, restyles D-017; do not revert to the flat light-Carbon

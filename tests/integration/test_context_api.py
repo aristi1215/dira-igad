@@ -74,6 +74,71 @@ def test_regional_indicators_is_geojson_for_all_zones(client: TestClient) -> Non
         assert key in props
 
 
+def test_zones_and_regional_use_latest_assessment_without_open_situation(
+    client: TestClient,
+) -> None:
+    """Quiet zones still get a map band from assessments; situation_id stays null."""
+    from dira_api.settings import get_settings
+    from dira_data.db import connect
+
+    get_settings.cache_clear()
+    url = get_settings().database_url
+    zone_id = "afar_coast"
+    cycle = "2030-01-01"
+    with connect(url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM situations WHERE zone_id = %s AND status = 'open'",
+                (zone_id,),
+            )
+            cur.execute(
+                "DELETE FROM assessments WHERE zone_id = %s AND cycle = %s",
+                (zone_id, cycle),
+            )
+            cur.execute(
+                """
+                INSERT INTO assessments (
+                  zone_id, cycle, prob_conflict, expected_incidents,
+                  model_risk, model_band, corroboration, operational_band,
+                  combination_rule, explanation, shap, exposure_snapshot
+                ) VALUES (
+                  %s, %s, 0.05, 0.1,
+                  0.05, 'low', 0.0, 'low',
+                  'test_rule', 'integration quiet zone', '{}'::jsonb, '{}'::jsonb
+                )
+                """,
+                (zone_id, cycle),
+            )
+        conn.commit()
+
+    try:
+        zones = client.get("/zones").json()
+        row = next(z for z in zones if z["zone_id"] == zone_id)
+        assert row["operational_band"] == "low"
+        assert row["model_risk"] == pytest.approx(0.05)
+        assert row["situation_id"] is None
+
+        features = client.get("/indicators/regional").json()["features"]
+        props = next(
+            f["properties"] for f in features if f["properties"]["zone_id"] == zone_id
+        )
+        assert props["operational_band"] == "low"
+        assert props["situation_id"] is None
+
+        overview = client.get("/analytics/overview").json()
+        band_rows = {r["band"]: int(r["zones"]) for r in overview["band_distribution"]}
+        assert sum(band_rows.values()) == 22
+        assert band_rows.get("low", 0) >= 1
+    finally:
+        with connect(url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM assessments WHERE zone_id = %s AND cycle = %s",
+                    (zone_id, cycle),
+                )
+            conn.commit()
+
+
 def test_hazards_is_geojson_with_current_bulletins(client: TestClient) -> None:
     response = client.get("/hazards")
     assert response.status_code == 200

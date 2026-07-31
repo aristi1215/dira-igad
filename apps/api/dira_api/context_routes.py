@@ -58,25 +58,32 @@ def _db() -> Any:
 
 @router.get("/zones")
 def list_zones() -> list[dict[str, Any]]:
-    """All zones with cluster, latest indicator context and open-situation band."""
+    """All zones with cluster, latest assessment band + optional open situation id."""
     with _db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT c.*, cl.name AS cluster_name,
                        ze.population, ze.pastoralist_share, ze.water_points, ze.markets,
-                       ms.operational_band, ms.model_risk, ms.situation_id
+                       latest.operational_band, latest.model_risk, sit.situation_id
                 FROM v_zone_context c
                 JOIN zones z ON z.id = c.zone_id
                 JOIN clusters cl ON cl.id = c.cluster_id
                 LEFT JOIN zone_exposure ze ON ze.zone_id = c.zone_id
                 LEFT JOIN LATERAL (
-                  SELECT operational_band, model_risk, situation_id
-                  FROM v_map_situations m
-                  WHERE m.zone_id = c.zone_id
+                  SELECT operational_band, model_risk
+                  FROM assessments
+                  WHERE zone_id = c.zone_id
+                  ORDER BY cycle DESC
                   LIMIT 1
-                ) ms ON TRUE
-                ORDER BY ms.model_risk DESC NULLS LAST, c.zone_id
+                ) latest ON TRUE
+                LEFT JOIN LATERAL (
+                  SELECT id AS situation_id
+                  FROM situations
+                  WHERE zone_id = c.zone_id AND status = 'open'
+                  LIMIT 1
+                ) sit ON TRUE
+                ORDER BY latest.model_risk DESC NULLS LAST, c.zone_id
                 """
             )
             return _rows(cur)
@@ -264,7 +271,7 @@ def regional_indicators() -> dict[str, Any]:
                 """
                 SELECT c.*, ST_AsGeoJSON(z.geom)::json AS geometry,
                        inc.incidents_180d, inc.fatalities_180d,
-                       ms.operational_band, ms.model_risk, ms.situation_id
+                       latest.operational_band, latest.model_risk, sit.situation_id
                 FROM v_zone_context c
                 JOIN zones z ON z.id = c.zone_id
                 LEFT JOIN LATERAL (
@@ -277,11 +284,18 @@ def regional_indicators() -> dict[str, Any]:
                     )
                 ) inc ON TRUE
                 LEFT JOIN LATERAL (
-                  SELECT operational_band, model_risk, situation_id
-                  FROM v_map_situations m
-                  WHERE m.zone_id = c.zone_id
+                  SELECT operational_band, model_risk
+                  FROM assessments
+                  WHERE zone_id = c.zone_id
+                  ORDER BY cycle DESC
                   LIMIT 1
-                ) ms ON TRUE
+                ) latest ON TRUE
+                LEFT JOIN LATERAL (
+                  SELECT id AS situation_id
+                  FROM situations
+                  WHERE zone_id = c.zone_id AND status = 'open'
+                  LIMIT 1
+                ) sit ON TRUE
                 ORDER BY c.zone_id
                 """
             )
@@ -849,8 +863,16 @@ def analytics_overview() -> dict[str, Any]:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT COALESCE(operational_band, 'none') AS band, count(*) AS zones
-                FROM v_map_situations GROUP BY 1
+                SELECT COALESCE(latest.operational_band, 'none') AS band, count(*) AS zones
+                FROM zones z
+                LEFT JOIN LATERAL (
+                  SELECT operational_band
+                  FROM assessments
+                  WHERE zone_id = z.id
+                  ORDER BY cycle DESC
+                  LIMIT 1
+                ) latest ON TRUE
+                GROUP BY 1
                 """
             )
             band_distribution = _rows(cur)

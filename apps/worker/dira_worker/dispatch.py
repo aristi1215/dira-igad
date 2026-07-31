@@ -36,7 +36,10 @@ def claim_next(conn: Any) -> dict[str, Any] | None:
             cur.execute(
                 """
                 SELECT d.id, d.alert_id, d.recipient_id, d.channel, d.idempotency_key,
-                       d.attempt_count, r.phone_e164, a.audio_url, a.body_text
+                       d.attempt_count, r.phone_e164, a.audio_url, a.language,
+                       -- The wording frozen for this recipient at approval time.
+                       -- COALESCE covers deliveries queued before variants existed.
+                       COALESCE(d.body_text, a.body_text) AS body_text
                 FROM deliveries d
                 JOIN recipients r ON r.id = d.recipient_id
                 JOIN alerts a ON a.id = d.alert_id
@@ -187,12 +190,15 @@ def process_one(
     channel = claimed["channel"]
     provider: Any
     audio_url = claimed["audio_url"] or audio_fallback
+    # The alert's own language, not a hardcoded "sw". Without this the language
+    # chosen at the approval gate never reached the provider at all.
+    language = str(claimed.get("language") or "sw")
 
     # Live mode: synthesize alert audio to a public URL (outside any Tx).
     # TTS failure is non-fatal — the adapter falls back to <Say>.
     if channel == "voice" and synthesizer is not None and claimed.get("body_text"):
         try:
-            audio_url = synthesizer.synthesize(str(claimed["body_text"]), "sw").url
+            audio_url = synthesizer.synthesize(str(claimed["body_text"]), language).url
         except Exception as exc:  # noqa: BLE001
             logger.warning("TTS synth failed for delivery=%s: %s", delivery_id, exc)
 
@@ -213,7 +219,7 @@ def process_one(
             ref = ProviderRef(provider_message_id=provider_message_id)
         elif channel == "voice":
             provider = voice
-            ref = provider.call(phone, audio_url, idem)
+            ref = provider.call(phone, audio_url, idem, language=language)
         else:
             raise RuntimeError(f"Unsupported delivery channel: {channel}")
         record_success(conn, delivery_id, ref.provider_message_id)
