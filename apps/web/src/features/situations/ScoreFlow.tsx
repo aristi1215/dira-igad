@@ -14,8 +14,9 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
     assessment.combination_rule,
     assessment.model_risk,
     assessment.corroboration,
+    assessment.model_band,
   )
-  const { newsCorroboration, fieldCorroboration, operationalScore, preBumpBand, bumped } =
+  const { newsCorroboration, fieldCorroboration, operationalScore, preBumpBand, bumped, floored } =
     breakdown
   const activeIndex = LADDER.indexOf(preBumpBand)
   const finalIndex = LADDER.indexOf(assessment.operational_band)
@@ -100,6 +101,15 @@ export function ScoreFlow({ assessment }: { assessment: Assessment }) {
               className="mt-1 text-xs font-medium text-accent"
             >
               ↑ raised one step — strong on-the-ground confirmation
+            </motion.p>
+          ) : floored ? (
+            <motion.p
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              className="mt-1 text-xs font-medium text-muted"
+            >
+              Held at the model's own read — weak corroboration cannot pull it lower.
             </motion.p>
           ) : null}
         </div>

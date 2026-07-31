@@ -185,8 +185,16 @@ export function ZoneCard({
   const OverlayIcon = overlayBrief?.icon
 
   const breakdown =
-    situation?.combination_rule && situation.model_risk != null && situation.corroboration != null
-      ? parseCombination(situation.combination_rule, situation.model_risk, situation.corroboration)
+    situation?.combination_rule &&
+    situation.model_risk != null &&
+    situation.corroboration != null &&
+    situation.model_band
+      ? parseCombination(
+          situation.combination_rule,
+          situation.model_risk,
+          situation.corroboration,
+          situation.model_band,
+        )
       : null
 
   return (
